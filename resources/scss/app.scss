@@ -1,0 +1,59 @@
+/*
+Template Name: Konrix - Responsive Tailwind Admin Dashboard
+Version: 1.0
+Author: CoderThemes
+Email: support@coderthemes.com
+File: Main Css File
+*/
+
+// Custom Variables
+@use "sass:meta";
+@use "config/variables" as *;
+@use "config/theme-config" as *;
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+// Structure
+@include meta.load-css("structure/sidenav");
+@include meta.load-css("structure/topbar");
+
+// Components
+@include meta.load-css("components/reboot");
+@include meta.load-css("components/buttons");
+@include meta.load-css("components/card");
+@include meta.load-css("components/forms");
+@include meta.load-css("components/print");
+@include meta.load-css("components/helper");
+
+// Plugins (Extended UI Components) 
+@include meta.load-css("plugins/swiper");
+@include meta.load-css("plugins/simplebar");
+@include meta.load-css("plugins/prismjs");
+@include meta.load-css("plugins/sweetalert2");
+@include meta.load-css("plugins/sortablejs");
+@include meta.load-css("plugins/tour");
+@include meta.load-css("plugins/glightbox");
+@include meta.load-css("plugins/tippy-tooltip");
+
+// Chart Plugins
+@include meta.load-css("plugins/apexcharts");
+
+// Advanced Form Plugins
+@include meta.load-css("plugins/dropzone");
+@include meta.load-css("plugins/range-slider");
+@include meta.load-css("plugins/flatpicker");
+@include meta.load-css("plugins/colorpicker");
+@include meta.load-css("plugins/choices");
+@include meta.load-css("plugins/quilljs");
+
+// Data Table
+@include meta.load-css("plugins/gridjs");
+
+// Map Plugins
+@include meta.load-css("plugins/vector-maps");
+@include meta.load-css("plugins/google-map");
+
+// App Pages Plugins
+@include meta.load-css("plugins/fullcalendar");
