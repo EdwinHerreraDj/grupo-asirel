@@ -664,35 +664,21 @@ class FolderManager extends Component
             return;
         }
 
-        // extensión original
+        // Mantener extensión original
         $ext = strtolower(pathinfo($file->nombre, PATHINFO_EXTENSION));
         $nuevoNombre = $base . ($ext ? '.' . $ext : '');
 
-        // ruta actual en storage (ajusta esto a tu campo real)
-        $rutaActual = $file->ruta; // ejemplo: "drive/usuario123/xxx.pdf"
-
-        $directorio = dirname($rutaActual);
-        $rutaNueva = $directorio . '/' . $nuevoNombre;
-
-        // Evitar colisiones
-        if (Storage::disk('public')->exists($rutaNueva)) {
-            $this->addError('nombreEditadoFile', 'Ya existe un archivo con ese nombre.');
-            return;
-        }
-
-        // Renombrar físicamente
-        Storage::disk('public')->move($rutaActual, $rutaNueva);
-
-        // Actualizar BD
+        // SOLO actualizar nombre (NO ruta)
         $file->update([
             'nombre' => $nuevoNombre,
-            'ruta'   => $rutaNueva,
         ]);
 
-        $this->cancelarRenombrarArchivo();
+        $this->renamingFileId = null;
+        $this->nombreEditadoFile = '';
 
         $this->dispatch('toast', type: 'success', text: 'Archivo renombrado correctamente');
     }
+
 
     public function render()
     {
