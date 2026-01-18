@@ -15,15 +15,11 @@ class FileManager extends Component
 
     public $showModal = false;
     public ?int $carpetaId = null;
-    public $archivo;
+    public $archivo = [];
     public $tieneCaducidad = false;
-    public $fechaCaducidad;
+    public $fechaCaducidad = null;
     public $currentFolderId;
 
-    protected $rules = [
-        'archivo' => 'required|file|max:10240',
-        'fechaCaducidad' => 'nullable|date|after:today',
-    ];
 
     public function mount($carpetaId)
     {
@@ -60,37 +56,43 @@ class FileManager extends Component
     public function subirArchivo()
     {
         $this->validate([
-            'archivo' => 'required|file|max:51200', // máximo 50 MB
+            'archivo' => 'required|array|min:1',
+            'archivo.*' => 'file|max:512000',
             'tieneCaducidad' => 'boolean',
-            'fechaCaducidad' => 'nullable|date|after:today',
+            'fechaCaducidad' => $this->tieneCaducidad
+                ? 'required|date|after:today'
+                : 'nullable',
         ]);
 
-        // Carpeta actual o raíz
         $folderId = $this->carpetaId ?? 0;
 
-        // Almacenar el archivo en disco local
-        $path = $this->archivo->store("drive/{$folderId}", 'local');
+        foreach ($this->archivo as $file) {
 
-        // Crear registro en base de datos
-        File::create([
-            'folder_id'        => $folderId,
-            'usuario_id'       => auth()->id(),
-            'nombre'           => $this->archivo->getClientOriginalName(),
-            'ruta'             => $path,
-            'tipo'             => $this->archivo->getClientOriginalExtension(),
-            'tamaño'           => $this->archivo->getSize(),
-            'tiene_caducidad'  => $this->tieneCaducidad ?? false,
-            'fecha_caducidad'  => $this->tieneCaducidad ? $this->fechaCaducidad : null,
-        ]);
+            $path = $file->store("drive/{$folderId}", 'local');
 
-        // Limpiar inputs y notificar
+            File::create([
+                'folder_id'       => $folderId,
+                'usuario_id'      => auth()->id(),
+                'nombre'          => $file->getClientOriginalName(),
+                'ruta'            => $path,
+                'tipo'            => $file->getClientOriginalExtension(),
+                'tamaño'          => $file->getSize(),
+                'tiene_caducidad' => $this->tieneCaducidad,
+                'fecha_caducidad' => $this->tieneCaducidad ? $this->fechaCaducidad : null,
+            ]);
+        }
+
         $this->reset(['archivo', 'tieneCaducidad', 'fechaCaducidad']);
-        $this->dispatch('toast', type: 'success', text: 'Archivo subido correctamente.');
 
-        // Cerrar modal si existe
-        $this->dispatch('archivoSubido')->to(FolderManager::class);
+        $this->dispatch('archivoSubido')->to(\App\Livewire\Drive\FolderManager::class);
+        $this->dispatch('toast', type: 'success', text: 'Archivos subidos correctamente.');
+
         $this->closeModal();
     }
+
+
+
+
 
     /* Eliminar archivos */
     public function eliminarConfirmado(): void

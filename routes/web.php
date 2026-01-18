@@ -24,6 +24,10 @@ use App\Http\Controllers\FacturasRecibidasController;
 use App\Http\Controllers\ProveedorController;
 use App\Http\Controllers\CategoriaGastoEmpresaController;
 use App\Http\Controllers\CertificacionController;
+use App\Http\Controllers\Admin\ClienteController;
+use App\Http\Controllers\CertificacionDetalleController;
+use App\Http\Controllers\FacturasVentasController;
+use App\Http\Controllers\FacturaSeriesController;
 
 require __DIR__ . '/auth.php';
 
@@ -97,9 +101,14 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
     Route::get('/ventas/informe/{id}', [VentaController::class, 'verInforme'])->name('ventas.informe');
     Route::get('/obra/{id}/ventas/informes/excel', [VentaController::class, 'ventasExcel'])->name('obra.ventas.excel');
     Route::get('/obra/{id}/ventas/informes/pdf', [VentaController::class, 'descargarPDF'])->name('obra.ventas.pdf');
+    Route::get('empresa/certificaciones/informe',[CertificacionController::class, 'informe'])->name('empresa.certificaciones.informe');
+
 
     // Certificaciones Asirel
     Route::get('/obras/{id}/certificaciones', [CertificacionController::class, 'index'])->name('obras.certificaciones');
+    Route::get('/empresa/obras/{obra}/certificaciones/facturar',[CertificacionController::class, 'facturar'])->name('empresa.certificaciones.facturar');
+    Route::get('/empresa/certificaciones/{certificacion}', [CertificacionDetalleController::class, 'show'])->name('empresa.certificaciones.show');
+
 
     // Rutas de Fichajes
     Route::get('/fichajes/{id}', [FichajeController::class, 'index'])->name('obras.fichajes');
@@ -109,6 +118,7 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
     // Rutas de Drive App (Carpetas y Archivos)
     Route::get('/descargar/{file}', [FileController::class, 'descargar'])->name('files.descargar');
     Route::get('/descargar-carpeta/{id}', [FileController::class, 'descargarCarpeta'])->name('folders.descargarCarpeta');
+    Route::get('/drive/ver/{file}', [FileController::class, 'ver'])->name('drive.ver');
 
     // Rutas de Gastos de la Empresa
     Route::get('/empresa/gastos-empresa', [GastosEmpresaController::class, 'index'])->name('empresa.gastosEmpresa');
@@ -134,10 +144,22 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
         ->name('informes.exportar.coste-venta-mensual');
 
     // Modulos de Asirel
-    Route::get('/obras/{obra}/facturas-recibidas',[FacturasRecibidasController::class, 'index'])->name('obras.facturas-recibidas');
-    Route::get('/proveedores',[ProveedorController::class, 'index'])->name('proveedores');
+    Route::get('/obras/{obra}/facturas-recibidas', [FacturasRecibidasController::class, 'index'])->name('obras.facturas-recibidas');
+    // Rutas de Proveedores
+    Route::get('/proveedores', [ProveedorController::class, 'index'])->name('proveedores');
+    //Rutas de Clientes
+    Route::get('/clientes', [ClienteController::class, 'index'])->name('clientes');
+
+    // Rutas de Facturas de Ventas
+    Route::get('/empresa/facturas-series', [FacturaSeriesController::class, 'index'])->name('empresa.facturas-series');
+    Route::get('/empresa/facturas-ventas', [FacturasVentasController::class, 'index'])->name('empresa.facturas-ventas');
+    Route::get('/empresa/facturas-ventas/{factura}', [FacturasVentasController::class, 'detalle'])->name('empresa.facturas-ventas.detalle');
+    // routes/web.php
+
+    Route::get('/empresa/facturas-ventas/{factura}/pdf', [FacturasVentasController::class, 'pdf'])->name('empresa.facturas-ventas.pdf');
 
 
+    // Rutas dinamicas - DEBE IR AL FINAL DE TODO
     Route::get('{first}/{second}/{third}', [RoutingController::class, 'thirdLevel'])->name('third');
     Route::get('{first}/{second}', [RoutingController::class, 'secondLevel'])->name('second');
     Route::get('{any}', [RoutingController::class, 'root'])->name('any');

@@ -78,7 +78,7 @@
         <!-- Footer -->
         <div class="flex justify-end gap-3 pt-6 border-t border-gray-200">
             
-            <x-btns.cancel wire:click="$dispatch('cerrarModalProveedor')">
+            <x-btns.cancel wire:click="$dispatch('cerrarModalProveedor')" type="button">
                 Cancelar
             </x-btns.cancel>
 

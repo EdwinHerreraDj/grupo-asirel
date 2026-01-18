@@ -7,139 +7,169 @@
 
     {{-- Modal --}}
     @if ($showModal)
-        <div class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center px-4" x-data
+        <div class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center px-3 sm:px-4" x-data
             x-on:keydown.escape.window="$wire.closeModal()">
 
-            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-md p-6 relative animate-fadeIn">
+            {{-- CONTENEDOR --}}
+            <div
+                class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full
+                       max-w-md sm:max-w-lg md:max-w-xl
+                       max-h-[92vh] sm:max-h-[90vh]
+                       overflow-hidden
+                       animate-fadeIn">
 
-                {{-- Cabecera --}}
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-                        <i class="mgc_upload_2_line text-blue-600"></i> Subir archivo
-                    </h2>
-                    <button wire:click="closeModal" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
-                        <i class="mgc_close_line text-xl"></i>
-                    </button>
-                </div>
+                {{-- SCROLL INTERNO --}}
+                <div class="p-4 sm:p-6 overflow-y-auto max-h-[92vh] sm:max-h-[90vh]">
 
-                {{-- Formulario --}}
-                <form wire:submit.prevent="subirArchivo" class="space-y-6">
+                    {{-- Cabecera --}}
+                    <div class="flex items-start justify-between gap-4 mb-4">
+                        <h2
+                            class="text-base sm:text-lg font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+                            <i class="mgc_upload_2_line text-blue-600"></i>
+                            Subir archivos
+                        </h2>
 
-                    {{-- ID oculto --}}
-                    <input type="hidden" wire:model.live="carpetaId">
+                        <button wire:click="closeModal" wire:loading.attr="disabled"
+                            class="shrink-0 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+                            <i class="mgc_close_line text-xl"></i>
+                        </button>
+                    </div>
 
-                    {{-- Subida de archivo con arrastrar y soltar --}}
-                    <div x-data="{
-                        isDropping: false,
-                        fileName: null,
-                        handleDrop(e) {
-                            this.isDropping = false;
-                            const files = e.dataTransfer.files;
-                            if (files.length > 0) {
-                                this.fileName = files[0].name;
-                                $wire.upload('archivo', files[0]);
+                    {{-- Formulario --}}
+                    <form wire:submit.prevent="subirArchivo" class="space-y-5 sm:space-y-6">
+
+                        <input type="hidden" wire:model.defer="carpetaId">
+
+                        {{-- DROPZONE --}}
+                        <div x-data="{
+                            isDropping: false,
+                            filesCount: 0,
+                            handleDrop(e) {
+                                this.isDropping = false;
+                                this.filesCount = e.dataTransfer.files.length;
+                        
+                                this.$refs.fileInput.files = e.dataTransfer.files;
+                        
+                                // 🔥 Esto es lo que hace que Livewire se entere
+                                this.$refs.fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+                            },
+                            handleFileSelect(e) {
+                                this.filesCount = e.target.files.length;
                             }
-                        },
-                        handleFileSelect(e) {
-                            const file = e.target.files[0];
-                            if (file) {
-                                this.fileName = file.name;
-                            }
-                        }}" x-on:dragover.prevent="isDropping = true"
-                        x-on:dragleave.prevent="isDropping = false" x-on:drop.prevent="handleDrop($event)"
-                        class="relative border-2 border-dashed rounded-xl px-6 py-8 text-center transition
-                          cursor-pointer select-none
-                        border-gray-300 dark:border-gray-600
-                        hover:border-blue-500 dark:hover:border-blue-400"
-                        :class="isDropping ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500' : ''">
-                        <input type="file" id="archivo" wire:model="archivo" x-on:change="handleFileSelect"
-                            class="absolute inset-0 opacity-0 cursor-pointer" />
+                        }" x-on:dragover.prevent="isDropping = true"
+                            x-on:dragleave.prevent="isDropping = false" x-on:drop.prevent="handleDrop($event)"
+                            :class="isDropping ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500' : ''"
+                            class="relative border-2 border-dashed rounded-xl
+                                   px-4 sm:px-6 py-6 sm:py-8
+                                   text-center cursor-pointer
+                                   transition border-gray-300 dark:border-gray-600
+                                   hover:border-blue-500 dark:hover:border-blue-400">
 
-                        {{-- Estado por defecto --}}
-                        <template x-if="!fileName">
-                            <div class="flex flex-col items-center">
-                                <i class="mgc_upload_2_line text-blue-500 text-3xl mb-2"></i>
-                                <p class="text-sm text-gray-600 dark:text-gray-300">
-                                    Arrastra tu archivo aquí o haz clic para seleccionarlo
-                                </p>
-                            </div>
-                        </template>
+                            <input x-ref="fileInput" type="file" multiple wire:model="archivo"
+                                wire:loading.attr="disabled" class="absolute inset-0 opacity-0 cursor-pointer"
+                                @change="handleFileSelect" />
 
-                        {{-- Estado mientras se arrastra --}}
-                        <template x-if="isDropping">
-                            <div class="flex flex-col items-center">
-                                <i class="mgc_cloud_upload_fill text-blue-600 text-4xl mb-2"></i>
-                                <p class="text-sm font-semibold text-blue-600">
-                                    Suelta el archivo para subirlo
-                                </p>
-                            </div>
-                        </template>
 
-                        {{-- Previsualización del archivo seleccionado --}}
-                        <template x-if="fileName">
-                            <div class="flex flex-col items-center mt-2">
-                                <i class="mgc_file_line text-blue-500 text-3xl mb-1"></i>
-                                <p class="text-sm text-gray-700 dark:text-gray-300 truncate max-w-[250px]">
-                                    <strong>Archivo seleccionado:</strong> <span x-text="fileName"></span>
-                                </p>
-
-                                {{-- Mensaje de archivo listo --}}
-                                <div class="mt-2 text-green-600 text-sm font-medium"
-                                    x-show="$wire.entangle('archivo').length > 0" x-transition>
-                                    ✅ Archivo listo para subir
+                            {{-- Estado inicial --}}
+                            <template x-if="filesCount === 0 && !isDropping">
+                                <div class="flex flex-col items-center">
+                                    <i class="mgc_upload_2_line text-blue-500 text-3xl sm:text-4xl mb-2"></i>
+                                    <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-300">
+                                        Arrastra archivos aquí o haz clic para seleccionarlos
+                                    </p>
                                 </div>
-                            </div>
-                        </template>
-                    </div>
+                            </template>
 
-                    @error('archivo')
-                        <p class="text-red-600 text-xs mt-2">{{ $message }}</p>
-                    @enderror
+                            {{-- Estado arrastrando --}}
+                            <template x-if="isDropping">
+                                <div class="flex flex-col items-center">
+                                    <i class="mgc_cloud_upload_fill text-blue-600 text-4xl sm:text-5xl mb-2"></i>
+                                    <p class="text-xs sm:text-sm font-semibold text-blue-600">
+                                        Suelta los archivos para subirlos
+                                    </p>
+                                </div>
+                            </template>
 
-                    {{-- ⏳ Caducidad --}}
-                    <div class="flex items-center gap-3">
-                        <input id="caducidad" type="checkbox" wire:model.live="tieneCaducidad"
-                            class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-offset-0">
-                        <label for="caducidad" class="text-sm text-gray-700 dark:text-gray-300 select-none">
-                            ¿Tiene fecha de caducidad?
-                        </label>
-                    </div>
+                            {{-- Archivos seleccionados --}}
+                            <template x-if="filesCount > 0 && !isDropping">
+                                <div class="flex flex-col items-center">
+                                    <i class="mgc_file_line text-blue-500 text-3xl sm:text-4xl mb-1"></i>
+                                    <p class="text-xs sm:text-sm text-gray-700 dark:text-gray-300">
+                                        <strong x-text="filesCount"></strong>
+                                        archivo(s) seleccionados
+                                    </p>
+                                </div>
+                            </template>
+                        </div>
 
-                    {{-- Fecha de caducidad --}}
-                    @if ($tieneCaducidad)
-                        <div>
-                            <label for="fechaCaducidad"
-                                class="block text-sm font-semibold text-gray-800 dark:text-gray-100 mb-1">
+                        @error('archivo')
+                            <p class="text-red-600 text-xs">{{ $message }}</p>
+                        @enderror
+
+                        {{-- Caducidad --}}
+                        <div class="flex items-start gap-3">
+                            <input id="caducidad" type="checkbox" wire:model="tieneCaducidad"
+                                class="mt-0.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <label for="caducidad"
+                                class="text-xs sm:text-sm text-gray-700 dark:text-gray-300 select-none leading-5">
+                                ¿Aplicar fecha de caducidad a todos?
+                            </label>
+                        </div>
+
+                        {{-- Fecha --}}
+                        <div class="transition-opacity duration-200"
+                            :class="$wire.tieneCaducidad ? 'opacity-100' : 'opacity-40 pointer-events-none'">
+
+                            <label class="block text-xs sm:text-sm font-semibold mb-1">
                                 Fecha de caducidad
                             </label>
-                            <input id="fechaCaducidad" type="date" wire:model="fechaCaducidad"
-                                class="w-full text-sm rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
-                            @error('fechaCaducidad')
-                                <p class="text-red-600 text-xs mt-2">{{ $message }}</p>
-                            @enderror
+
+                            <input type="date" wire:model="fechaCaducidad" :disabled="!$wire.tieneCaducidad"
+                                class="w-full text-sm rounded-lg border-gray-300
+                                       dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100
+                                       focus:ring-2 focus:ring-blue-500">
                         </div>
-                    @endif
 
-                    {{-- ⚙️ Botones --}}
-                    <div class="flex justify-end gap-3 pt-5 border-t border-gray-200 dark:border-gray-700">
-                        <button type="button" wire:click="closeModal"
-                            class="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                            Cancelar
-                        </button>
+                        @error('fechaCaducidad')
+                            <p class="text-red-600 text-xs">{{ $message }}</p>
+                        @enderror
 
-                        <button type="submit"
-                            class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 transition disabled:opacity-50">
-                            <span wire:loading.remove wire:target="subirArchivo">Subir</span>
-                            <span wire:loading wire:target="subirArchivo" class="flex items-center gap-2">
-                                <i class="mgc_loading_line animate-spin text-lg"></i> Cargando...
-                            </span>
-                        </button>
-                    </div>
+                        {{-- Botones --}}
+                        <div
+                            class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-5
+                                   border-t border-gray-200 dark:border-gray-700">
 
-                </form>
+                            <button type="button" wire:click="closeModal" wire:loading.attr="disabled"
+                                class="w-full sm:w-auto px-4 py-2 text-sm rounded-lg border border-gray-300
+                                       dark:border-gray-600 dark:text-gray-200
+                                       hover:bg-gray-100 dark:hover:bg-gray-700">
+                                Cancelar
+                            </button>
 
+                            <button type="submit" wire:loading.attr="disabled" wire:target="archivo,subirArchivo"
+                                class="w-full sm:w-auto relative inline-flex items-center justify-center gap-2 px-5 py-2.5
+                                       bg-blue-600 text-white text-sm font-semibold rounded-lg
+                                       shadow-sm transition hover:bg-blue-700
+                                       focus:ring-2 focus:ring-blue-500
+                                       disabled:opacity-60 disabled:cursor-not-allowed">
 
+                                <span wire:loading.remove wire:target="archivo,subirArchivo"
+                                    class="inline-flex items-center gap-2">
+                                    <i class="mgc_upload_2_line text-base"></i>
+                                    Subir archivos
+                                </span>
 
+                                <span wire:loading wire:target="archivo,subirArchivo"
+                                    class="inline-flex items-center gap-2">
+                                    <i class="mgc_loading_line animate-spin text-lg"></i>
+                                    Cargando…
+                                </span>
+                            </button>
+
+                        </div>
+
+                    </form>
+                </div>
             </div>
         </div>
     @endif
@@ -162,5 +192,3 @@
         }
     </style>
 </div>
-
-{{-- Animación --}}

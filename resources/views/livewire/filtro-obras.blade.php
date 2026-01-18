@@ -93,56 +93,83 @@
                             </div>
 
 
-                            <p class="mb-5">Informe general: </p>
+                            {{--  <p class="mb-5">Informe general: </p> --}}
 
-                            <div class="flex flex-wrap gap-3">
-                                <!-- PDF -->
+                            {{-- <div class="flex flex-wrap gap-3">
+                            
                                 <a href="{{ route('obra.informe.general', $obra->id) }}"
                                     class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-white bg-red-500 hover:bg-red-600 transition-colors duration-300">
                                     Descargar
                                     <img src="/images/icons/pdf.svg" alt="Icon PDF" class="w-5 h-5">
                                 </a>
 
-                                <!-- Excel -->
+                        
                                 <a href="{{ route('obras.informeGeneralExcel', $obra->id) }}"
                                     class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-600 text-white hover:bg-green-700 transition-all duration-300">
                                     Descargar
                                     <img src="/images/icons/excel.svg" alt="Icon Excel" class="w-5 h-5">
                                 </a>
-                            </div>
+                            </div> --}}
 
                         </div>
 
                         <!-- Botonera inferior -->
-                        <div
-                            class="flex flex-wrap items-center justify-between gap-2 p-3 border-t border-gray-300 dark:border-gray-700">
+                        <div class="flex flex-wrap items-center gap-2 p-3 border-t border-gray-200 bg-gray-50">
 
-                            <a class="btn flex-1 sm:flex-none text-center bg-secondary/25 text-secondary hover:bg-secondary hover:text-white"
-                                href="{{ route('obras.gastos', $obra->id) }}">
-                                <i class="mgc_receive_money_line m-1"></i>Gastos
+                            {{-- Gastos --}}
+                            <a href="{{ route('obras.gastos', $obra->id) }}"
+                                class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium
+               bg-amber-100 text-amber-800 border border-amber-200
+               hover:bg-amber-200 transition">
+                                <i class="mgc_receive_money_line"></i>
+                                Gastos
                             </a>
 
-                            <a class="btn flex-1 sm:flex-none text-center bg-info/25 text-info hover:bg-info hover:text-white"
-                                href="{{ route('obras.documentos', $obra->id) }}">
-                                <i class="mgc_file_check_line m-1"></i>Docs
+                            {{-- Ventas --}}
+                            <a href="{{ route('obras.certificaciones', $obra->id) }}"
+                                class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium
+               bg-emerald-100 text-emerald-800 border border-emerald-200
+               hover:bg-emerald-200 transition">
+                                <i class="mgc_bank_line"></i>
+                                Ventas
                             </a>
 
-                            <a class="btn flex-1 sm:flex-none text-center bg-warning/25 text-warning hover:bg-warning hover:text-white"
-                                href="{{ route('obras.edit', $obra->id) }}">
-                                <i class="mgc_edit_2_line m-1"></i>Editar
+                            {{-- Documentos --}}
+                            <a href="{{ route('obras.documentos', $obra->id) }}"
+                                class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium
+               bg-sky-100 text-sky-800 border border-sky-200
+               hover:bg-sky-200 transition">
+                                <i class="mgc_file_check_line"></i>
+                                Docs
                             </a>
 
+                            {{-- Editar --}}
+                            <a href="{{ route('obras.edit', $obra->id) }}"
+                                class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium
+               bg-indigo-100 text-indigo-800 border border-indigo-200
+               hover:bg-indigo-200 transition">
+                                <i class="mgc_edit_2_line"></i>
+                                Editar
+                            </a>
+
+                            {{-- Eliminar --}}
                             <form id="delete-form-{{ $obra->id }}"
                                 action="{{ route('obras.destroy', $obra->id) }}" method="POST" class="hidden">
                                 @csrf @method('DELETE')
                             </form>
 
-                            <a type="button"
-                                class="btn flex-1 sm:flex-none text-center cursor-pointer bg-danger/25 text-danger hover:bg-danger hover:text-white"
-                                onclick="confirmDelete({{ $obra->id }})">
-                                <i class="mgc_close_circle_line mr-1"></i>Eliminar
-                            </a>
+                            <button type="button" onclick="confirmDelete({{ $obra->id }})"
+                                class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium
+               bg-red-100 text-red-700 border border-red-200
+               hover:bg-red-600 hover:text-white transition">
+                                <i class="mgc_close_circle_line"></i>
+                                Eliminar
+                            </button>
+
                         </div>
+
+
+
 
                         <!-- Balance y Documentación -->
                         <div class="border-t p-5 border-gray-300 dark:border-gray-700">

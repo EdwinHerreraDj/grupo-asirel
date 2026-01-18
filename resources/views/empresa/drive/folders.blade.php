@@ -43,4 +43,6 @@
             }
         });
     </script>
+
+    @vite(['resources/js/visor-pdf.js'])
 @endsection

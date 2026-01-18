@@ -18,7 +18,13 @@ class FacturaRecibida extends Model
         'tipo_coste',
         'numero_factura',
         'concepto',
-        'importe',
+        'importe', 
+        'base_imponible',
+        'iva_porcentaje',
+        'iva_importe',
+        'retencion_porcentaje',
+        'retencion_importe',
+        'total',
         'fecha_factura',
         'fecha_contable',
         'vencimiento',
@@ -26,6 +32,7 @@ class FacturaRecibida extends Model
         'estado',
         'adjunto',
     ];
+
 
     protected $casts = [
         'fecha_factura' => 'date',

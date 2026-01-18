@@ -14,7 +14,6 @@
         </p>
         <ul class="mt-2 list-disc list-inside">
             <li><strong>Gastos</strong>: materiales, alquileres, subcontratas, mano de obra y otros.</li>
-            <li><strong>Ventas</strong>: cualquier ingreso generado directamente desde la obra.</li>
         </ul>
         <p class="mt-2">
             Mantener actualizados estos apartados es fundamental para el <strong>control económico y el análisis
@@ -72,8 +71,8 @@
                     </div> --}}
                 </div>
                 <hr>
-                <h1 class="mt-5">Venta | Certificaciones</h1>
-                <div class="container grid grid-cols-4 gap-4 p-4">
+               {{--  <h1 class="mt-5">Venta | Certificaciones</h1> --}}
+                {{-- <div class="container grid grid-cols-4 gap-4 p-4"> --}}
                     {{--  <div>
                         <a href="{{ route('obras.ventas', $obra->id) }}"
                             class="block bg-purple-400 hover:bg-purple-500 text-white font-bold text-center py-6 rounded-lg shadow-md transition-all duration-200">
@@ -81,12 +80,12 @@
                             <span class="block mt-2">Venta</span>
                         </a>
                     </div> --}}
-                    <a href="{{ route('obras.certificaciones', $obra->id) }}"
+                  {{--   <a href="{{ route('obras.certificaciones', $obra->id) }}"
                         class="block bg-purple-400 hover:bg-purple-500 text-white font-bold text-center py-6 rounded-lg shadow-md transition-all duration-200">
                         <i class="mgc_pig_money_line text-2xl mb-2 inline-block"></i>
                         <span class="block mt-2">Certificaciones</span>
-                    </a>
-                </div>
+                    </a> --}}
+              {{--   </div> --}}
                 <hr>
                 <h1 class="mt-5">Control de Presencia | Mano de Obra</h1>
                 <div class="container grid grid-cols-4 gap-4 p-4">

@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\Attributes\On;
+use Symfony\Component\Finder\Finder;
+use Illuminate\Http\File as HttpFile;
 
 
 class FolderManager extends Component
@@ -46,10 +48,26 @@ class FolderManager extends Component
 
 
     /* Propiedades para mover contenudios entre carpetas */
-    public ?int $movingId = null; 
-    public ?string $movingType = null; 
-    public bool $showMoveModal = false; 
+    public ?int $movingId = null;
+    public ?string $movingType = null;
+    public bool $showMoveModal = false;
     public ?int $destinationFolderId = null;
+
+    /* Manejo de pronto a vencer archivos */
+    public bool $showCaducidades = false;
+    public string $filtroCaducidad = 'all';
+
+    protected array $folderPathCache = [];
+    protected array $folderMap = [];
+
+    /* Variables para cambiar nombre a los archivos */
+    public ?int $renamingFolderId = null;
+    public string $nombreEditadoFolder = '';
+
+    public ?int $renamingFileId = null;
+    public string $nombreEditadoFile = '';
+
+
 
 
 
@@ -59,9 +77,98 @@ class FolderManager extends Component
     }
 
     public function buscar()
-{
-    $this->searching = true;
-}
+    {
+        $this->searching = true;
+    }
+
+    public function abrirCaducidades(): void
+    {
+        $this->showCaducidades = true;
+    }
+
+    public function cerrarCaducidades(): void
+    {
+        $this->showCaducidades = false;
+        $this->filtroCaducidad = 'all';
+    }
+
+    public function getDocumentosCaducidadProperty()
+    {
+        $from = now()->startOfDay();
+        $query = File::query()
+            ->where('usuario_id', Auth::id())
+            ->where('tiene_caducidad', 1)
+            ->whereNotNull('fecha_caducidad')
+            ->with('folder');
+
+        switch ($this->filtroCaducidad) {
+            case 'expired':
+                $query->whereDate('fecha_caducidad', '<', $from);
+                break;
+
+            case '2weeks':
+                $query->whereBetween('fecha_caducidad', [$from, now()->addWeeks(2)->endOfDay()]);
+                break;
+
+            case '2months':
+                $query->whereBetween('fecha_caducidad', [$from, now()->addMonths(2)->endOfDay()]);
+                break;
+
+            case '4months':
+                $query->whereBetween('fecha_caducidad', [$from, now()->addMonths(4)->endOfDay()]);
+                break;
+
+            case '6months':
+                $query->whereBetween('fecha_caducidad', [$from, now()->addMonths(6)->endOfDay()]);
+                break;
+
+            case 'all':
+            default:
+                // sin filtro extra
+                break;
+        }
+
+        return $query->orderBy('fecha_caducidad')->get();
+    }
+
+    private function buildFolderMap(): void
+    {
+        if (!empty($this->folderMap)) return;
+
+        $folders = Folder::where('usuario_id', Auth::id())
+            ->get(['id', 'nombre', 'parent_id']);
+
+        foreach ($folders as $f) {
+            $this->folderMap[$f->id] = [
+                'nombre' => $f->nombre,
+                'parent_id' => $f->parent_id,
+            ];
+        }
+    }
+
+    public function rutaDeCarpeta(?int $folderId): string
+    {
+        if (!$folderId) return 'Raíz';
+
+        $this->buildFolderMap();
+
+        if (isset($this->folderPathCache[$folderId])) {
+            return $this->folderPathCache[$folderId];
+        }
+
+        $parts = [];
+        $current = $folderId;
+
+        while ($current && isset($this->folderMap[$current])) {
+            array_unshift($parts, $this->folderMap[$current]['nombre']);
+            $current = $this->folderMap[$current]['parent_id'];
+        }
+
+        return $this->folderPathCache[$folderId] = 'Raíz / ' . implode(' / ', $parts);
+    }
+
+
+
 
     private function setCurrentFolder(int $id): void
     {
@@ -118,7 +225,7 @@ class FolderManager extends Component
         } else {
             $this->setCurrentFolder(0);
         }
-    
+
         $this->dispatch('carpetaCambiada', $this->currentFolderId);
     }
 
@@ -159,6 +266,31 @@ class FolderManager extends Component
         $this->dispatch('toast', type: 'success', text: 'Nombre actualizado correctamente.');
     }
 
+    private function eliminarCarpetaRecursiva(Folder $folder): void
+    {
+        // 1. Eliminar subcarpetas primero
+        foreach ($folder->children as $child) {
+            $this->eliminarCarpetaRecursiva($child);
+        }
+
+        // 2. Eliminar archivos de la carpeta
+        $files = File::where('folder_id', $folder->id)->get();
+
+        foreach ($files as $file) {
+            if (Storage::disk('local')->exists($file->ruta)) {
+                Storage::disk('local')->delete($file->ruta);
+            }
+            $file->delete();
+        }
+
+        // 3. Eliminar carpeta física
+        Storage::disk('local')->deleteDirectory("drive/{$folder->id}");
+
+        // 4. Eliminar carpeta en BD
+        $folder->delete();
+    }
+
+
     public function confirmarEliminar(int $id): void
     {
         $folder = Folder::findOrFail($id);
@@ -174,51 +306,26 @@ class FolderManager extends Component
 
     public function eliminarConfirmado(): void
     {
-        $this->deleteError = null;
+        if (! $this->deletingId) return;
 
-        if (! $this->deletingId) {
-            return;
-        }
+        $folder = Folder::with('children')->find($this->deletingId);
 
-        $folder = Folder::find($this->deletingId);
         if (! $folder) {
             $this->dispatch('toast', type: 'error', text: 'La carpeta ya no existe.');
             $this->cancelarEliminar();
             return;
         }
 
-        // Evitar borrar si tiene subcarpetas
-        if ($folder->children()->exists()) {
-            $this->deleteError = 'Primero elimina las subcarpetas de esta carpeta.';
-            return;
-        }
+        $this->eliminarCarpetaRecursiva($folder);
 
-        // Eliminar archivos asociados (físico + BD)
-        $archivos = File::where('folder_id', $folder->id)->get();
-
-        foreach ($archivos as $archivo) {
-            // Eliminar del disco si existe
-            if (Storage::disk('local')->exists($archivo->ruta)) {
-                Storage::disk('local')->delete($archivo->ruta);
-            }
-            // Eliminar de BD
-            $archivo->delete();
-        }
-
-        // Eliminar carpeta física
-        Storage::disk('local')->deleteDirectory("drive/{$folder->id}");
-
-        // Eliminar carpeta de BD
-        $folder->delete();
-
-        // Notificación
-        $this->dispatch('toast', type: 'success', text: 'Carpeta y archivos eliminados.');
-
-        // Cerrar modal y refrescar vista
+        // Limpiar estado y refrescar
         $this->cancelarEliminar();
-        unset($this->cache[$this->currentFolderId]);
+        $this->cache = [];
+
         $this->dispatch('$refresh');
+        $this->dispatch('toast', type: 'success', text: 'Carpeta eliminada con todo su contenido.');
     }
+
 
     /* ZONA DE ARCHIVOS */
     #[On('archivoSubido')]
@@ -283,8 +390,8 @@ class FolderManager extends Component
     public function moverElemento()
     {
         if (!$this->movingId || !$this->movingType || $this->destinationFolderId === null) {
-        $this->dispatch('toast', type: 'error', text: 'Selecciona una carpeta destino.');
-        return;
+            $this->dispatch('toast', type: 'error', text: 'Selecciona una carpeta destino.');
+            return;
         }
 
         try {
@@ -370,6 +477,156 @@ class FolderManager extends Component
             ->whereDate('fecha_caducidad', '<', now());
     }
 
+
+
+    public function descomprimirZip(int $fileId): void
+    {
+        $zipDb = File::findOrFail($fileId);
+
+        // 1) Validar ZIP
+        if (strtolower(pathinfo($zipDb->nombre, PATHINFO_EXTENSION)) !== 'zip') {
+            $this->dispatch('toast', type: 'error', text: 'El archivo no es un ZIP.');
+            return;
+        }
+
+        $zipPath = Storage::disk('local')->path($zipDb->ruta);
+
+        if (!is_file($zipPath)) {
+            $this->dispatch('toast', type: 'error', text: 'El archivo físico no existe.');
+            return;
+        }
+
+        $zip = new \ZipArchive();
+        if ($zip->open($zipPath) !== true) {
+            $this->dispatch('toast', type: 'error', text: 'No se pudo abrir el ZIP.');
+            return;
+        }
+
+        // 2) Extraer a tmp
+        $tmpPath = storage_path('app/tmp/unzip_' . uniqid());
+        if (!is_dir($tmpPath)) {
+            mkdir($tmpPath, 0755, true);
+        }
+
+        $zip->extractTo($tmpPath);
+        $zip->close();
+
+        $baseFolderId = $zipDb->folder_id ?? 0;
+
+        // Mapa para convertir "ruta/carpeta" => folder_id
+        $folderMap = [];
+
+        /*
+    |--------------------------------------------------------------------------
+    | 3) Crear TODAS las carpetas (aunque estén vacías)
+    |--------------------------------------------------------------------------
+    */
+        $dirFinder = new Finder();
+        $dirFinder->directories()->in($tmpPath)->ignoreDotFiles(true);
+
+        foreach ($dirFinder as $dir) {
+            // ruta relativa dentro del zip extraído
+            $relative = str_replace('\\', '/', $dir->getRelativePathname());
+            if ($relative === '') continue;
+
+            $parts = explode('/', $relative);
+            $parentId = $baseFolderId;
+            $pathKey = '';
+
+            foreach ($parts as $folderName) {
+                if ($folderName === '') continue;
+
+                $pathKey .= '/' . $folderName;
+
+                if (!isset($folderMap[$pathKey])) {
+                    $folder = Folder::firstOrCreate([
+                        'nombre'     => $folderName,
+                        'parent_id'  => $parentId,
+                        'usuario_id' => Auth::id(),
+                    ], [
+                        'tipo' => $parentId === 0 ? 1 : 2,
+                    ]);
+
+                    Storage::disk('local')->makeDirectory("drive/{$folder->id}");
+                    $folderMap[$pathKey] = $folder->id;
+                }
+
+                $parentId = $folderMap[$pathKey];
+            }
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | 4) Procesar archivos (si existen)
+    |--------------------------------------------------------------------------
+    */
+        $fileFinder = new Finder();
+        $fileFinder->files()->in($tmpPath)->ignoreDotFiles(true);
+
+        $procesados = 0;
+
+        foreach ($fileFinder as $f) {
+            $relative = str_replace('\\', '/', $f->getRelativePathname());
+            $parts = explode('/', $relative);
+
+            $parentId = $baseFolderId;
+            $pathKey = '';
+
+            // resolver el folder_id destino según el path
+            for ($i = 0; $i < count($parts) - 1; $i++) {
+                $pathKey .= '/' . $parts[$i];
+                if (isset($folderMap[$pathKey])) {
+                    $parentId = $folderMap[$pathKey];
+                }
+            }
+
+            $fileName = end($parts);
+
+            // evitar duplicados
+            if (File::where('folder_id', $parentId)->where('nombre', $fileName)->exists()) {
+                $base = pathinfo($fileName, PATHINFO_FILENAME);
+                $ext  = pathinfo($fileName, PATHINFO_EXTENSION);
+                $n = 1;
+
+                do {
+                    $fileName = $ext ? "{$base}_{$n}.{$ext}" : "{$base}_{$n}";
+                    $n++;
+                } while (File::where('folder_id', $parentId)->where('nombre', $fileName)->exists());
+            }
+
+            $storedPath = Storage::disk('local')->putFileAs(
+                "drive/{$parentId}",
+                new HttpFile($f->getRealPath()),
+                $fileName
+            );
+
+            File::create([
+                'folder_id'  => $parentId,
+                'usuario_id' => Auth::id(),
+                'nombre'     => $fileName,
+                'ruta'       => $storedPath,
+                'tipo'       => pathinfo($fileName, PATHINFO_EXTENSION) ?: ($f->getExtension() ?: 'file'),
+                'tamaño'     => $f->getSize(),
+            ]);
+
+            $procesados++;
+        }
+
+        // 5) Limpiar tmp
+        \Illuminate\Support\Facades\File::deleteDirectory($tmpPath);
+
+        // 6) Refrescar
+        $this->cache = [];
+        unset($this->cache[$this->currentFolderId]);
+        $this->dispatch('$refresh');
+
+        $this->dispatch(
+            'toast',
+            type: 'success',
+            text: "ZIP descomprimido. Carpetas creadas y {$procesados} archivo(s) importado(s)."
+        );
+    }
+
     public function scopePorVencer($query)
     {
         return $query->where('tiene_caducidad', 1)
@@ -379,7 +636,63 @@ class FolderManager extends Component
     }
 
 
+    /* METODOS PARA RENOMBRAR ARCHIVOS */
+    public function iniciarRenombrarArchivo(int $fileId): void
+    {
+        $file = \App\Models\File::findOrFail($fileId);
 
+        $this->renamingFileId = $file->id;
+        $this->nombreEditadoFile = pathinfo($file->nombre, PATHINFO_FILENAME);
+    }
+
+    public function cancelarRenombrarArchivo(): void
+    {
+        $this->renamingFileId = null;
+        $this->nombreEditadoFile = '';
+    }
+
+    public function guardarRenombrarArchivo(): void
+    {
+        if (!$this->renamingFileId) return;
+
+        $file = File::findOrFail($this->renamingFileId);
+
+        $base = trim($this->nombreEditadoFile);
+
+        if ($base === '') {
+            $this->addError('nombreEditadoFile', 'El nombre no puede estar vacío.');
+            return;
+        }
+
+        // extensión original
+        $ext = strtolower(pathinfo($file->nombre, PATHINFO_EXTENSION));
+        $nuevoNombre = $base . ($ext ? '.' . $ext : '');
+
+        // ruta actual en storage (ajusta esto a tu campo real)
+        $rutaActual = $file->ruta; // ejemplo: "drive/usuario123/xxx.pdf"
+
+        $directorio = dirname($rutaActual);
+        $rutaNueva = $directorio . '/' . $nuevoNombre;
+
+        // Evitar colisiones
+        if (Storage::disk('public')->exists($rutaNueva)) {
+            $this->addError('nombreEditadoFile', 'Ya existe un archivo con ese nombre.');
+            return;
+        }
+
+        // Renombrar físicamente
+        Storage::disk('public')->move($rutaActual, $rutaNueva);
+
+        // Actualizar BD
+        $file->update([
+            'nombre' => $nuevoNombre,
+            'ruta'   => $rutaNueva,
+        ]);
+
+        $this->cancelarRenombrarArchivo();
+
+        $this->dispatch('toast', type: 'success', text: 'Archivo renombrado correctamente');
+    }
 
     public function render()
     {
@@ -413,7 +726,4 @@ class FolderManager extends Component
 
         return view('livewire.drive.folder-manager', $this->cache[$this->currentFolderId]);
     }
-
-
-
 }

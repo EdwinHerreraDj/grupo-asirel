@@ -52,10 +52,18 @@
 
                 <li class="menu-item">
                     <a href="{{ route('proveedores') }}" data-fc-type="collapse" class="menu-link">
-                        <span class="menu-icon"><i class="mgc_group_line"></i></span>
+                        <span class="menu-icon"><i class="mgc_truck_line"></i></span>
                         <span class="menu-text">Proveedores </span>
                     </a>
                 </li>
+
+                <li class="menu-item">
+                    <a href="{{ route('clientes') }}" data-fc-type="collapse" class="menu-link">
+                        <span class="menu-icon"><i class="mgc_user_follow_line"></i></span>
+                        <span class="menu-text">Clientes </span>
+                    </a>
+                </li>
+
 
 
                 <li class="menu-item">

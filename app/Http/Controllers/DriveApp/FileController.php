@@ -49,10 +49,10 @@ class FileController extends Controller
 
     /**
      * Agregar carpeta y su contenido recursivamente al ZIP
-    */
+     */
     private function agregarCarpetaAlZip(ZipArchive $zip, Folder $folder, $path = '')
     {
-    // Agregar carpeta al zip (vacía al principio)
+        // Agregar carpeta al zip (vacía al principio)
         $folderPath = $path . $folder->nombre . '/';
         $zip->addEmptyDir($folderPath);
 
@@ -71,5 +71,21 @@ class FileController extends Controller
             $this->agregarCarpetaAlZip($zip, $subfolder, $folderPath);
         }
     }
-}
+    
+    public function ver(File $file)
+    {
+        // Seguridad mínima (ajusta si hay roles)
+        if ($file->usuario_id !== auth()->id()) {
+            abort(403);
+        }
 
+        // Ruta real
+        $path = Storage::disk('local')->path($file->ruta);
+
+        if (!file_exists($path)) {
+            abort(404);
+        }
+
+        return response()->file($path);
+    }
+}

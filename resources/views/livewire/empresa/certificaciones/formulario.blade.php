@@ -2,7 +2,7 @@
 
     <form wire:submit.prevent="guardar" enctype="multipart/form-data" class="space-y-5">
 
-        <!-- FECHA INGRESO -->
+        <!-- FECHA CERTIFICACIÓN -->
         <div>
             <label class="block font-medium mb-1">Fecha certificación *</label>
             <input type="date" wire:model.defer="fecha_ingreso"
@@ -22,6 +22,21 @@
             @enderror
         </div>
 
+        <!-- CLIENTE -->
+        <div>
+            <label class="block font-medium mb-1">Cliente *</label>
+            <select wire:model.defer="cliente_id"
+                class="w-full rounded-xl border-gray-300 shadow-sm focus:border-primary focus:ring-primary">
+                <option value="">-- Seleccionar cliente --</option>
+                @foreach ($clientes as $cliente)
+                    <option value="{{ $cliente->id }}">{{ $cliente->nombre }}</option>
+                @endforeach
+            </select>
+            @error('cliente_id')
+                <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+            @enderror
+        </div>
+
         <!-- NÚMERO CERTIFICACIÓN -->
         <div>
             <label class="block font-medium mb-1">Número certificación</label>
@@ -29,17 +44,6 @@
                 class="w-full rounded-xl border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
                 placeholder="Ej: 001/2024">
             @error('numero_certificacion')
-                <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-            @enderror
-        </div>
-
-        <!-- TOTAL -->
-        <div>
-            <label class="block font-medium mb-1">Total (€) *</label>
-            <input type="number" step="0.01" wire:model.defer="total"
-                class="w-full rounded-xl border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
-                placeholder="Ej: 1500.00">
-            @error('total')
                 <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
             @enderror
         </div>
@@ -59,92 +63,41 @@
             @enderror
         </div>
 
-        <!-- TIPO DOCUMENTO -->
-        <div>
-            <label class="block font-medium mb-1">Tipo documento *</label>
-            <select wire:model.live="tipo_documento"
-                class="w-full rounded-xl border-gray-300 shadow-sm focus:border-primary focus:ring-primary">
-                <option value="">-- Seleccionar tipo --</option>
-                <option value="certificacion">Certificación</option>
-                <option value="factura">Factura</option>
-            </select>
-            @error('tipo_documento')
-                <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-            @enderror
-        </div>
-
-        <!-- FECHA VENCIMIENTO (si factura) -->
-        @if ($tipo_documento === 'factura')
+        <!-- ESTADOS (SOLO VISUAL) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-                <label class="block font-medium mb-1">Fecha vencimiento *</label>
-                <input type="date" wire:model.defer="fecha_vencimiento"
-                    class="w-full rounded-xl border-gray-300 shadow-sm focus:border-primary focus:ring-primary">
-                @error('fecha_vencimiento')
-                    <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-        @endif
-
-        <!-- ESPECIFICACIÓN -->
-        <div>
-            <label class="block font-medium mb-1">Especificación</label>
-            <textarea wire:model.defer="especificacion" rows="3"
-                class="w-full rounded-xl border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
-                placeholder="Especifica detalles adicionales..."></textarea>
-            @error('especificacion')
-                <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-            @enderror
-        </div>
-
-        <!-- ADJUNTO -->
-        <div x-data="{
-            progreso: 0,
-            cargando: false
-        }" x-on:livewire-upload-start="cargando = true"
-            x-on:livewire-upload-finish="cargando = false; progreso = 0" x-on:livewire-upload-error="cargando = false"
-            x-on:livewire-upload-progress="progreso = $event.detail.progress">
-
-            <label class="block font-medium mb-2">Documento adjunto (PDF/Imagen)</label>
-
-            <div class="flex items-center gap-3">
-                <!-- Botón de selección -->
-                <label
-                    class="px-4 py-2 rounded-xl bg-primary text-white font-medium cursor-pointer hover:bg-primary/90 transition">
-                    Seleccionar archivo
-                    <input type="file" wire:model="adjunto" class="hidden">
-                </label>
-
-                <!-- Nombre del archivo -->
-                <span class="text-sm flex items-center gap-2">
-                    @if ($adjunto)
-                        <span class="inline-flex items-center gap-2 text-green-600 font-medium">
-                            <i class="mgc_check_line text-lg"></i>
-                            <span class="truncate max-w-[200px]">
-                                {{ $adjunto->getClientOriginalName() }}
-                            </span>
-                        </span>
-                    @else
-                        <span class="text-gray-500 italic">Ningún archivo seleccionado</span>
-                    @endif
-                </span>
+                <label class="block font-medium mb-1">Estado certificación</label>
+                <input type="text" value="Enviada" disabled
+                    class="w-full rounded-xl border-gray-200 bg-gray-100 text-gray-700">
             </div>
 
-            <!-- Barra de progreso -->
-            <template x-if="cargando">
-                <div class="mt-3 w-full">
-                    <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div class="h-2 bg-primary rounded-full transition-all duration-200"
-                            :style="`width: ${progreso}%`"></div>
-                    </div>
-                    <p class="text-xs text-primary font-medium mt-1" x-text="progreso + '%'"></p>
-                </div>
-            </template>
-
-            @error('adjunto')
-                <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-            @enderror
+            <div>
+                <label class="block font-medium mb-1">Estado factura</label>
+                <input type="text" value="—" disabled
+                    class="w-full rounded-xl border-gray-200 bg-gray-100 text-gray-700">
+            </div>
         </div>
+        
+        <div class="grid grid-cols-2 gap-4">
 
+            <!-- IVA -->
+            <div>
+                <label class="block font-medium mb-1">IVA (%)</label>
+                <input type="number" step="0.01" wire:model.defer="iva_porcentaje"
+                    class="w-full rounded-xl border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
+                    placeholder="Iva"
+                    >
+            </div>
+
+            <!-- IRPF -->
+            <div>
+                <label class="block font-medium mb-1">IRPF / Retención (%)</label>
+                <input type="number" step="0.01" wire:model.defer="retencion_porcentaje"
+                    class="w-full rounded-xl border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
+                    placeholder="IRPF / Retención">
+            </div>
+
+        </div>
 
         <!-- BOTONES -->
         <div class="flex justify-end gap-2 pt-2">
@@ -155,7 +108,7 @@
 
             <button type="submit"
                 class="px-5 py-2.5 rounded-xl bg-primary text-white font-semibold shadow-md hover:bg-primary/90 transition">
-                Guardar
+                Crear certificación
             </button>
         </div>
 

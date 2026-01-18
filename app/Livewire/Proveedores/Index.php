@@ -39,6 +39,11 @@ class Index extends Component
         $this->reset(['search', 'filtroActivo', 'filtrar']);
     }
 
+    public function abrirModalCrear()
+    {
+        $this->modalCrear = true;
+    }
+
     public function abrirModalEditar($id)
     {
         $this->proveedorEditarId = $id;
@@ -52,6 +57,14 @@ class Index extends Component
         $this->confirmarEliminacion = true;
     }
 
+    public function cerrarModales()
+    {
+        $this->modalCrear = false;
+        $this->modalEditar = false;
+    }
+
+
+
     public function eliminar()
     {
         Proveedor::findOrFail($this->proveedorAEliminar)->delete();
@@ -62,16 +75,9 @@ class Index extends Component
         $this->dispatch('toast', type: 'success', text: 'Proveedor eliminado correctamente.');
     }
 
-    public function abrirModalCrear()
-    {
-        $this->modalCrear = true;
-    }
 
-    public function cerrarModales()
-    {
-        $this->modalCrear = false;
-        $this->modalEditar = false;
-    }
+
+
 
     public function render()
     {

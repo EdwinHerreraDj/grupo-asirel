@@ -8,13 +8,15 @@
 @endsection
 
 @section('content')
-    {{-- Renderizamos el componente Livewire --}}
-    @livewire('obras.facturas-recibidas', ['obra' => $obra])
+    <div class="grid grid-cols-12">
+        <div class="col-span-12 card p-10">
+            {{-- Renderizamos el componente Livewire --}}
+            @livewire('obras.facturas-recibidas', ['obra' => $obra])
+        </div>
+    </div>
 @endsection
 
 @section('script')
     @vite(['resources/js/pages/highlight.js'])
     @vite(['resources/js/visor-pdf.js'])
 @endsection
-
-
