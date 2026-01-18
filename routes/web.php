@@ -49,10 +49,6 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
     Route::get('/empresa/drive-app', [FoldersController::class, 'index'])->name('empresa.driveApp');
 
     // Rutas de Obras
-    Route::post('admin/obras', [ObraController::class, 'store'])->name('obras.store');
-    Route::delete('/obras/{id}', [ObraController::class, 'destroy'])->name('obras.destroy');
-    Route::get('/obras/{id}/edit', [ObraController::class, 'edit'])->name('obras.edit');
-    Route::put('/obras/{id}', [ObraController::class, 'update'])->name('obras.update');
     Route::get('/obra/{id}/informe-general', [ObraController::class, 'informeGeneral'])->name('obra.informe.general');
     Route::get('/obras/{id}/informe-general-excel', [ObraController::class, 'informeGeneralExcel'])->name('obras.informeGeneralExcel');
 
@@ -91,7 +87,7 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
     Route::post('/gastos-varios', [GastosVariosController::class, 'store'])->name('gastos-varios.store');
     Route::delete('/gastos-varios/{id}', [GastosVariosController::class, 'destroy'])->name('gastos-varios.destroy');
     Route::get('/gastos-varios/informe/{id}', [GastosVariosController::class, 'verInforme'])->name('gastos-varios.informe');
-    Route::get('/obra/{id}/gastosvarios/informes/excel', [GastosVariosController::class, 'gastosVariosExcel'])->name('obra.subcontratas.excel');
+    Route::get('/obra/{id}/gastosvarios/informes/excel', [GastosVariosController::class, 'gastosVariosExcel'])->name('obra.gastosvarios.excel');
     Route::get('/obra/{id}/gastosvarios/informes/pdf', [GastosVariosController::class, 'descargarPDF'])->name('obra.gastosvarios.pdf');
 
     // Rutas de Ventas Certificaciones
