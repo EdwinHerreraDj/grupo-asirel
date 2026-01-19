@@ -23,7 +23,6 @@ class Facturar extends Component
     public $series;
     public ?string $modalError = null;
 
-
     /* =========================
      * MOUNT
      * ========================= */
@@ -38,11 +37,17 @@ class Facturar extends Component
     }
 
     /* =========================
-     * CONFIRMAR (ABRE MODAL)
+     * CONFIRMAR FACTURACIÓN
      * ========================= */
 
     public function confirmarFacturacion(string $numero): void
     {
+        // TOTAL capítulos del número
+        $totalCapitulos = Certificacion::where('obra_id', $this->obraId)
+            ->where('numero_certificacion', $numero)
+            ->count();
+
+        // Capítulos aceptados y pendientes de facturar
         $certs = Certificacion::where('obra_id', $this->obraId)
             ->where('numero_certificacion', $numero)
             ->where('estado_certificacion', 'aceptada')
@@ -51,16 +56,27 @@ class Facturar extends Component
             ->get();
 
         if ($certs->isEmpty()) {
-            $this->dispatch('toast', type: 'error', text: 'No hay certificaciones válidas para facturar.');
+            $this->dispatch('toast', type: 'error', text: 'No hay capítulos aceptados para facturar.');
             return;
         }
 
+        if ($certs->count() !== $totalCapitulos) {
+            $this->dispatch(
+                'toast',
+                type: 'error',
+                text: 'No se puede facturar: hay capítulos de esta certificación que aún no están aceptados.'
+            );
+            return;
+        }
+
+        // Cliente único
         $clienteId = $certs->first()->cliente_id;
-        if ($certs->contains(fn($c) => $c->cliente_id !== $clienteId)) {
+        if ($certs->contains(fn ($c) => $c->cliente_id !== $clienteId)) {
             $this->dispatch('toast', type: 'error', text: 'Las certificaciones no pertenecen al mismo cliente.');
             return;
         }
 
+        // Resumen
         $this->resumenFactura = [
             'cliente'   => $certs->first()->cliente->nombre ?? '—',
             'capitulos' => $certs->count(),
@@ -69,7 +85,6 @@ class Facturar extends Component
             'ret'       => $certs->sum('retencion_importe'),
             'total'     => $certs->sum('total'),
         ];
-
 
         $this->serieSeleccionada = null;
         $this->modalError = null;
@@ -85,6 +100,7 @@ class Facturar extends Component
             'serieSeleccionada',
             'resumenFactura',
         ]);
+
         $this->modalError = null;
     }
 
@@ -102,7 +118,13 @@ class Facturar extends Component
         try {
             $facturaId = DB::transaction(function () {
 
-                // 🔒 Bloquear certificaciones
+                // 🔒 TODOS los capítulos del número
+                $totalCapitulos = Certificacion::where('obra_id', $this->obraId)
+                    ->where('numero_certificacion', $this->numeroCertificacionSeleccionada)
+                    ->lockForUpdate()
+                    ->count();
+
+                // 🔒 Solo aceptados
                 $certs = Certificacion::where('obra_id', $this->obraId)
                     ->where('numero_certificacion', $this->numeroCertificacionSeleccionada)
                     ->where('estado_certificacion', 'aceptada')
@@ -111,41 +133,35 @@ class Facturar extends Component
                     ->lockForUpdate()
                     ->get();
 
-                if ($certs->isEmpty()) {
+                if ($certs->isEmpty() || $certs->count() !== $totalCapitulos) {
                     throw ValidationException::withMessages([
-                        'certificacion' => 'No hay certificaciones válidas para facturar.',
+                        'certificacion' => 'Existen capítulos no aceptados. No se puede facturar.',
                     ]);
                 }
 
-                // 🔒 Cliente único
+                // Cliente único
                 $clienteId = $certs->first()->cliente_id;
-                if ($certs->contains(fn($c) => $c->cliente_id !== $clienteId)) {
+                if ($certs->contains(fn ($c) => $c->cliente_id !== $clienteId)) {
                     throw ValidationException::withMessages([
                         'cliente' => 'Las certificaciones no pertenecen al mismo cliente.',
                     ]);
                 }
 
-                // 🔒 Consumir contador de serie
+                // 🔒 Serie
                 $serie = FacturaSerie::where('serie', $this->serieSeleccionada)
                     ->lockForUpdate()
-                    ->first();
-
-                if (!$serie) {
-                    throw ValidationException::withMessages([
-                        'serie' => 'La serie seleccionada no es válida.',
-                    ]);
-                }
+                    ->firstOrFail();
 
                 $numeroFactura = $serie->ultimo_numero + 1;
                 $serie->update(['ultimo_numero' => $numeroFactura]);
 
-                // 🔢 Totales
+                // Totales
                 $baseTotal = $certs->sum('base_imponible');
                 $ivaTotal  = $certs->sum('iva_importe');
                 $retTotal  = $certs->sum('retencion_importe');
                 $total     = $certs->sum('total');
 
-                // 🧾 Crear factura (YA NUMERADA)
+                // Crear factura
                 $factura = FacturaVenta::create([
                     'serie'          => $serie->serie,
                     'numero_factura' => $numeroFactura,
@@ -157,7 +173,7 @@ class Facturar extends Component
                     'origen'               => 'certificacion',
                     'codigo_certificacion' => $this->numeroCertificacionSeleccionada,
                     'cliente_id'           => $clienteId,
-                    'obra_id'              => $this->obraId,    
+                    'obra_id'              => $this->obraId,
 
                     'base_imponible'    => $baseTotal,
                     'iva_importe'       => $ivaTotal,
@@ -165,13 +181,13 @@ class Facturar extends Component
                     'total'             => $total,
                 ]);
 
-                // 📄 Líneas (1 × concepto cerrado)
+                // Líneas
                 foreach ($certs as $cert) {
                     FacturaVentaDetalle::create([
                         'factura_venta_id' => $factura->id,
                         'certificacion_id' => $cert->id,
 
-                        'concepto'        => 'Certificación ' . $cert->numero_certificacion
+                        'concepto' => 'Certificación ' . $cert->numero_certificacion
                             . ' – ' . ($cert->oficio->nombre ?? 'Capítulo'),
 
                         'cantidad'        => 1,
@@ -181,14 +197,18 @@ class Facturar extends Component
                     ]);
                 }
 
-                // 🔗 Marcar certificaciones
-                Certificacion::where('numero_certificacion', $this->numeroCertificacionSeleccionada)
+                // 🔗 Marcar SOLO los aceptados
+                Certificacion::where('obra_id', $this->obraId)
+                    ->where('numero_certificacion', $this->numeroCertificacionSeleccionada)
+                    ->where('estado_certificacion', 'aceptada')
+                    ->where('estado_factura', 'pendiente')
                     ->update(['estado_factura' => 'facturada']);
 
                 return $factura->id;
             });
 
             return redirect()->route('empresa.facturas-ventas.detalle', $facturaId);
+
         } catch (\Throwable $e) {
 
             report($e);

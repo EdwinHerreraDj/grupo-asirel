@@ -369,7 +369,7 @@
                            rounded-xl bg-gray-100 hover:bg-gray-200
                            text-gray-800 font-medium">
                         <i class="mgc_eye_2_line text-lg"></i>
-                        Ver detalle
+                        Agregar detalle
                     </button>
 
 

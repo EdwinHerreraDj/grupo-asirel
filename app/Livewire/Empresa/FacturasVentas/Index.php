@@ -40,6 +40,11 @@ class Index extends Component
     public ?string $tmpFechaDesde = null;
     public ?string $tmpFechaHasta = null;
 
+    /* Modal para las acciones del registro */
+    public bool $showAccionesModal = false;
+    public ?int $facturaAccionesId = null;
+
+
 
 
     public function aplicarFiltros(): void
@@ -100,6 +105,7 @@ class Index extends Component
 
         $this->facturaId = $id;
         $this->showFormulario = true;
+        $this->showAccionesModal = false;
     }
 
     #[On('cerrarModalForm')]
@@ -139,6 +145,21 @@ class Index extends Component
     }
 
     /* =======================
+        METODOS PARA EL MODAL DE LAS ACCIONES
+    ======================= */
+    public function abrirAcciones(int $id): void
+    {
+        $this->facturaAccionesId = $id;
+        $this->showAccionesModal = true;
+    }
+
+    public function cerrarAcciones(): void
+    {
+        $this->reset('showAccionesModal', 'facturaAccionesId');
+    }
+
+
+    /* =======================
         LISTADO
     ======================= */
     public function render()
@@ -155,7 +176,6 @@ class Index extends Component
 
             $query->where(function ($q) use ($search) {
 
-                // Caso FV-1, FV-000123, etc.
                 if (str_contains($search, '-')) {
 
                     [$serie, $numero] = explode('-', $search, 2);
@@ -163,32 +183,29 @@ class Index extends Component
                     $q->where('serie', $serie)
                         ->where('numero_factura', ltrim($numero, '0'));
                 } else {
-                    // Solo número o solo serie
                     $q->where('numero_factura', 'like', "%{$search}%")
                         ->orWhere('serie', 'like', "%{$search}%");
                 }
             });
         }
 
-
         if ($this->codigo) {
             $query->where('codigo_certificacion', 'like', "%{$this->codigo}%");
         }
 
-        // 🔹 FECHA DESDE
         if ($this->fechaDesde) {
             $query->whereDate('fecha_emision', '>=', $this->fechaDesde);
         }
 
-        // 🔹 FECHA HASTA
         if ($this->fechaHasta) {
             $query->whereDate('fecha_emision', '<=', $this->fechaHasta);
         }
 
         return view('livewire.empresa.facturas-ventas.index', [
-            'facturas' => $query
-                ->orderByDesc('fecha_emision')
-                ->paginate(10),
+            'facturas' => $query->orderByDesc('fecha_emision')->paginate(10),
+            'facturaAcciones' => $this->facturaAccionesId
+                ? FacturaVenta::find($this->facturaAccionesId)
+                : null,
         ]);
     }
 }

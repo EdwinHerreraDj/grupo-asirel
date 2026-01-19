@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\DB;
 use App\Models\FacturaVentaDetalle;
 use App\Models\FacturaSerie;
 use App\Models\FacturaVentaPago;
+use App\Models\Empresa;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Storage;
 
 
 class Detalle extends Component
@@ -232,10 +235,10 @@ class Detalle extends Component
 
         DB::transaction(function () {
 
-            // 1️⃣ Recalcular totales finales (por seguridad)
+            // 1️⃣ Recalcular totales
             $this->recalcularTotales();
 
-            // 2️⃣ Obtener serie
+            // 2️⃣ Bloquear serie
             $serie = FacturaSerie::where('serie', $this->factura->serie)
                 ->lockForUpdate()
                 ->firstOrFail();
@@ -247,7 +250,7 @@ class Detalle extends Component
                 'ultimo_numero' => $numero,
             ]);
 
-            // 4️⃣ Emitir factura
+            // 4️⃣ Marcar como emitida (aún sin PDF)
             $this->factura->update([
                 'numero_factura' => $numero,
                 'estado'         => 'emitida',
@@ -255,14 +258,47 @@ class Detalle extends Component
             ]);
         });
 
-        // Refrescar estado
+        // 🔁 Refrescar modelo ya emitido
         $this->factura->refresh();
-        $this->editable = false;
 
+        // 5️⃣ Generar PDF (FUERA de la transacción)
+        $this->generarPdfFactura();
+
+        // 6️⃣ Bloquear edición
+        $this->editable = false;
         $this->showEmitirModal = false;
 
         $this->dispatch('toast', type: 'success', text: 'Factura emitida correctamente');
     }
+
+    protected function generarPdfFactura(): void
+    {
+        $this->factura->load(['cliente', 'detalles']);
+
+        $pdf = Pdf::loadView('pdf.factura-venta', [
+            'factura' => $this->factura,
+            'empresa' => Empresa::first(),
+        ])
+            ->setPaper('A4')
+            ->setOptions([
+                'defaultFont' => 'DejaVu Sans',
+                'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled' => true,
+            ]);
+
+        $nombre = sprintf(
+            'facturas/%s-%s.pdf',
+            $this->factura->serie,
+            str_pad($this->factura->numero_factura, 6, '0', STR_PAD_LEFT)
+        );
+
+        Storage::disk('public')->put($nombre, $pdf->output());
+
+        $this->factura->update([
+            'pdf_url' => $nombre,
+        ]);
+    }
+
 
     /* Gestion de cobros de la factura */
     public function abrirModalPago()

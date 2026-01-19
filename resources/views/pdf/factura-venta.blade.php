@@ -65,6 +65,7 @@
 </head>
 
 <body>
+
     {{-- HEADER --}}
     <table class="header-table" style="margin-bottom: 20px;">
         <tr>

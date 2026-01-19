@@ -102,126 +102,229 @@
 
 
 
-
+            {{-- Modal de caducidades --}}
             @if ($showCaducidades)
-                <div class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center px-4">
+                <div class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center px-4 py-8">
                     <div
-                        class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-5xl
-                             max-h-[90vh] overflow-hidden flex flex-col">
-
+                        class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-6xl
+                   max-h-[90vh] overflow-hidden flex flex-col border border-gray-200 dark:border-gray-800">
 
                         {{-- Header --}}
-                        <div class="flex justify-between items-center mb-4">
-                            <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">
-                                Documentos con caducidad
-                            </h2>
+                        <div
+                            class="px-6 py-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="h-10 w-10 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                                    <i class="mgc_calendar_line text-xl text-gray-700 dark:text-gray-200"></i>
+                                </div>
 
-                            <button wire:click="cerrarCaducidades">
-                                <i class="mgc_close_line text-xl"></i>
+                                <div>
+                                    <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                                        Documentos con caducidad
+                                    </h2>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                                        Control rápido de vencimientos y próximos a caducar
+                                    </p>
+                                </div>
+                            </div>
+
+                            <button wire:click="cerrarCaducidades"
+                                class="h-9 w-9 rounded-xl border border-gray-200 dark:border-gray-700
+                           hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-center">
+                                <i class="mgc_close_line text-xl text-gray-700 dark:text-gray-200"></i>
                             </button>
                         </div>
 
-                        {{-- Filtro --}}
-                        <div class="mb-4">
-                            <select wire:model.live="filtroCaducidad"
-                                class="rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
-                                <option value="all">Todos</option>
-                                <option value="expired">Vencidos</option>
-                                <option value="2weeks">Vencen en 2 semanas</option>
-                                <option value="2months">Vencen en 2 meses</option>
-                                <option value="4months">Vencen en 4 meses</option>
-                                <option value="6months">Vencen en 6 meses</option>
-                            </select>
+                        {{-- Toolbar --}}
+                        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-800">
+                            <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-sm font-medium text-gray-700 dark:text-gray-200">
+                                        Filtro:
+                                    </span>
+
+                                    <select wire:model.live="filtroCaducidad"
+                                        class="rounded-xl border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100
+                                   text-sm px-3 py-2 focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-700">
+                                        <option value="all">Todos</option>
+                                        <option value="expired">Vencidos</option>
+                                        <option value="2weeks">Vencen en 2 semanas</option>
+                                        <option value="2months">Vencen en 2 meses</option>
+                                        <option value="4months">Vencen en 4 meses</option>
+                                        <option value="6months">Vencen en 6 meses</option>
+                                    </select>
+                                </div>
+
+                                {{-- Leyenda --}}
+                                <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                                    <span class="inline-flex items-center gap-1">
+                                        <span class="h-2 w-2 rounded-full bg-red-500"></span> Vencido
+                                    </span>
+                                    <span class="inline-flex items-center gap-1">
+                                        <span class="h-2 w-2 rounded-full bg-yellow-500"></span> Próximo
+                                    </span>
+                                    <span class="inline-flex items-center gap-1">
+                                        <span class="h-2 w-2 rounded-full bg-green-500"></span> En regla
+                                    </span>
+                                </div>
+                            </div>
                         </div>
 
                         {{-- Tabla --}}
-                        <div class="overflow-x-auto overflow-y-auto">
-                            <table class="w-full text-sm">
-                                <thead class="text-left text-gray-500 dark:text-gray-400 border-b">
-                                    <tr>
-                                        <th class="py-2">Documento</th>
-                                        <th class="py-2">Tipo</th>
-                                        <th class="py-2">Ruta</th>
-                                        <th class="py-2">Fecha caducidad</th>
-                                        <th class="py-2">Estado</th>
-                                        <th class="py-2 text-center">Acciones</th>
-                                    </tr>
-                                </thead>
-
-                                <tbody>
-                                    @forelse ($this->documentosCaducidad as $doc)
-                                        @php
-                                            $fecha = \Carbon\Carbon::parse($doc->fecha_caducidad);
-                                            $dias = now()->diffInDays($fecha, false);
-                                        @endphp
-
-                                        <tr class="border-t border-gray-200 dark:border-gray-700">
-                                            {{-- Documento --}}
-                                            <td class="py-2 font-medium text-gray-800 dark:text-gray-100">
-                                                {{ $doc->nombre }}
-                                            </td>
-
-                                            {{-- Tipo --}}
-                                            <td class="uppercase text-xs text-gray-600 dark:text-gray-300">
-                                                {{ $doc->tipo }}
-                                            </td>
-
-                                            {{-- Ruta --}}
-                                            <td class="text-xs text-gray-600 dark:text-gray-300">
-                                                {{ $this->rutaDeCarpeta($doc->folder_id) }}
-                                            </td>
-
-                                            {{-- Fecha --}}
-                                            <td class="text-sm">
-                                                {{ $fecha->format('d/m/Y') }}
-                                            </td>
-
-                                            {{-- Estado --}}
-                                            <td
-                                                class="font-semibold
-                                    @if ($fecha->isPast()) text-red-600
-                                    @elseif ($dias <= 14) text-yellow-600
-                                    @else text-green-600 @endif
-                                ">
-                                                @if ($fecha->isPast())
-                                                    Vencido
-                                                @elseif ($dias <= 14)
-                                                    Próximo
-                                                @else
-                                                    En regla
-                                                @endif
-                                            </td>
-
-                                            {{-- Acciones --}}
-                                            <td class="flex items-center justify-center gap-3 py-2">
-                                                @if (in_array($doc->tipo, ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp']))
-                                                    <button type="button"
-                                                        class="open-pdf-modal text-blue-600 hover:text-blue-800"
-                                                        data-pdf="{{ route('drive.ver', $doc->id) }}" title="Ver">
-                                                        <i class="mgc_eye_2_line text-lg"></i>
-                                                    </button>
-                                                @endif
-
-                                                <a href="{{ route('files.descargar', $doc->id) }}"
-                                                    class="text-gray-600 hover:text-gray-900" title="Descargar">
-                                                    <i class="mgc_download_2_line text-lg"></i>
-                                                </a>
-                                            </td>
+                        <div class="flex-1 overflow-hidden">
+                            <div class="overflow-x-auto overflow-y-auto h-full">
+                                <table class="w-full text-sm">
+                                    <thead
+                                        class="sticky top-0 z-10 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                                        <tr
+                                            class="text-left text-xs uppercase tracking-wide text-gray-500 dark:text-gray-300">
+                                            <th class="px-6 py-3">Documento</th>
+                                            <th class="px-6 py-3">Tipo</th>
+                                            <th class="px-6 py-3">Ruta</th>
+                                            <th class="px-6 py-3">Caducidad</th>
+                                            <th class="px-6 py-3">Estado</th>
+                                            <th class="px-6 py-3 text-center">Acciones</th>
                                         </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="6" class="py-6 text-center text-gray-500">
-                                                No hay documentos para este filtro
-                                            </td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
+                                    </thead>
+
+                                    <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
+                                        @forelse ($this->documentosCaducidad as $doc)
+                                            @php
+                                                $fecha = \Carbon\Carbon::parse($doc->fecha_caducidad);
+                                                $dias = now()->diffInDays($fecha, false);
+
+                                                $estadoTexto = $fecha->isPast()
+                                                    ? 'Vencido'
+                                                    : ($dias <= 14
+                                                        ? 'Próximo'
+                                                        : 'En regla');
+
+                                                $estadoClasses = $fecha->isPast()
+                                                    ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                                                    : ($dias <= 14
+                                                        ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
+                                                        : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300');
+                                            @endphp
+
+                                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/60 transition">
+                                                {{-- Documento --}}
+                                                <td class="px-6 py-4">
+                                                    <div class="flex items-center gap-3">
+                                                        <div
+                                                            class="h-9 w-9 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                                                            <i
+                                                                class="mgc_file_line text-lg text-gray-700 dark:text-gray-200"></i>
+                                                        </div>
+
+                                                        <div class="min-w-0">
+                                                            <p
+                                                                class="font-semibold text-gray-900 dark:text-gray-100 truncate">
+                                                                {{ $doc->nombre }}
+                                                            </p>
+                                                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                                                ID: {{ $doc->id }}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+
+                                                {{-- Tipo --}}
+                                                <td class="px-6 py-4">
+                                                    <span
+                                                        class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold
+                                            bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                                                        {{ strtoupper($doc->tipo) }}
+                                                    </span>
+                                                </td>
+
+                                                {{-- Ruta --}}
+                                                <td class="px-6 py-4">
+                                                    <p
+                                                        class="text-xs text-gray-600 dark:text-gray-300 truncate max-w-[280px]">
+                                                        {{ $this->rutaDeCarpeta($doc->folder_id) }}
+                                                    </p>
+                                                </td>
+
+                                                {{-- Fecha --}}
+                                                <td class="px-6 py-4">
+                                                    <p class="font-medium text-gray-900 dark:text-gray-100">
+                                                        {{ $fecha->format('d/m/Y') }}
+                                                    </p>
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                                                        @if ($fecha->isPast())
+                                                            Hace {{ abs($dias) }} días
+                                                        @else
+                                                            En {{ $dias }} días
+                                                        @endif
+                                                    </p>
+                                                </td>
+
+                                                {{-- Estado --}}
+                                                <td class="px-6 py-4">
+                                                    <span
+                                                        class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold {{ $estadoClasses }}">
+                                                        {{ $estadoTexto }}
+                                                    </span>
+                                                </td>
+
+                                                {{-- Acciones --}}
+                                                <td class="px-6 py-4">
+                                                    <div class="flex items-center justify-center gap-2">
+                                                        @if (in_array($doc->tipo, ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp']))
+                                                            <button type="button"
+                                                                class="open-pdf-modal h-9 w-9 rounded-xl border border-gray-200 dark:border-gray-700
+                                                           hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-center"
+                                                                data-pdf="{{ route('drive.ver', $doc->id) }}"
+                                                                title="Ver">
+                                                                <i
+                                                                    class="mgc_eye_2_line text-lg text-gray-700 dark:text-gray-200"></i>
+                                                            </button>
+                                                        @endif
+
+                                                        <a href="{{ route('files.descargar', $doc->id) }}"
+                                                            class="h-9 w-9 rounded-xl border border-gray-200 dark:border-gray-700
+                                                       hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-center"
+                                                            title="Descargar">
+                                                            <i
+                                                                class="mgc_download_2_line text-lg text-gray-700 dark:text-gray-200"></i>
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="6" class="px-6 py-10 text-center">
+                                                    <div
+                                                        class="flex flex-col items-center gap-2 text-gray-500 dark:text-gray-400">
+                                                        <i class="mgc_inbox_line text-3xl opacity-60"></i>
+                                                        <p class="font-medium">No hay documentos para este filtro</p>
+                                                        <p class="text-xs">Prueba otro rango de caducidad</p>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        {{-- Footer --}}
+                        <div
+                            class="px-6 py-4 border-t border-gray-200 dark:border-gray-800 flex items-center justify-between">
+                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                Mostrando {{ count($this->documentosCaducidad) }} resultado(s)
+                            </p>
+
+                            <button wire:click="cerrarCaducidades"
+                                class="px-4 py-2 rounded-xl bg-gray-900 text-white text-sm font-semibold hover:bg-gray-800">
+                                Cerrar
+                            </button>
                         </div>
 
                     </div>
                 </div>
             @endif
+
 
 
 
@@ -517,8 +620,8 @@
                     @endphp
 
                     <div class="group relative p-4 rounded-2xl border border-gray-200 bg-gradient-to-br from-white to-gray-50 
-                dark:from-gray-800 dark:to-gray-700 dark:border-gray-700 
-                shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300"
+                    dark:from-gray-800 dark:to-gray-700 dark:border-gray-700 
+                    shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300"
                         x-data="{ open: false }" :class="open ? 'z-[9999]' : 'z-0'">
 
                         {{-- Ícono dinámico --}}
