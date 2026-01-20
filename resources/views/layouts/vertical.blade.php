@@ -82,7 +82,31 @@
                 });
             }
         });
+
+        // Mantener sesión viva mientras la pestaña esté abierta
+        setInterval(() => {
+            fetch("{{ route('ping') }}", {
+                method: 'GET',
+                credentials: 'same-origin',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+        }, 5 * 60 * 1000); // cada 5 minutos
     </script>
+
+    <script>
+        document.addEventListener('livewire:load', () => {
+            Livewire.onError((status) => {
+                if (status === 419) {
+                    alert('Tu sesión ha expirado. Por favor, vuelve a iniciar sesión.');
+                    window.location.href = "{{ route('login') }}";
+                    return false;
+                }
+            });
+        });
+    </script>
+
 
 
 </body>

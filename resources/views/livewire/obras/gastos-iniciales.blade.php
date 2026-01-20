@@ -34,7 +34,8 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
             @foreach ($categorias as $cat)
-                <div class="border border-gray-200 bg-white rounded-lg p-4 shadow-sm">
+                <div wire:key="categoria-{{ $cat->id }}"
+                    class="border border-gray-200 bg-white rounded-lg p-4 shadow-sm">
 
                     <!-- Encabezado -->
                     <div class="flex justify-between items-start mb-3">
@@ -62,6 +63,7 @@
                         value="{{ old('gastos_iniciales.' . $cat->id, $gastosObra[$cat->id] ?? '') }}">
                 </div>
             @endforeach
+
 
         </div>
     @endif

@@ -9,8 +9,8 @@ use App\Models\ObraGastoCategoria;
 class GastosIniciales extends Component
 {
     public $obra;
-    public $categorias;        
-    public $gastosObra = [];   
+    public $categorias;
+    public $gastosObra = [];
 
     // Modales
     public $showModal = false;
@@ -35,8 +35,14 @@ class GastosIniciales extends Component
         $this->obra = $obra;
 
         if ($this->obra) {
-            // Categorías de esta obra
+
+            // Categorías de esta obra (orden numérico + nombre)
             $this->categorias = $this->obra->categoriasGasto()
+                ->orderByRaw("
+                CAST(
+                    SUBSTRING_INDEX(nombre, '-', 1) AS UNSIGNED
+                ) ASC
+            ")
                 ->orderBy('nombre')
                 ->get();
 
@@ -50,14 +56,23 @@ class GastosIniciales extends Component
         }
     }
 
+
     public function cargarCategorias()
     {
-        if (!$this->obra) return;
+        if (!$this->obra) {
+            return;
+        }
 
         $this->categorias = $this->obra->categoriasGasto()
+            ->orderByRaw("
+            CAST(
+                SUBSTRING_INDEX(nombre, '-', 1) AS UNSIGNED
+            ) ASC
+        ")
             ->orderBy('nombre')
             ->get();
     }
+
 
     /* -------------------------------------------------------
      * CREAR NUEVA CATEGORIA

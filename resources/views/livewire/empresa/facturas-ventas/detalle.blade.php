@@ -84,7 +84,7 @@
         </div>
     @endif
 
-    
+
     @if ($factura->origen === 'certificacion')
         <div class="mt-6 mb-6 rounded-2xl border border-gray-200 bg-gray-50 p-5">
 
@@ -297,7 +297,8 @@
     </div>
 
     @if ($showModal)
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div wire:ignore.self
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
 
             <div class="bg-white w-full max-w-2xl rounded-2xl shadow-xl border overflow-hidden">
 
@@ -311,7 +312,8 @@
                         {{ $modoEdicion ? 'Editar línea de factura' : 'Añadir línea a factura' }}
                     </h3>
 
-                    <button wire:click="cerrarModal" class="ml-auto text-gray-500 hover:text-red-600 text-2xl">
+                    <button wire:click="cerrarModal"
+                        class="ml-auto text-gray-500 hover:text-red-600 text-2xl leading-none">
                         &times;
                     </button>
                 </div>
@@ -319,6 +321,7 @@
                 {{-- CONTENIDO --}}
                 <div class="p-6 space-y-5">
 
+                    {{-- CONCEPTO --}}
                     <div>
                         <label class="block font-medium mb-1">Concepto *</label>
                         <input type="text" wire:model.defer="concepto"
@@ -329,6 +332,7 @@
                         @enderror
                     </div>
 
+                    {{-- UNIDAD --}}
                     <div>
                         <label class="block font-medium mb-1">Unidad de medida</label>
                         <input type="text" wire:model.defer="unidad"
@@ -336,30 +340,42 @@
                             placeholder="Ejemplo: unidad, hora, metro, kg...">
                     </div>
 
+                    {{-- CANTIDAD / PRECIO --}}
                     <div class="grid grid-cols-2 gap-4">
+
+                        {{-- CANTIDAD --}}
                         <div>
                             <label class="block font-medium mb-1">Cantidad *</label>
-                            <input type="number" step="0.01" wire:model.live="cantidad"
+                            <input type="text" inputmode="decimal" wire:model.lazy="cantidad"
                                 class="w-full rounded-xl border-gray-300 focus:ring-primary focus:border-primary">
                             @error('cantidad')
                                 <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                             @enderror
                         </div>
 
+                        {{-- PRECIO --}}
                         <div>
                             <label class="block font-medium mb-1">Precio unitario (€) *</label>
-                            <input type="number" step="0.01" wire:model.live="precio_unitario"
+                            <input type="text" inputmode="decimal" wire:model.lazy="precio_unitario"
                                 class="w-full rounded-xl border-gray-300 focus:ring-primary focus:border-primary">
                             @error('precio_unitario')
                                 <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                             @enderror
                         </div>
+
                     </div>
 
+                    {{-- IMPORTE --}}
                     <div class="text-right text-lg font-semibold border-t pt-3">
                         Importe:
                         <span class="text-primary">
-                            {{ number_format($cantidad * $precio_unitario, 2, ',', '.') }} €
+                            {{ number_format(
+                                ((float) str_replace(',', '.', $cantidad ?? 0)) * ((float) str_replace(',', '.', $precio_unitario ?? 0)),
+                                2,
+                                ',',
+                                '.',
+                            ) }}
+                            €
                         </span>
                     </div>
 
@@ -380,6 +396,9 @@
             </div>
         </div>
     @endif
+
+
+
 
     @if ($showDeleteModal)
         <x-modals.confirmar titulo="Eliminar línea"

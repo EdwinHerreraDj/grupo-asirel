@@ -9,6 +9,7 @@ use App\Models\FacturaVenta;
 use App\Models\FacturaVentaDetalle;
 use App\Models\FacturaSerie;
 use Illuminate\Validation\ValidationException;
+use App\Services\Facturas\FacturaPdfService;
 
 class Facturar extends Component
 {
@@ -71,7 +72,7 @@ class Facturar extends Component
 
         // Cliente único
         $clienteId = $certs->first()->cliente_id;
-        if ($certs->contains(fn ($c) => $c->cliente_id !== $clienteId)) {
+        if ($certs->contains(fn($c) => $c->cliente_id !== $clienteId)) {
             $this->dispatch('toast', type: 'error', text: 'Las certificaciones no pertenecen al mismo cliente.');
             return;
         }
@@ -141,7 +142,7 @@ class Facturar extends Component
 
                 // Cliente único
                 $clienteId = $certs->first()->cliente_id;
-                if ($certs->contains(fn ($c) => $c->cliente_id !== $clienteId)) {
+                if ($certs->contains(fn($c) => $c->cliente_id !== $clienteId)) {
                     throw ValidationException::withMessages([
                         'cliente' => 'Las certificaciones no pertenecen al mismo cliente.',
                     ]);
@@ -160,6 +161,20 @@ class Facturar extends Component
                 $ivaTotal  = $certs->sum('iva_importe');
                 $retTotal  = $certs->sum('retencion_importe');
                 $total     = $certs->sum('total');
+                $ivaPorcentaje = $certs->first()->iva_porcentaje ?? 0;
+                $retPorcentaje = $certs->first()->retencion_porcentaje ?? 0;
+
+                // Validación fiscal
+                if ($certs->pluck('iva_porcentaje')->unique()->count() > 1) {
+                    $this->modalError = 'Las certificaciones no tienen el mismo IVA.';
+                    return;
+                }
+
+                if ($certs->pluck('retencion_porcentaje')->unique()->count() > 1) {
+                    $this->modalError = 'Las certificaciones no tienen la misma retención.';
+                    return;
+                }
+
 
                 // Crear factura
                 $factura = FacturaVenta::create([
@@ -175,11 +190,17 @@ class Facturar extends Component
                     'cliente_id'           => $clienteId,
                     'obra_id'              => $this->obraId,
 
-                    'base_imponible'    => $baseTotal,
-                    'iva_importe'       => $ivaTotal,
-                    'retencion_importe' => $retTotal,
-                    'total'             => $total,
+                    'base_imponible'       => $baseTotal,
+
+                    'iva_porcentaje'       => $ivaPorcentaje,
+                    'iva_importe'          => $ivaTotal,
+
+                    'retencion_porcentaje' => $retPorcentaje,
+                    'retencion_importe'    => $retTotal,
+
+                    'total'                => $total,
                 ]);
+
 
                 // Líneas
                 foreach ($certs as $cert) {
@@ -207,8 +228,12 @@ class Facturar extends Component
                 return $factura->id;
             });
 
-            return redirect()->route('empresa.facturas-ventas.detalle', $facturaId);
+            $factura = FacturaVenta::findOrFail($facturaId);
 
+            // Generar PDF igual que en manual
+            app(FacturaPdfService::class)->generar($factura);
+
+            return redirect()->route('empresa.facturas-ventas.detalle', $facturaId);
         } catch (\Throwable $e) {
 
             report($e);

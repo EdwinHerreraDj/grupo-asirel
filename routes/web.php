@@ -97,12 +97,12 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
     Route::get('/ventas/informe/{id}', [VentaController::class, 'verInforme'])->name('ventas.informe');
     Route::get('/obra/{id}/ventas/informes/excel', [VentaController::class, 'ventasExcel'])->name('obra.ventas.excel');
     Route::get('/obra/{id}/ventas/informes/pdf', [VentaController::class, 'descargarPDF'])->name('obra.ventas.pdf');
-    Route::get('empresa/certificaciones/informe',[CertificacionController::class, 'informe'])->name('empresa.certificaciones.informe');
+    Route::get('empresa/certificaciones/informe', [CertificacionController::class, 'informe'])->name('empresa.certificaciones.informe');
 
 
     // Certificaciones Asirel
     Route::get('/obras/{id}/certificaciones', [CertificacionController::class, 'index'])->name('obras.certificaciones');
-    Route::get('/empresa/obras/{obra}/certificaciones/facturar',[CertificacionController::class, 'facturar'])->name('empresa.certificaciones.facturar');
+    Route::get('/empresa/obras/{obra}/certificaciones/facturar', [CertificacionController::class, 'facturar'])->name('empresa.certificaciones.facturar');
     Route::get('/empresa/certificaciones/{certificacion}', [CertificacionDetalleController::class, 'show'])->name('empresa.certificaciones.show');
 
 
@@ -153,6 +153,9 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
     // routes/web.php
 
     Route::get('/empresa/facturas-ventas/{factura}/pdf', [FacturasVentasController::class, 'pdf'])->name('empresa.facturas-ventas.pdf');
+
+    //Rutas de consevar la session activa
+    Route::get('/ping', function () { return response()->noContent();})->name('ping');
 
 
     // Rutas dinamicas - DEBE IR AL FINAL DE TODO

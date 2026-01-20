@@ -298,12 +298,12 @@
 
 
     @if ($showModal)
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div wire:ignore.self
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
 
             <div
                 class="bg-white w-full max-w-3xl rounded-2xl shadow-[0_15px_40px_rgba(0,0,0,0.2)]
                    border border-gray-200 overflow-hidden
-                   animate-[fadeIn_0.25s_ease-out,slideUp_0.3s_ease-out]
                    max-h-[92vh] flex flex-col">
 
                 <!-- CABECERA -->
@@ -318,13 +318,11 @@
                         {{ $modoEdicion ? 'Editar detalle de certificación' : 'Añadir detalle de certificación' }}
                     </h3>
 
-                    <!-- Botón cerrar -->
                     <button wire:click="cerrarModal"
                         class="ml-auto text-gray-500 hover:text-red-600 transition text-3xl leading-none">
                         &times;
                     </button>
                 </div>
-
 
                 <!-- CONTENIDO -->
                 <div class="p-6 overflow-y-auto flex-1 space-y-5">
@@ -355,8 +353,8 @@
                         <label class="block font-medium mb-1">
                             Cantidad <span class="text-red-600">*</span>
                         </label>
-                        <input type="number" step="0.01" wire:model.live="cantidad"
-                            class="w-full rounded-xl border-gray-300 shadow-sm focus:border-primary focus:ring-primary">
+                        <input type="number" step="0.01" wire:model.lazy="cantidad"
+                            class="w-full rounded-xl border-gray-300 focus:border-primary focus:ring-primary">
                         @error('cantidad')
                             <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                         @enderror
@@ -367,18 +365,19 @@
                         <label class="block font-medium mb-1">
                             Precio unitario (€) <span class="text-red-600">*</span>
                         </label>
-                        <input type="number" step="0.01" wire:model.live="precio_unitario"
-                            class="w-full rounded-xl border-gray-300 shadow-sm focus:border-primary focus:ring-primary">
+                        <input type="number" step="0.01" wire:model.lazy="precio_unitario"
+                            class="w-full rounded-xl border-gray-300 focus:border-primary focus:ring-primary">
                         @error('precio_unitario')
                             <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                         @enderror
                     </div>
 
-                    <!-- IMPORTE CALCULADO -->
+                    <!-- IMPORTE -->
                     <div class="text-right text-lg font-semibold text-gray-700 pt-2 border-t">
                         Importe:
                         <span class="text-primary">
-                            {{ number_format(((float) $cantidad) * ((float) $precio_unitario), 2, ',', '.') }} €
+                            {{ number_format(((float) ($cantidad ?? 0)) * ((float) ($precio_unitario ?? 0)), 2, ',', '.') }}
+                            €
                         </span>
                     </div>
 
@@ -402,6 +401,8 @@
             </div>
         </div>
     @endif
+
+
 
     @if ($showDeleteModal)
         <x-modals.confirmar titulo="Confirmar eliminación"
