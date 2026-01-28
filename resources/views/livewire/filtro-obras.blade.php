@@ -114,59 +114,24 @@
                         </div>
 
                         <!-- Botonera inferior -->
-                        <div class="flex flex-wrap items-center gap-2 p-3 border-t border-gray-200 bg-gray-50">
-
-                            {{-- Gastos --}}
-                            <a href="{{ route('obras.gastos', $obra->id) }}"
+                        <div class="flex items-center justify-between p-3 border-t border-gray-200 bg-gray-50">
+                            <button wire:click="$set('obraAccionesId', {{ $obra->id }})"
                                 class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium
-               bg-amber-100 text-amber-800 border border-amber-200
-               hover:bg-amber-200 transition">
-                                <i class="mgc_receive_money_line"></i>
-                                Gastos
-                            </a>
-
-                            {{-- Ventas --}}
-                            <a href="{{ route('obras.certificaciones', $obra->id) }}"
-                                class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium
-               bg-emerald-100 text-emerald-800 border border-emerald-200
-               hover:bg-emerald-200 transition">
-                                <i class="mgc_bank_line"></i>
-                                Ventas
-                            </a>
-
-                            {{-- Documentos --}}
-                            <a href="{{ route('obras.documentos', $obra->id) }}"
-                                class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium
-               bg-sky-100 text-sky-800 border border-sky-200
-               hover:bg-sky-200 transition">
-                                <i class="mgc_file_check_line"></i>
-                                Docs
-                            </a>
-
-                            {{-- Editar --}}
-                            <a href="{{ route('obras.edit', $obra->id) }}"
-                                class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium
-               bg-indigo-100 text-indigo-800 border border-indigo-200
-               hover:bg-indigo-200 transition">
-                                <i class="mgc_edit_2_line"></i>
-                                Editar
-                            </a>
-
-                            {{-- Eliminar --}}
-                            <form id="delete-form-{{ $obra->id }}"
-                                action="{{ route('obras.destroy', $obra->id) }}" method="POST" class="hidden">
-                                @csrf @method('DELETE')
-                            </form>
-
-                            <button type="button" onclick="confirmDelete({{ $obra->id }})"
-                                class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium
-               bg-red-100 text-red-700 border border-red-200
-               hover:bg-red-600 hover:text-white transition">
-                                <i class="mgc_close_circle_line"></i>
-                                Eliminar
+               text-gray-600
+               hover:text-gray-900 hover:bg-white
+               border border-transparent hover:border-gray-300
+               transition-all">
+                                <i class="mgc_more_2_line text-base"></i>
+                                Acciones
                             </button>
+                            <span class="text-xs text-gray-400">
+                                ID #{{ $obra->id }}
+                            </span>
+
 
                         </div>
+
+
 
 
 
@@ -225,6 +190,144 @@
                     </div>
                 </div>
             @endforeach
+        @endif
+
+        @if ($obraAccionesId)
+            @php
+                $obraSeleccionada = $obras->firstWhere('id', $obraAccionesId);
+            @endphp
+
+            <div class="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-center justify-center px-4"
+                x-data x-on:keydown.escape.window="$wire.cerrarAcciones()">
+
+                <div class="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-200 p-6">
+
+                    {{-- HEADER --}}
+                    <div class="flex items-start justify-between mb-5">
+                        <div>
+                            <h3 class="text-base font-semibold text-gray-900">
+                                Acciones de obra
+                            </h3>
+                            <p class="text-sm text-gray-500 mt-1">
+                                {{ $obraSeleccionada->nombre ?? '—' }}
+                            </p>
+                        </div>
+
+                        <button wire:click="cerrarAcciones" class="text-gray-400 hover:text-gray-600">
+                            <i class="mgc_close_line text-xl"></i>
+                        </button>
+                    </div>
+
+                    {{-- ACCIONES --}}
+                    <div class="grid grid-cols-1 gap-3">
+
+                        <a href="{{ route('obras.gastos', $obraAccionesId) }}"
+                            class="flex items-center gap-3 px-4 py-3 rounded-lg border hover:bg-amber-50">
+                            <i class="mgc_receive_money_line text-amber-600"></i>
+                            <span>Gastos</span>
+                        </a>
+
+                        <a href="{{ route('obras.presupuesto-venta', $obraAccionesId) }}"
+                            class="flex items-center gap-3 px-4 py-3 rounded-lg border hover:bg-violet-50">
+                            <i class="mgc_align_bottom_line text-violet-600"></i>
+                            <span>Presupuesto de venta</span>
+                        </a>
+
+                        <a href="{{ route('obras.certificaciones', $obraAccionesId) }}"
+                            class="flex items-center gap-3 px-4 py-3 rounded-lg border hover:bg-emerald-50">
+                            <i class="mgc_bank_line text-emerald-600"></i>
+                            <span>Ventas / Certificaciones</span>
+                        </a>
+
+                        <a href="{{ route('obras.documentos', $obraAccionesId) }}"
+                            class="flex items-center gap-3 px-4 py-3 rounded-lg border hover:bg-sky-50">
+                            <i class="mgc_file_check_line text-sky-600"></i>
+                            <span>Documentos</span>
+                        </a>
+
+                        <a href="{{ route('obras.edit', $obraAccionesId) }}"
+                            class="flex items-center gap-3 px-4 py-3 rounded-lg border hover:bg-indigo-50">
+                            <i class="mgc_edit_2_line text-indigo-600"></i>
+                            <span>Editar obra</span>
+                        </a>
+
+                        <button wire:click="abrirEliminar({{ $obraAccionesId }})"
+                            class="flex items-center gap-3 px-4 py-3 rounded-lg border
+           text-red-600 hover:bg-red-50">
+                            <i class="mgc_close_circle_line"></i>
+                            <span>Eliminar obra</span>
+                        </button>
+
+
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        @if ($obraAEliminarId)
+            <div
+                class="fixed inset-0 z-[10000]
+           bg-black/60 backdrop-blur-sm
+           flex items-center justify-center px-4">
+
+                <div
+                    class="w-full max-w-md
+               bg-white rounded-3xl shadow-2xl
+               border border-gray-200 overflow-hidden">
+
+                    {{-- HEADER --}}
+                    <div class="px-6 pt-6 text-center">
+                        <div
+                            class="mx-auto mb-4
+                       flex items-center justify-center
+                       w-14 h-14 rounded-full
+                       bg-red-100 text-red-600">
+                            <i class="mgc_warning_line text-3xl"></i>
+                        </div>
+
+                        <h3 class="text-lg font-semibold text-gray-900">
+                            Eliminar obra
+                        </h3>
+
+                        <p class="mt-2 text-sm text-gray-600 leading-relaxed">
+                            Esta acción eliminará la obra y
+                            <span class="font-semibold text-gray-800">
+                                toda su información asociada
+                            </span>.
+                            <br>
+                            <span class="text-red-600 font-medium">
+                                No se puede deshacer.
+                            </span>
+                        </p>
+                    </div>
+
+                    {{-- FOOTER --}}
+                    <div
+                        class="mt-6 px-6 py-4
+                   bg-gray-50 border-t border-gray-200
+                   flex items-center justify-end gap-3">
+
+                        <button wire:click="cancelarEliminar"
+                            class="px-4 py-2 rounded-xl text-sm font-medium
+                       border border-gray-300
+                       text-gray-700
+                       hover:bg-gray-100
+                       transition">
+                            Cancelar
+                        </button>
+
+                        <button wire:click="eliminarObra"
+                            class="px-4 py-2 rounded-xl text-sm font-semibold
+                       bg-red-600 text-white
+                       hover:bg-red-700
+                       active:scale-[0.97]
+                       transition-all shadow-sm">
+                            Eliminar definitivamente
+                        </button>
+                    </div>
+
+                </div>
+            </div>
         @endif
 
     </div>

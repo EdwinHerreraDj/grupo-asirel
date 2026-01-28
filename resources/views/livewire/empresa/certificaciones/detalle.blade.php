@@ -130,6 +130,43 @@
         </div>
     @endif
 
+    @if ($alertaPresupuestoActiva)
+        <div class="mb-6 p-4 rounded-xl bg-red-50 border border-red-300 text-red-800 mt-6">
+            <div class="flex items-start gap-3">
+                <div class="text-red-600 text-2xl">
+                    <i class="mgc_warning_line"></i>
+                </div>
+
+                <div class="text-sm">
+                    <p class="font-semibold mb-1">
+                        Atención: esta certificación supera el presupuesto de venta contratado.
+                    </p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                        <div>
+                            <p class="font-semibold">Importe contratado</p>
+                            <p>{{ number_format($alertaImporteContratado, 2, ',', '.') }} €</p>
+                        </div>
+
+                        <div>
+                            <p class="font-semibold">Importe certificado actual</p>
+                            <p>{{ number_format($alertaImporteCertificado, 2, ',', '.') }} €</p>
+                        </div>
+
+                        <div>
+                            <p class="font-semibold">Cantidad contratada</p>
+                            <p>{{ number_format($alertaCantidadContratada, 2, ',', '.') }}</p>
+                        </div>
+
+                        <div>
+                            <p class="font-semibold">Cantidad certificada</p>
+                            <p>{{ number_format($alertaCantidadCertificada, 2, ',', '.') }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
 
 
 
@@ -380,6 +417,42 @@
                             €
                         </span>
                     </div>
+
+                    @if ($excedePresupuesto)
+                        <div
+                            class="mt-3 p-4 rounded-xl bg-red-50 border border-red-300 text-red-800 text-sm space-y-3">
+                            <div>
+                                <strong>Atención:</strong><br>
+                                El importe certificado supera el valor contratado del presupuesto de venta.
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4 text-xs">
+                                <div>
+                                    <p class="font-semibold">Importe contratado</p>
+                                    <p>{{ number_format($importeContratado, 2, ',', '.') }} €</p>
+                                </div>
+
+                                <div>
+                                    <p class="font-semibold">Importe tras guardar</p>
+                                    <p>{{ number_format($importeCertificadoTrasGuardar, 2, ',', '.') }} €</p>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4 text-xs pt-2 border-t border-red-200">
+                                <div>
+                                    <p class="font-semibold">Cantidad contratada</p>
+                                    <p>{{ number_format($cantidadContratada, 2, ',', '.') }}</p>
+                                </div>
+
+                                <div>
+                                    <p class="font-semibold">Cantidad tras guardar</p>
+                                    <p>{{ number_format($cantidadCertificadaTrasGuardar, 2, ',', '.') }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+
 
                 </div>
 

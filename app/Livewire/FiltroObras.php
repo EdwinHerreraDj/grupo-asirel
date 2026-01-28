@@ -11,6 +11,44 @@ use App\Models\Certificacion;
 class FiltroObras extends Component
 {
     public $estado = '';
+    public ?int $obraAccionesId = null;
+    public ?int $obraAEliminarId = null;
+
+
+    public function cerrarAcciones()
+    {
+        $this->obraAccionesId = null;
+    }
+
+    public function abrirEliminar(int $obraId)
+    {
+        // Cierra el modal de acciones
+        $this->obraAccionesId = null;
+
+        // Abre modal de confirmación
+        $this->obraAEliminarId = $obraId;
+    }
+
+    public function cancelarEliminar()
+    {
+        $this->obraAEliminarId = null;
+    }
+
+    public function eliminarObra()
+    {
+        $obra = Obra::findOrFail($this->obraAEliminarId);
+
+        $obra->delete();
+
+        $this->obraAEliminarId = null;
+
+        $this->dispatch('notify', [
+            'type' => 'success',
+            'message' => 'Obra eliminada correctamente.'
+        ]);
+    }
+
+
 
     /*  public function render()
     {
@@ -112,5 +150,5 @@ class FiltroObras extends Component
         return view('livewire.filtro-obras', [
             'obras' => $obras,
         ]);
-    } 
+    }
 }

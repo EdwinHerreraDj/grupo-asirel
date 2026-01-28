@@ -28,6 +28,7 @@ use App\Http\Controllers\Admin\ClienteController;
 use App\Http\Controllers\CertificacionDetalleController;
 use App\Http\Controllers\FacturasVentasController;
 use App\Http\Controllers\FacturaSeriesController;
+use App\Http\Controllers\PresupuestoVentaController;
 
 require __DIR__ . '/auth.php';
 
@@ -153,6 +154,10 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
     // routes/web.php
 
     Route::get('/empresa/facturas-ventas/{factura}/pdf', [FacturasVentasController::class, 'pdf'])->name('empresa.facturas-ventas.pdf');
+    // Rutas de Prseupuestos de Venta
+    Route::get('/obras/{obra}/presupuesto-venta',[PresupuestoVentaController::class, 'index'])->name('obras.presupuesto-venta');
+
+
 
     //Rutas de consevar la session activa
     Route::get('/ping', function () { return response()->noContent();})->name('ping');

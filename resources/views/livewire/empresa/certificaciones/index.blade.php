@@ -6,7 +6,7 @@
     <div class="flex flex-wrap items-center gap-3 mb-7">
 
         {{-- REGRESAR --}}
-        <x-btns.regresar href="{{ route('obras.gastos', $obraId) }}">
+        <x-btns.regresar href="{{ route('unidad') }}">
             Regresar
         </x-btns.regresar>
 
@@ -104,12 +104,31 @@
         </div>
     </x-tablas.filters>
 
-    <div class="mt-6 flex justify-end">
+
+
+    <div class="mt-6 flex items-center justify-end gap-3">
+
+        {{-- Acción secundaria --}}
+        <a wire:click="abrirComparativa"
+            class="inline-flex items-center gap-2
+               px-4 py-2.5 rounded-xl
+               text-sm font-medium
+               bg-indigo-50 text-indigo-700
+               border border-indigo-200
+               hover:bg-indigo-100
+               active:scale-[0.98]
+               transition-all duration-150
+               focus:outline-none focus:ring-2 focus:ring-indigo-400/40 focus:ring-offset-2 cursor-pointer">
+            <i class="mgc_document_3_line text-base"></i>
+            Comparativa mensual
+        </a>
+
+        {{-- Acción principal --}}
         <a href="{{ route('empresa.certificaciones.facturar', ['obra' => $obraId]) }}"
             class="inline-flex items-center justify-center gap-2
-               px-5 py-3 rounded-2xl
+               px-6 py-3 rounded-2xl
                bg-emerald-600/10 text-emerald-700
-               border border-emerald-600/20
+               border border-emerald-600/30
                text-sm font-semibold
                hover:bg-emerald-600 hover:text-white hover:border-emerald-600
                active:scale-[0.98]
@@ -118,7 +137,26 @@
             <i class="mgc_counter_2_line text-lg"></i>
             Facturar certificaciones
         </a>
+
     </div>
+
+
+    @if ($mostrarComparativa)
+        <div class="mt-6 bg-white rounded-xl border border-gray-200 p-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-800">
+                    Comparativa mensual
+                </h3>
+
+                <button wire:click="cerrarComparativa" class="text-sm text-gray-500 hover:text-gray-700">
+                    Cerrar
+                </button>
+
+            </div>
+
+            @livewire('empresa.certificaciones.comparativa-mensual', ['obraId' => $obraId], key('comparativa-' . $obraId))
+        </div>
+    @endif
 
 
     {{-- Tabla --}}

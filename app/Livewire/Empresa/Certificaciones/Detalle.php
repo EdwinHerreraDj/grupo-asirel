@@ -42,6 +42,22 @@ class Detalle extends Component
     public float $iva_porcentaje = 21;
     public float $retencion_porcentaje = 0;
 
+    // Control de presupuesto de venta 
+    public bool $excedePresupuesto = false;
+    public float $cantidadContratada = 0;
+    public float $cantidadCertificadaTrasGuardar = 0;
+    public float $importeContratado = 0;
+    public float $importeCertificadoTrasGuardar = 0;
+
+    public bool $alertaPresupuestoActiva = false;
+    public float $alertaImporteContratado = 0;
+    public float $alertaImporteCertificado = 0;
+    public float $alertaCantidadContratada = 0;
+    public float $alertaCantidadCertificada = 0;
+
+
+
+
     protected $rules = [
         'concepto'        => 'required|string|max:255',
         'unidad'          => 'required|string|max:100',
@@ -105,12 +121,29 @@ class Detalle extends Component
 
     public function guardarDetalle()
     {
-        if (!$this->asegurarEditable()) return;
+        if (!$this->asegurarEditable()) {
+            return;
+        }
 
         $this->validate();
 
+        // Calcular importe de la línea
         $importe = $this->cantidad * $this->precio_unitario;
 
+        // Comprobar presupuesto ANTES de guardar
+        $this->comprobarPresupuesto();
+
+        if ($this->excedePresupuesto) {
+            $this->alertaPresupuestoActiva = true;
+
+            $this->alertaImporteContratado   = $this->importeContratado;
+            $this->alertaImporteCertificado  = $this->importeCertificadoTrasGuardar;
+            $this->alertaCantidadContratada  = $this->cantidadContratada;
+            $this->alertaCantidadCertificada = $this->cantidadCertificadaTrasGuardar;
+        }
+
+
+        // Guardar detalle
         if ($this->modoEdicion) {
             CertificacionDetalle::where('id', $this->detalleId)->update([
                 'concepto'        => $this->concepto,
@@ -130,20 +163,26 @@ class Detalle extends Component
             ]);
         }
 
-        app(CertificacionCalculator::class)
+        // Recalcular certificación
+        app(\App\Services\CertificacionCalculator::class)
             ->recalcular($this->certificacion->fresh());
 
+        // Refrescar estado
         $this->refrescarCertificacion();
         $this->cerrarModal();
 
+        // Mensaje final coherente
         $this->dispatch(
             'toast',
-            type: 'success',
-            text: $this->modoEdicion
-                ? 'Detalle actualizado correctamente.'
-                : 'Detalle añadido correctamente.'
+            type: $this->excedePresupuesto ? 'warning' : 'success',
+            text: $this->excedePresupuesto
+                ? 'Detalle guardado, pero el importe certificado supera el presupuesto contratado.'
+                : ($this->modoEdicion
+                    ? 'Detalle actualizado correctamente.'
+                    : 'Detalle añadido correctamente.')
         );
     }
+
 
     public function confirmarEliminarDetalle($detalleId)
     {
@@ -251,7 +290,7 @@ class Detalle extends Component
 
         $this->dispatch('toast', type: 'success', text: 'Fiscalidad actualizada para toda la certificación.');
     }
-    
+
     /* =========================
        FILTROS
     ========================= */
@@ -323,6 +362,12 @@ class Detalle extends Component
         $this->unidad = '';
         $this->cantidad = 1;
         $this->precio_unitario = 0;
+
+        $this->excedePresupuesto = false;
+        $this->cantidadContratada = 0;
+        $this->cantidadCertificadaTrasGuardar = 0;
+        $this->importeContratado = 0;
+        $this->importeCertificadoTrasGuardar = 0;
     }
 
     private function refrescarCertificacion()
@@ -333,6 +378,56 @@ class Detalle extends Component
             'detalles'
         ]);
     }
+
+    /* CONTROL DE PRESUPUESTO DE VENTA */
+    private function comprobarPresupuesto(): void
+    {
+        $obraId   = $this->certificacion->obra_id;
+        $oficioId = $this->certificacion->obra_gasto_categoria_id;
+
+        // Presupuesto contratado
+        $presupuesto = \App\Models\ObraPresupuestoVenta::where('obra_id', $obraId)
+            ->where('obra_gasto_categoria_id', $oficioId)
+            ->first();
+
+        $this->cantidadContratada = (float) ($presupuesto->cantidad ?? 0);
+        $precioContrato           = (float) ($presupuesto->precio_unitario ?? 0);
+        $this->importeContratado  = $this->cantidadContratada * $precioContrato;
+
+        // Certificado hasta ahora (sin la línea actual si se edita)
+        $certificadoActualCantidad = CertificacionDetalle::whereHas('certificacion', function ($q) use ($obraId, $oficioId) {
+            $q->where('obra_id', $obraId)
+                ->where('obra_gasto_categoria_id', $oficioId);
+        })
+            ->when(
+                $this->modoEdicion && $this->detalleId,
+                fn($q) => $q->where('id', '!=', $this->detalleId)
+            )
+            ->sum('cantidad');
+
+        // Importes
+        $this->cantidadCertificadaTrasGuardar = $certificadoActualCantidad + $this->cantidad;
+
+        $this->importeCertificadoTrasGuardar =
+            $this->cantidadCertificadaTrasGuardar * $this->precio_unitario;
+
+        // Control principal por IMPORTE
+        $this->excedePresupuesto = $this->importeCertificadoTrasGuardar > $this->importeContratado;
+    }
+
+
+
+    public function updatedCantidad(): void
+    {
+        $this->comprobarPresupuesto();
+    }
+
+    public function updatedPrecioUnitario(): void
+    {
+        $this->comprobarPresupuesto();
+    }
+
+
 
     public function render()
     {

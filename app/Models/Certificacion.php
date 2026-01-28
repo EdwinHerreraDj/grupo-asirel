@@ -24,7 +24,6 @@ class Certificacion extends Model
         'retencion_importe',
         'tipo_documento',
         'fecha_vencimiento',
-        'estado_certificacion',
         'estado_factura',
         'total',
         'adjunto_url',

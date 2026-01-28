@@ -78,6 +78,8 @@ class Index extends Component
     public array $capitulosSeleccionadosInforme = [];
     public float $totalInforme = 0;
     public ?string $urlInformePdf = null;
+    public bool $mostrarComparativa = false;
+
 
 
 
@@ -90,6 +92,8 @@ class Index extends Component
     {
         $this->obraId = $obraId;
     }
+
+
 
     public function abrirModal()
     {
@@ -176,14 +180,29 @@ class Index extends Component
         $this->modalAcciones = true;
     }
 
-
-
     public function cerrarAcciones(): void
     {
         $this->modalAcciones = false;
         $this->certificacionActiva = null;
         $this->numeroCertificacionActiva = null;
     }
+
+
+    /* =========================
+   COMPARATIVA MENSUAL
+========================= */
+
+    public function abrirComparativa(): void
+    {
+        $this->mostrarComparativa = true;
+    }
+
+    public function cerrarComparativa(): void
+    {
+        $this->mostrarComparativa = false;
+    }
+
+    /* Mostrar comparativa mensual  */
 
     /* Implementación para crear un nuevo capitulo */
     public function nuevoCapitulo(int $certificacionId): void
@@ -424,16 +443,19 @@ class Index extends Component
 
         // FECHAS (fecha_certificacion)
         if ($this->fechaDesde) {
-            $query->whereDate('fecha_certificacion', '>=', $this->fechaDesde);
+            $query->whereDate('fecha_ingreso', '>=', $this->fechaDesde);
         }
 
         if ($this->fechaHasta) {
-            $query->whereDate('fecha_certificacion', '<=', $this->fechaHasta);
+            $query->whereDate('fecha_ingreso', '<=', $this->fechaHasta);
         }
+
+
+
 
         return view('livewire.empresa.certificaciones.index', [
             'certificaciones' => $query
-                ->orderBy('fecha_certificacion', 'desc')
+                ->orderBy('fecha_ingreso', 'desc')
                 ->paginate(10),
 
             'oficios' => ObraGastoCategoria::where('obra_id', $this->obraId)
