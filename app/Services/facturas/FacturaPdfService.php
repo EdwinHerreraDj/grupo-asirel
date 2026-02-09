@@ -11,7 +11,7 @@ class FacturaPdfService
 {
     public function generar(FacturaVenta $factura): void
     {
-        // Cargar relaciones necesarias (manual + certificaciones)
+        // Cargar relaciones necesarias
         $factura->load([
             'cliente',
             'detalles',
@@ -28,9 +28,12 @@ class FacturaPdfService
                 'isRemoteEnabled' => true,
             ]);
 
+        // Serie saneada para nombre de archivo
+        $serieSafe = str_replace(['/', '\\'], '-', $factura->serie);
+
         $nombre = sprintf(
             'facturas/%s-%s.pdf',
-            $factura->serie,
+            $serieSafe,
             str_pad($factura->numero_factura, 6, '0', STR_PAD_LEFT)
         );
 

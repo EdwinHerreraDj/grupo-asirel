@@ -8,6 +8,9 @@ use App\Models\ObraGastoCategoria;
 use Livewire\WithFileUploads;
 use App\Models\Certificacion;
 use App\Models\Cliente;
+use App\Models\Obra;
+use App\Models\Empresa;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
 
 
@@ -371,13 +374,13 @@ class Index extends Component
             return;
         }
 
-        $obra = \App\Models\Obra::findOrFail($certs->first()->obra_id);
-        $empresa = \App\Models\Empresa::first();
-        $cliente = $certs->first()->cliente; // si por tu lógica siempre es el mismo cliente
+        $obra = Obra::findOrFail($certs->first()->obra_id);
+        $empresa = Empresa::first();
+        $cliente = $certs->first()->cliente;
         $fecha = now()->format('d/m/Y');
         $numero_certificacion = $this->numeroCertificacionInforme;
 
-        // Construir estructura EXACTA para tu Blade (arrays con descripcion/cantidad/precio/total)
+        // Construir estructura EXACTA para el Blade del PDF
         $capitulos = $certs->groupBy('obra_gasto_categoria_id')->map(function ($grupo) {
 
             $lineas = $grupo->flatMap->detalles->map(function ($d) {
@@ -400,16 +403,28 @@ class Index extends Component
 
         $total = $certs->sum('total');
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView(
+        $pdf = Pdf::loadView(
             'pdf.certificacion',
-            compact('obra', 'empresa', 'cliente', 'fecha', 'numero_certificacion', 'capitulos', 'total')
+            compact(
+                'obra',
+                'empresa',
+                'cliente',
+                'fecha',
+                'numero_certificacion',
+                'capitulos',
+                'total'
+            )
         )->setPaper('a4', 'portrait');
+
+        // Nombre de archivo saneado (IMPORTANTE para producción)
+        $filename = 'informe_certificacion_' . str_replace(['/', '\\'], '-', $numero_certificacion) . '.pdf';
 
         return response()->streamDownload(
             fn() => print($pdf->output()),
-            'informe_certificacion_' . $numero_certificacion . '.pdf'
+            $filename
         );
     }
+
 
 
 
