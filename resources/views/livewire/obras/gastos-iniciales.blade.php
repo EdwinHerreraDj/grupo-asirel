@@ -78,7 +78,7 @@
 
                 <!-- Importe presupuestado -->
                 <div class="p-3 bg-white rounded shadow-sm border text-center">
-                    <p class="text-xs text-gray-500 uppercase">Importe presupuestado</p>
+                    <p class="text-xs text-gray-500 uppercase">Total presupuesto de venta</p>
                     <p id="importe_presu" class="text-lg font-bold text-primary">
                         {{ number_format($obra->importe_presupuestado ?? old('importe_presupuestado', 0), 2, ',', '.') }}
                         €
@@ -87,7 +87,7 @@
 
                 <!-- Total gastos iniciales -->
                 <div class="p-3 bg-white rounded shadow-sm border text-center">
-                    <p class="text-xs text-gray-500 uppercase">Total gastos iniciales</p>
+                    <p class="text-xs text-gray-500 uppercase">Total coste teorico</p>
                     <p id="total_gastos" class="text-lg font-bold text-red-600">0.00 €</p>
                 </div>
 
