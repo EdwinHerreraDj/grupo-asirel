@@ -1,0 +1,19 @@
+// resources/js/react/Drive/components/FolderGrid.jsx
+import React from "react";
+import FolderItem from "./FolderItem";
+
+export default function FolderGrid({ folders, onFolderClick, onDelete, onRename }) {
+    return (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            {folders.map((folder) => (
+                <FolderItem
+                    key={folder.id}
+                    folder={folder}
+                    onClick={() => onFolderClick(folder.id)}
+                    onDelete={() => onDelete(folder.id)}
+                    onRename={(newName) => onRename(folder.id, newName)}
+                />
+            ))}
+        </div>
+    );
+}

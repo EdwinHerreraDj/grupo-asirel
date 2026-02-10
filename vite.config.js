@@ -77,6 +77,7 @@ export default defineConfig({
                 'resources/js/pages/obras-docs.js',
                 // Code Highlight Js
                 'resources/js/pages/highlight.js',
+                'resources/js/react/app.jsx',
             ],
             refresh: true
         }),

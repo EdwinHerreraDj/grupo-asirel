@@ -29,6 +29,9 @@ use App\Http\Controllers\CertificacionDetalleController;
 use App\Http\Controllers\FacturasVentasController;
 use App\Http\Controllers\FacturaSeriesController;
 use App\Http\Controllers\PresupuestoVentaController;
+use App\Http\Controllers\Api\Drive\FolderController;
+use App\Http\Controllers\Api\Drive\FileController as ApiFileController;
+use App\Models\File;
 
 require __DIR__ . '/auth.php';
 
@@ -155,16 +158,42 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
 
     Route::get('/empresa/facturas-ventas/{factura}/pdf', [FacturasVentasController::class, 'pdf'])->name('empresa.facturas-ventas.pdf');
     // Rutas de Prseupuestos de Venta
-    Route::get('/obras/{obra}/presupuesto-venta',[PresupuestoVentaController::class, 'index'])->name('obras.presupuesto-venta');
-
-
+    Route::get('/obras/{obra}/presupuesto-venta', [PresupuestoVentaController::class, 'index'])->name('obras.presupuesto-venta');
 
     //Rutas de consevar la session activa
-    Route::get('/ping', function () { return response()->noContent();})->name('ping');
+    Route::get('/ping', function () {
+        return response()->noContent();
+    })->name('ping');
+
+
+
 
 
     // Rutas dinamicas - DEBE IR AL FINAL DE TODO
     Route::get('{first}/{second}/{third}', [RoutingController::class, 'thirdLevel'])->name('third');
     Route::get('{first}/{second}', [RoutingController::class, 'secondLevel'])->name('second');
     Route::get('{any}', [RoutingController::class, 'root'])->name('any');
+});
+
+
+/* Drive React (API-style, session-based) */
+Route::middleware('auth')->prefix('api')->group(function () {
+
+    Route::prefix('folders')->group(function () {
+        Route::get('{id}/content', [FolderController::class, 'getContent']);
+        Route::post('/', [FolderController::class, 'store']);
+        Route::put('{id}', [FolderController::class, 'update']);
+        Route::delete('{id}', [FolderController::class, 'destroy']);
+        // Route::post('{id}/copy', [FolderController::class, 'copy']); ← ELIMINAR
+        Route::post('{id}/move', [FolderController::class, 'move']);
+    });
+
+    Route::prefix('files')->group(function () {
+        Route::post('/', [ApiFileController::class, 'store']);
+        Route::put('{id}', [ApiFileController::class, 'update']);
+        Route::delete('{id}', [ApiFileController::class, 'destroy']);
+        Route::get('{id}/download', [ApiFileController::class, 'download']);
+        // Route::post('{id}/copy', [ApiFileController::class, 'copy']); ← ELIMINAR
+        Route::post('{id}/move', [ApiFileController::class, 'move']);
+    });
 });

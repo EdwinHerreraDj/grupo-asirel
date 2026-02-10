@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Models\Folder;
 use App\Models\User;
+use Illuminate\Support\Facades\Storage;
 
 class File extends Model
 {
@@ -33,6 +34,7 @@ class File extends Model
 
     public function getUrlAttribute(): string
     {
-        return asset('storage/' . $this->ruta);
+        // Cambiar de asset() a Storage::url()
+        return Storage::disk('public')->url($this->ruta);
     }
 }

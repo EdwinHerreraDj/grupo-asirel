@@ -1,0 +1,28 @@
+// resources/js/react/Drive/components/FileGrid.jsx
+import React from "react";
+import FileItem from "./FileItem";
+
+export default function FileGrid({ 
+    files, 
+    onDelete, 
+    onDownload, 
+    onRename,
+    selectedFiles,
+    onSelectFile
+}) {
+    return (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            {files.map((file) => (
+                <FileItem
+                    key={file.id}
+                    file={file}
+                    onDelete={() => onDelete(file.id)}
+                    onDownload={() => onDownload(file.id)}
+                    onRename={(newName) => onRename(file.id, newName)}
+                    isSelected={selectedFiles.includes(file.id)}
+                    onSelect={() => onSelectFile(file.id)}
+                />
+            ))}
+        </div>
+    );
+}

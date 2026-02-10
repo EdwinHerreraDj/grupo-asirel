@@ -399,6 +399,14 @@
     "isEntry": true,
     "src": "resources/js/pages/tables-datatable.js"
   },
+  "resources/js/react/app.jsx": {
+    "file": "assets/app-4890d0c4.js",
+    "imports": [
+      "__commonjsHelpers-725317a4.js"
+    ],
+    "isEntry": true,
+    "src": "resources/js/react/app.jsx"
+  },
   "resources/js/table-users.js": {
     "file": "assets/table-users-012d170e.js",
     "imports": [
@@ -413,7 +421,7 @@
     "src": "resources/js/visor-pdf.js"
   },
   "resources/scss/app.scss": {
-    "file": "assets/app-cabf5c04.css",
+    "file": "assets/app-5bde7b11.css",
     "isEntry": true,
     "src": "resources/scss/app.scss"
   },

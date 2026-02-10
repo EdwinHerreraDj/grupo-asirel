@@ -6,8 +6,9 @@
         "build": "vite build"
     },
     "devDependencies": {
+        "@vitejs/plugin-react": "^5.1.4",
         "autoprefixer": "^10.4.14",
-        "axios": "^1.4.0",
+        "axios": "^1.13.5",
         "laravel-vite-plugin": "^0.7.5",
         "postcss": "^8.4.24",
         "sass": "^1.93.2",
@@ -25,6 +26,7 @@
         "aos": "^2.3.4",
         "apexcharts": "^3.41.0",
         "clipboard": "^2.0.11",
+        "clsx": "^2.1.1",
         "dropzone": "^5.9.0",
         "feather-icons": "^4.29.0",
         "flatpickr": "^4.6.13",
@@ -42,6 +44,8 @@
         "pristinejs": "^1.1.0",
         "quill": "^1.3.7",
         "rater-js": "^1.0.1",
+        "react": "^19.2.4",
+        "react-dom": "^19.2.4",
         "shepherd.js": "^11.0.1",
         "shufflejs": "^6.1.0",
         "simplebar": "^6.2.5",

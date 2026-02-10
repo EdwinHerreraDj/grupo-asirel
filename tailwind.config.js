@@ -4,6 +4,7 @@ module.exports = {
         './storage/framework/views/*.php',
         './resources/**/*.blade.php',
         './resources/**/*.js',
+        './resources/**/*.jsx',
         './resources/**/*.vue',
     ],
     darkMode: ['class', '[data-mode="dark"]'],

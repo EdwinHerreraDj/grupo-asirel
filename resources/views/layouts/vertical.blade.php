@@ -51,7 +51,8 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.datatables.net/v/dt/dt-2.1.8/datatables.min.js"></script>
-    @vite(['resources/js/pages/tables-datatable.js', 'resources/js/app.js'])
+    @vite(['resources/js/pages/tables-datatable.js', 'resources/js/app.js', 'resources/js/react/app.jsx'])
+    
     @livewireScripts
 
     <script>

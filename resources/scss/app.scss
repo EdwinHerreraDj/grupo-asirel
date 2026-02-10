@@ -27,7 +27,7 @@ File: Main Css File
 @include meta.load-css("components/print");
 @include meta.load-css("components/helper");
 
-// Plugins (Extended UI Components) 
+// Plugins (Extended UI Components)
 @include meta.load-css("plugins/swiper");
 @include meta.load-css("plugins/simplebar");
 @include meta.load-css("plugins/prismjs");
@@ -57,3 +57,21 @@ File: Main Css File
 
 // App Pages Plugins
 @include meta.load-css("plugins/fullcalendar");
+
+@layer components {
+    .menu-item {
+        @apply flex items-center gap-3
+               w-full px-4 py-2.5
+               text-sm font-medium
+               text-gray-700 dark:text-gray-300
+               hover:bg-gray-100
+               dark:hover:bg-gray-800
+               transition;
+    }
+
+    .menu-divider {
+        @apply my-2 border-t border-gray-200/70 dark:border-gray-800;
+    }
+}
+
+@tailwind utilities;
