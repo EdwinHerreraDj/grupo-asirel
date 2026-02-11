@@ -26,6 +26,9 @@ function DriveAppContent() {
     const [loadingExpiring, setLoadingExpiring] = useState(false);
     const [previewFile, setPreviewFile] = useState(null);
 
+    const [searchResults, setSearchResults] = useState(null);
+    const [isSearching, setIsSearching] = useState(false);
+
     const { showSuccess, showError, showWarning, showInfo } = useNotification();
     const { copyItems, cutItems, clipboard, clearClipboard, MAX_SELECTION } =
         useClipboard();
@@ -365,6 +368,43 @@ function DriveAppContent() {
         }
     };
 
+    /* Metodos de busqueda */
+
+    const handleSearch = (results) => {
+        if (results.selectedItem) {
+            // Click en un resultado
+            const { selectedItem } = results;
+
+            if (selectedItem.type === "folder") {
+                // Navegar a la carpeta
+                handleFolderClick(selectedItem.id);
+                setIsSearching(false);
+                setSearchResults(null);
+            } else if (selectedItem.type === "file") {
+                // Navegar a la carpeta que contiene el archivo
+                if (selectedItem.folder_id) {
+                    handleFolderClick(selectedItem.folder_id);
+                } else {
+                    handleFolderClick(0);
+                }
+                setIsSearching(false);
+                setSearchResults(null);
+            }
+        } else if (results.total > 0) {
+            // Actualizar vista con resultados
+            setSearchResults(results);
+            setIsSearching(true);
+            setFolders(results.folders);
+            setFiles(results.files);
+        }
+    };
+
+    const handleClearSearch = () => {
+        setIsSearching(false);
+        setSearchResults(null);
+        loadFolder(currentFolderId);
+    };
+
     return (
         <DriveLayout
             onBack={handleBack}
@@ -398,6 +438,10 @@ function DriveAppContent() {
             onPreviewFile={handlePreviewFile}
             previewFile={previewFile}
             onClosePreview={closePreview}
+            onSearch={handleSearch}
+            onClearSearch={handleClearSearch}
+            searchResults={searchResults}
+            isSearching={isSearching}
         />
     );
 }

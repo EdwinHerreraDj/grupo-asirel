@@ -8,6 +8,7 @@ import PasteButton from "./components/PasteButton";
 import SelectionBar from "./components/SelectionBar";
 import ExpiringFilesModal from "./components/ExpiringFilesModal";
 import FilePreviewModal from "./components/FilePreviewModal";
+import SearchBar from "./components/SearchBar";
 
 export default function DriveLayout({
     onBack,
@@ -38,6 +39,10 @@ export default function DriveLayout({
     previewFile,
     onPreviewFile,
     onClosePreview,
+    onSearch,
+    onClearSearch,
+    searchResults,
+    isSearching,
 }) {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const handleCreateFolderSubmit = async (nombre) => {
@@ -66,6 +71,14 @@ export default function DriveLayout({
                             <i className="mgc_arrow_left_line text-lg"></i>
                             Volver
                         </button>
+
+                        {/* Barra de búsqueda */}
+                        <div className="mb-5">
+                            <SearchBar
+                                onSearch={onSearch}
+                                onClear={onClearSearch}
+                            />
+                        </div>
 
                         {/* HEADER CARD */}
                         <div
@@ -143,10 +156,12 @@ export default function DriveLayout({
                     </div>
 
                     {/* Breadcrumbs */}
-                    <Breadcrumbs
-                        items={breadcrumbs}
-                        onNavigate={onFolderClick}
-                    />
+                    {!isSearching && (
+                        <Breadcrumbs
+                            items={breadcrumbs}
+                            onNavigate={onFolderClick}
+                        />
+                    )}
 
                     {/* CONTENIDO DRIVE */}
                     <div className="mt-6">

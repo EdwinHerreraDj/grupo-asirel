@@ -31,10 +31,15 @@ use App\Http\Controllers\FacturaSeriesController;
 use App\Http\Controllers\PresupuestoVentaController;
 use App\Http\Controllers\Api\Drive\FolderController;
 use App\Http\Controllers\Api\Drive\FileController as ApiFileController;
+use App\Http\Controllers\Api\Drive\SearchController;
 use App\Models\File;
 
 /* Drive React (API-style, session-based) */
+
 Route::middleware('auth')->prefix('api')->group(function () {
+
+    /* Busacador de folder files */
+    Route::get('drive/search', [SearchController::class, 'search'])->name('api.drive.search');
 
     Route::prefix('folders')->group(function () {
         Route::get('{id}/content', [FolderController::class, 'getContent']);

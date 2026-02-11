@@ -93,7 +93,7 @@ class FileController extends Controller
         $storage = Storage::disk('public');
 
         if (!$storage->exists($file->ruta)) {
-            \Log::error("File not found: " . $file->ruta);
+            Log::error("File not found: " . $file->ruta);
             return response()->json([
                 'message' => 'Archivo no encontrado en el servidor'
             ], 404);
