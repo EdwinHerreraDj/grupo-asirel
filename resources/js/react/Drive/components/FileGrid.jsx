@@ -8,7 +8,8 @@ export default function FileGrid({
     onDownload, 
     onRename,
     selectedFiles,
-    onSelectFile
+    onSelectFile,
+    onExtract  // ✅ Nueva prop
 }) {
     return (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -19,6 +20,7 @@ export default function FileGrid({
                     onDelete={() => onDelete(file.id)}
                     onDownload={() => onDownload(file.id)}
                     onRename={(newName) => onRename(file.id, newName)}
+                    onExtract={() => onExtract(file.id)}  // ✅ Pasar función
                     isSelected={selectedFiles.includes(file.id)}
                     onSelect={() => onSelectFile(file.id)}
                 />

@@ -11,14 +11,14 @@ export default function Toast({ message, type = 'success', onClose, duration = 4
     const icons = {
         success: 'mgc_check_circle_fill',
         error: 'mgc_close_circle_fill',
-        warning: 'mgc_alert_fill',
+        warning: 'mgc_alert_fill',  // ✅ Asegurar que existe
         info: 'mgc_information_fill'
     };
 
     const colors = {
         success: 'bg-green-500',
         error: 'bg-red-500',
-        warning: 'bg-yellow-500',
+        warning: 'bg-yellow-500',  // ✅ Asegurar que existe
         info: 'bg-blue-500'
     };
 

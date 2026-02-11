@@ -22,6 +22,7 @@ export default function DriveLayout({
     onDownloadFile,
     onRenameFolder,
     onRenameFile,
+    onExtractFile,  // ✅ Nueva prop
     onPasteItems,
     currentFolderId,
     selectedFiles,
@@ -118,6 +119,7 @@ export default function DriveLayout({
                                             onDelete={onDeleteFile}
                                             onDownload={onDownloadFile}
                                             onRename={onRenameFile}
+                                            onExtract={onExtractFile}  // ✅ Pasar función
                                             selectedFiles={selectedFiles}
                                             onSelectFile={onSelectFile}
                                         />

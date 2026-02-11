@@ -8,6 +8,7 @@ use App\Models\File;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use ZipArchive;
 use Illuminate\Http\Request;
 
 class FolderController extends Controller
@@ -332,5 +333,90 @@ class FolderController extends Controller
         }
 
         return false;
+    }
+
+   
+
+    public function download($id)
+    {
+        $folder = Folder::with('files')->findOrFail($id);
+
+        // Verificar que tenga archivos
+        if ($folder->files->count() === 0) {
+            return response()->json([
+                'message' => 'Esta carpeta no contiene archivos'
+            ], 422);
+        }
+
+        $zipFileName = preg_replace('/[^A-Za-z0-9_\-\s]/', '_', $folder->nombre) . '.zip';
+
+        $tempDir = storage_path('app' . DIRECTORY_SEPARATOR . 'temp');
+        $zipPath = $tempDir . DIRECTORY_SEPARATOR . uniqid() . '_' . time() . '.zip';
+
+        if (!is_dir($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+
+        $zip = new ZipArchive;
+
+        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== TRUE) {
+            return response()->json(['message' => 'No se pudo crear el archivo ZIP'], 500);
+        }
+
+        try {
+            $disk = Storage::disk('public');
+            $filesAdded = 0;
+
+            // 🔍 Esto añade TODOS los archivos de la carpeta (incluyendo ZIPs)
+            foreach ($folder->files as $file) {
+                $filePath = $disk->path($file->ruta);
+
+                if (file_exists($filePath) && is_readable($filePath)) {
+                    // Añadir archivo con su nombre original (sin importar la extensión)
+                    if ($zip->addFile($filePath, $file->nombre)) {
+                        $filesAdded++;
+                        Log::debug("✓ Archivo añadido: {$file->nombre}");
+                    }
+                } else {
+                    Log::warning("✗ Archivo no encontrado: {$file->nombre} (ruta: {$file->ruta})");
+                }
+            }
+
+            $zip->close();
+
+            if ($filesAdded === 0) {
+                if (file_exists($zipPath)) {
+                    unlink($zipPath);
+                }
+                return response()->json([
+                    'message' => 'No se encontraron archivos válidos para descargar'
+                ], 422);
+            }
+
+            $fileSize = filesize($zipPath);
+            Log::info("✓ ZIP creado: '{$folder->nombre}' con {$filesAdded} archivos (" . round($fileSize / 1024 / 1024, 2) . " MB)");
+
+            return response()->download($zipPath, $zipFileName, [
+                'Content-Type' => 'application/zip',
+            ])->deleteFileAfterSend(true);
+        } catch (\Exception $e) {
+            if (isset($zip) && $zip) {
+                @$zip->close();
+            }
+            if (isset($zipPath) && file_exists($zipPath)) {
+                @unlink($zipPath);
+            }
+
+            Log::error('Error creando ZIP', [
+                'folder_id' => $id,
+                'folder_name' => $folder->nombre,
+                'error' => $e->getMessage(),
+                'line' => $e->getLine()
+            ]);
+
+            return response()->json([
+                'message' => 'Error al crear el archivo ZIP'
+            ], 500);
+        }
     }
 }

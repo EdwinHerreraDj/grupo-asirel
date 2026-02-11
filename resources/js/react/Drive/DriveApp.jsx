@@ -18,8 +18,9 @@ function DriveAppContent() {
     ]);
     const [loading, setLoading] = useState(false);
     const [selectedFiles, setSelectedFiles] = useState([]);
+    const [extracting, setExtracting] = useState(false);
 
-    const { showSuccess, showError, showWarning } = useNotification();
+    const { showSuccess, showError, showWarning, showInfo } = useNotification();
     const { copyItems, cutItems, clipboard, clearClipboard, MAX_SELECTION } =
         useClipboard();
 
@@ -91,6 +92,11 @@ function DriveAppContent() {
 
     // Pegar items (archivos múltiples o carpeta individual)
     const handlePasteItems = async (items, targetFolderId) => {
+        if (targetFolderId === 0) {
+            showError("No se pueden mover archivos o carpetas a la raíz.");
+            return;
+        }
+
         let successCount = 0;
         let errorCount = 0;
         let renamedCount = 0;
@@ -165,10 +171,21 @@ function DriveAppContent() {
         }
     };
 
-    const handleFileUpload = async (file) => {
+    const handleFileUpload = async (file, hasExpiry, expiryDate) => {
+        if (currentFolderId === 0) {
+            showError("No se pueden subir archivos en la carpeta raíz.");
+            return false;
+        }
         const formData = new FormData();
         formData.append("file", file);
         formData.append("folder_id", currentFolderId);
+
+        if (hasExpiry && expiryDate) {
+            formData.append("tiene_caducidad", "1");
+            formData.append("fecha_caducidad", expiryDate);
+        } else {
+            formData.append("tiene_caducidad", "0");
+        }
 
         try {
             await api.post("/files", formData, {
@@ -176,8 +193,7 @@ function DriveAppContent() {
                     "Content-Type": "multipart/form-data",
                 },
             });
-            showSuccess(`Archivo "${file.name}" subido exitosamente`);
-            loadFolder(currentFolderId);
+
             return true;
         } catch (error) {
             console.error("Error uploading file:", error);
@@ -186,6 +202,10 @@ function DriveAppContent() {
             );
             return false;
         }
+    };
+
+    const refreshCurrentFolder = () => {
+        loadFolder(currentFolderId);
     };
 
     const handleDeleteFolder = async (folderId) => {
@@ -284,6 +304,31 @@ function DriveAppContent() {
         }
     };
 
+    const handleExtractFile = async (fileId) => {
+        setExtracting(true);
+
+        try {
+            showInfo("Extrayendo archivo ZIP...");
+
+            const response = await api.post(`/files/${fileId}/extract`);
+
+            showSuccess(
+                `ZIP extraído: ${response.data.stats.folders} carpetas y ${response.data.stats.files} archivos creados`,
+            );
+
+            // Recargar la carpeta actual para ver el contenido extraído
+            loadFolder(currentFolderId);
+        } catch (error) {
+            console.error("Error extracting ZIP:", error);
+            showError(
+                error.response?.data?.message ||
+                    "Error al extraer el archivo ZIP",
+            );
+        } finally {
+            setExtracting(false);
+        }
+    };
+
     return (
         <DriveLayout
             onBack={handleBack}
@@ -293,12 +338,16 @@ function DriveAppContent() {
             loading={loading}
             onFolderClick={handleFolderClick}
             onCreateFolder={handleCreateFolder}
-            onFileUpload={handleFileUpload}
+            onFileUpload={{
+                upload: handleFileUpload,
+                refresh: refreshCurrentFolder,
+            }}
             onDeleteFolder={handleDeleteFolder}
             onDeleteFile={handleDeleteFile}
             onDownloadFile={handleDownloadFile}
             onRenameFolder={handleRenameFolder}
             onRenameFile={handleRenameFile}
+            onExtractFile={handleExtractFile}
             onPasteItems={handlePasteItems}
             currentFolderId={currentFolderId}
             selectedFiles={selectedFiles}

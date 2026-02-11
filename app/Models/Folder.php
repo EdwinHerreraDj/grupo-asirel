@@ -30,8 +30,9 @@ class Folder extends Model
     // Relaciones (ojo: en raíz parent_id=0, no hay fila con id=0)
     public function parent(): BelongsTo
     {
-        return $this->belongsTo(self::class, 'parent_id')->where('id', '>', 0);
+        return $this->belongsTo(self::class, 'parent_id');
     }
+
 
     public function children(): HasMany
     {

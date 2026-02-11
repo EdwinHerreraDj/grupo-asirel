@@ -1,13 +1,14 @@
 // resources/js/react/Drive/components/FileItem.jsx
 import React, { useState, useRef, useEffect } from "react";
 
-export default function FileItem({ 
-    file, 
-    onDelete, 
-    onDownload, 
+export default function FileItem({
+    file,
+    onDelete,
+    onDownload,
     onRename,
     isSelected,
-    onSelect
+    onSelect,
+    onExtract,
 }) {
     const [showMenu, setShowMenu] = useState(false);
     const [isRenaming, setIsRenaming] = useState(false);
@@ -23,7 +24,8 @@ export default function FileItem({
         };
 
         document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
+        return () =>
+            document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
     useEffect(() => {
@@ -46,9 +48,9 @@ export default function FileItem({
     };
 
     const handleKeyDown = (e) => {
-        if (e.key === 'Enter') {
+        if (e.key === "Enter") {
             handleRename();
-        } else if (e.key === 'Escape') {
+        } else if (e.key === "Escape") {
             setNewName(file.nombre);
             setIsRenaming(false);
         }
@@ -59,119 +61,126 @@ export default function FileItem({
         onSelect();
     };
 
+    const isZipFile = () => {
+        const ext = file.nombre.split(".").pop().toLowerCase();
+        return ext === "zip";
+    };
+
     // Sistema de iconos mejorado
     const getFileExtension = (fileName) => {
-        const parts = fileName.split('.');
-        return parts.length > 1 ? parts.pop().toLowerCase() : 'default';
+        const parts = fileName.split(".");
+        return parts.length > 1 ? parts.pop().toLowerCase() : "default";
     };
 
     const getFileIconData = (fileName) => {
         const extension = getFileExtension(fileName);
-        
+
         const iconMap = {
-            'pdf': {
-                icon: 'mgc_pdf_fill',
-                color: 'text-red-600 bg-red-100 dark:bg-red-900/40 dark:text-red-300',
+            pdf: {
+                icon: "mgc_pdf_fill",
+                color: "text-red-600 bg-red-100 dark:bg-red-900/40 dark:text-red-300",
             },
-            'doc': {
-                icon: 'mgc_file_text_fill',
-                color: 'text-blue-600 bg-blue-100 dark:bg-blue-900/40 dark:text-blue-300',
+            doc: {
+                icon: "mgc_file_text_fill",
+                color: "text-blue-600 bg-blue-100 dark:bg-blue-900/40 dark:text-blue-300",
             },
-            'docx': {
-                icon: 'mgc_file_text_fill',
-                color: 'text-blue-600 bg-blue-100 dark:bg-blue-900/40 dark:text-blue-300',
+            docx: {
+                icon: "mgc_file_text_fill",
+                color: "text-blue-600 bg-blue-100 dark:bg-blue-900/40 dark:text-blue-300",
             },
-            'xls': {
-                icon: 'mgc_file_excel_fill',
-                color: 'text-green-600 bg-green-100 dark:bg-green-900/40 dark:text-green-300',
+            xls: {
+                icon: "mgc_file_excel_fill",
+                color: "text-green-600 bg-green-100 dark:bg-green-900/40 dark:text-green-300",
             },
-            'xlsx': {
-                icon: 'mgc_file_excel_fill',
-                color: 'text-green-600 bg-green-100 dark:bg-green-900/40 dark:text-green-300',
+            xlsx: {
+                icon: "mgc_file_excel_fill",
+                color: "text-green-600 bg-green-100 dark:bg-green-900/40 dark:text-green-300",
             },
-            'ppt': {
-                icon: 'mgc_file_ppt_fill',
-                color: 'text-orange-600 bg-orange-100 dark:bg-orange-900/40 dark:text-orange-300',
+            ppt: {
+                icon: "mgc_file_ppt_fill",
+                color: "text-orange-600 bg-orange-100 dark:bg-orange-900/40 dark:text-orange-300",
             },
-            'pptx': {
-                icon: 'mgc_file_ppt_fill',
-                color: 'text-orange-600 bg-orange-100 dark:bg-orange-900/40 dark:text-orange-300',
+            pptx: {
+                icon: "mgc_file_ppt_fill",
+                color: "text-orange-600 bg-orange-100 dark:bg-orange-900/40 dark:text-orange-300",
             },
-            'jpg': {
-                icon: 'mgc_pic_2_fill',
-                color: 'text-pink-600 bg-pink-100 dark:bg-pink-900/40 dark:text-pink-300',
+            jpg: {
+                icon: "mgc_pic_2_fill",
+                color: "text-pink-600 bg-pink-100 dark:bg-pink-900/40 dark:text-pink-300",
             },
-            'jpeg': {
-                icon: 'mgc_pic_2_fill',
-                color: 'text-pink-600 bg-pink-100 dark:bg-pink-900/40 dark:text-pink-300',
+            jpeg: {
+                icon: "mgc_pic_2_fill",
+                color: "text-pink-600 bg-pink-100 dark:bg-pink-900/40 dark:text-pink-300",
             },
-            'png': {
-                icon: 'mgc_pic_fill',
-                color: 'text-pink-600 bg-pink-100 dark:bg-pink-900/40 dark:text-pink-300',
+            png: {
+                icon: "mgc_pic_fill",
+                color: "text-pink-600 bg-pink-100 dark:bg-pink-900/40 dark:text-pink-300",
             },
-            'gif': {
-                icon: 'mgc_photo_album_fill',
-                color: 'text-pink-600 bg-pink-100 dark:bg-pink-900/40 dark:text-pink-300',
+            gif: {
+                icon: "mgc_photo_album_fill",
+                color: "text-pink-600 bg-pink-100 dark:bg-pink-900/40 dark:text-pink-300",
             },
-            'svg': {
-                icon: 'mgc_pic_fill',
-                color: 'text-pink-600 bg-pink-100 dark:bg-pink-900/40 dark:text-pink-300',
+            svg: {
+                icon: "mgc_pic_fill",
+                color: "text-pink-600 bg-pink-100 dark:bg-pink-900/40 dark:text-pink-300",
             },
-            'mp4': {
-                icon: 'mgc_video_fill',
-                color: 'text-purple-600 bg-purple-100 dark:bg-purple-900/40 dark:text-purple-300',
+            mp4: {
+                icon: "mgc_video_fill",
+                color: "text-purple-600 bg-purple-100 dark:bg-purple-900/40 dark:text-purple-300",
             },
-            'mov': {
-                icon: 'mgc_video_fill',
-                color: 'text-purple-600 bg-purple-100 dark:bg-purple-900/40 dark:text-purple-300',
+            mov: {
+                icon: "mgc_video_fill",
+                color: "text-purple-600 bg-purple-100 dark:bg-purple-900/40 dark:text-purple-300",
             },
-            'avi': {
-                icon: 'mgc_video_fill',
-                color: 'text-purple-600 bg-purple-100 dark:bg-purple-900/40 dark:text-purple-300',
+            avi: {
+                icon: "mgc_video_fill",
+                color: "text-purple-600 bg-purple-100 dark:bg-purple-900/40 dark:text-purple-300",
             },
-            'mp3': {
-                icon: 'mgc_music_fill',
-                color: 'text-indigo-600 bg-indigo-100 dark:bg-indigo-900/40 dark:text-indigo-300',
+            mp3: {
+                icon: "mgc_music_fill",
+                color: "text-indigo-600 bg-indigo-100 dark:bg-indigo-900/40 dark:text-indigo-300",
             },
-            'wav': {
-                icon: 'mgc_music_fill',
-                color: 'text-indigo-600 bg-indigo-100 dark:bg-indigo-900/40 dark:text-indigo-300',
+            wav: {
+                icon: "mgc_music_fill",
+                color: "text-indigo-600 bg-indigo-100 dark:bg-indigo-900/40 dark:text-indigo-300",
             },
-            'zip': {
-                icon: 'mgc_file_zip_fill',
-                color: 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/40 dark:text-yellow-300',
+            zip: {
+                icon: "mgc_file_zip_fill",
+                color: "text-yellow-600 bg-yellow-100 dark:bg-yellow-900/40 dark:text-yellow-300",
             },
-            'rar': {
-                icon: 'mgc_file_zip_fill',
-                color: 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/40 dark:text-yellow-300',
+            rar: {
+                icon: "mgc_file_zip_fill",
+                color: "text-yellow-600 bg-yellow-100 dark:bg-yellow-900/40 dark:text-yellow-300",
             },
-            '7z': {
-                icon: 'mgc_file_zip_fill',
-                color: 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/40 dark:text-yellow-300',
+            "7z": {
+                icon: "mgc_file_zip_fill",
+                color: "text-yellow-600 bg-yellow-100 dark:bg-yellow-900/40 dark:text-yellow-300",
             },
-            'txt': {
-                icon: 'mgc_file_text_line',
-                color: 'text-gray-600 bg-gray-100 dark:bg-gray-700 dark:text-gray-300',
+            txt: {
+                icon: "mgc_file_text_line",
+                color: "text-gray-600 bg-gray-100 dark:bg-gray-700 dark:text-gray-300",
             },
-            'csv': {
-                icon: 'mgc_file_text_line',
-                color: 'text-teal-600 bg-teal-100 dark:bg-teal-900/40 dark:text-teal-300',
+            csv: {
+                icon: "mgc_file_text_line",
+                color: "text-teal-600 bg-teal-100 dark:bg-teal-900/40 dark:text-teal-300",
             },
-            'default': {
-                icon: 'mgc_file_line',
-                color: 'text-gray-600 bg-gray-100 dark:bg-gray-700 dark:text-gray-300',
+            default: {
+                icon: "mgc_file_line",
+                color: "text-gray-600 bg-gray-100 dark:bg-gray-700 dark:text-gray-300",
             },
         };
 
-        return iconMap[extension] || iconMap['default'];
+        return iconMap[extension] || iconMap["default"];
     };
 
     const formatFileSize = (bytes) => {
         if (!bytes) return "0 B";
-        
+
         const sizes = ["B", "KB", "MB", "GB"];
         const i = Math.floor(Math.log(bytes) / Math.log(1024));
-        return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + " " + sizes[i];
+        return (
+            Math.round((bytes / Math.pow(1024, i)) * 100) / 100 + " " + sizes[i]
+        );
     };
 
     const iconData = getFileIconData(file.nombre);
@@ -188,26 +197,29 @@ export default function FileItem({
                 />
             </div>
 
-            <div 
+            <div
                 className={`
                     border rounded-lg p-4 transition-all bg-white dark:bg-gray-800
-                    ${isSelected 
-                        ? 'border-blue-500 ring-2 ring-blue-200 dark:ring-blue-800' 
-                        : 'border-gray-200 dark:border-gray-700 hover:border-blue-400 hover:shadow-md'
+                    ${
+                        isSelected
+                            ? "border-blue-500 ring-2 ring-blue-200 dark:ring-blue-800"
+                            : "border-gray-200 dark:border-gray-700 hover:border-blue-400 hover:shadow-md"
                     }
                 `}
             >
                 <div className="flex items-start justify-between mb-3">
                     {/* Icono con fondo de color */}
                     <div className="flex-1 flex justify-center">
-                        <div className={`
+                        <div
+                            className={`
                             w-16 h-16 rounded-xl flex items-center justify-center
                             ${iconData.color}
-                        `}>
+                        `}
+                        >
                             <i className={`${iconData.icon} text-3xl`}></i>
                         </div>
                     </div>
-                    
+
                     {/* Menu Button */}
                     <div className="relative" ref={menuRef}>
                         <button
@@ -244,6 +256,23 @@ export default function FileItem({
                                     <i className="mgc_external_link_line"></i>
                                     Abrir en nueva pestaña
                                 </a>
+                                {isZipFile() && (
+                                    <>
+                                        <hr className="my-1 border-gray-200 dark:border-gray-700" />
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onExtract();
+                                                setShowMenu(false);
+                                            }}
+                                            className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                                        >
+                                            <i className="mgc_folder_zip_line"></i>
+                                            Extraer aquí
+                                        </button>
+                                    </>
+                                )}
+
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
@@ -286,7 +315,10 @@ export default function FileItem({
                             className="w-full px-2 py-1 text-sm border border-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                         />
                     ) : (
-                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate text-center" title={file.nombre}>
+                        <p
+                            className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate text-center"
+                            title={file.nombre}
+                        >
                             {file.nombre}
                         </p>
                     )}

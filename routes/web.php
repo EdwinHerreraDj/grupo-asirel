@@ -184,8 +184,8 @@ Route::middleware('auth')->prefix('api')->group(function () {
         Route::post('/', [FolderController::class, 'store']);
         Route::put('{id}', [FolderController::class, 'update']);
         Route::delete('{id}', [FolderController::class, 'destroy']);
-        // Route::post('{id}/copy', [FolderController::class, 'copy']); ← ELIMINAR
         Route::post('{id}/move', [FolderController::class, 'move']);
+        Route::get('{id}/download', [FolderController::class, 'download']);
     });
 
     Route::prefix('files')->group(function () {
@@ -193,7 +193,8 @@ Route::middleware('auth')->prefix('api')->group(function () {
         Route::put('{id}', [ApiFileController::class, 'update']);
         Route::delete('{id}', [ApiFileController::class, 'destroy']);
         Route::get('{id}/download', [ApiFileController::class, 'download']);
-        // Route::post('{id}/copy', [ApiFileController::class, 'copy']); ← ELIMINAR
         Route::post('{id}/move', [ApiFileController::class, 'move']);
+        Route::post('{id}/extract', [ApiFileController::class, 'extract']);
+        Route::get('expiring', [ApiFileController::class, 'expiringFiles']);
     });
 });
