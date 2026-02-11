@@ -25,6 +25,7 @@ use App\Http\Controllers\ProveedorController;
 use App\Http\Controllers\CategoriaGastoEmpresaController;
 use App\Http\Controllers\CertificacionController;
 use App\Http\Controllers\Admin\ClienteController;
+use App\Http\Controllers\Api\ClienteController as ApiClienteController;
 use App\Http\Controllers\CertificacionDetalleController;
 use App\Http\Controllers\FacturasVentasController;
 use App\Http\Controllers\FacturaSeriesController;
@@ -37,10 +38,18 @@ use App\Models\File;
 /* Drive React (API-style, session-based) */
 
 Route::middleware('auth')->prefix('api')->group(function () {
+    
+    /* Clientes API */
+    Route::get('clientes', [ApiClienteController::class, 'index']);
+    Route::post('clientes', [ApiClienteController::class, 'store']);
+    Route::get('clientes/{id}', [ApiClienteController::class, 'show']);
+    Route::put('clientes/{id}', [ApiClienteController::class, 'update']);
+    Route::delete('clientes/{id}', [ApiClienteController::class, 'destroy']);
 
-    /* Busacador de folder files */
+    /* Buscador de folder files */
     Route::get('drive/search', [SearchController::class, 'search'])->name('api.drive.search');
-
+    
+    /* Rutas de folder Componentes DRIVE */
     Route::prefix('folders')->group(function () {
         Route::get('{id}/content', [FolderController::class, 'getContent']);
         Route::post('/', [FolderController::class, 'store']);
@@ -50,6 +59,7 @@ Route::middleware('auth')->prefix('api')->group(function () {
         Route::get('{id}/download', [FolderController::class, 'download']);
     });
 
+    /* Rutas de archivos Componentes DRIVE */
     Route::prefix('files')->group(function () {
         Route::get('expiring', [ApiFileController::class, 'expiringFiles']);
         Route::post('/', [ApiFileController::class, 'store']);

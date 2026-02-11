@@ -72,14 +72,6 @@ export default function DriveLayout({
                             Volver
                         </button>
 
-                        {/* Barra de búsqueda */}
-                        <div className="mb-5">
-                            <SearchBar
-                                onSearch={onSearch}
-                                onClear={onClearSearch}
-                            />
-                        </div>
-
                         {/* HEADER CARD */}
                         <div
                             className="
@@ -153,6 +145,14 @@ export default function DriveLayout({
                                 </div>
                             </div>
                         </div>
+                    </div>
+
+                    {/* Barra de búsqueda */}
+                    <div className="mb-5 flex justify-end">
+                        <SearchBar
+                            onSearch={onSearch}
+                            onClear={onClearSearch}
+                        />
                     </div>
 
                     {/* Breadcrumbs */}
