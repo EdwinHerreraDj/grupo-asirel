@@ -33,6 +33,33 @@ use App\Http\Controllers\Api\Drive\FolderController;
 use App\Http\Controllers\Api\Drive\FileController as ApiFileController;
 use App\Models\File;
 
+/* Drive React (API-style, session-based) */
+Route::middleware('auth')->prefix('api')->group(function () {
+
+    Route::prefix('folders')->group(function () {
+        Route::get('{id}/content', [FolderController::class, 'getContent']);
+        Route::post('/', [FolderController::class, 'store']);
+        Route::put('{id}', [FolderController::class, 'update']);
+        Route::delete('{id}', [FolderController::class, 'destroy']);
+        Route::post('{id}/move', [FolderController::class, 'move']);
+        Route::get('{id}/download', [FolderController::class, 'download']);
+    });
+
+    Route::prefix('files')->group(function () {
+        Route::get('expiring', [ApiFileController::class, 'expiringFiles']);
+        Route::post('/', [ApiFileController::class, 'store']);
+        Route::put('{id}', [ApiFileController::class, 'update']);
+        Route::delete('{id}', [ApiFileController::class, 'destroy']);
+        Route::get('{id}/download', [ApiFileController::class, 'download']);
+        Route::post('{id}/move', [ApiFileController::class, 'move']);
+        Route::post('{id}/extract', [ApiFileController::class, 'extract']);
+    });
+});
+
+
+
+
+
 require __DIR__ . '/auth.php';
 
 Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
@@ -166,35 +193,8 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
     })->name('ping');
 
 
-
-
-
     // Rutas dinamicas - DEBE IR AL FINAL DE TODO
     Route::get('{first}/{second}/{third}', [RoutingController::class, 'thirdLevel'])->name('third');
     Route::get('{first}/{second}', [RoutingController::class, 'secondLevel'])->name('second');
     Route::get('{any}', [RoutingController::class, 'root'])->name('any');
-});
-
-
-/* Drive React (API-style, session-based) */
-Route::middleware('auth')->prefix('api')->group(function () {
-
-    Route::prefix('folders')->group(function () {
-        Route::get('{id}/content', [FolderController::class, 'getContent']);
-        Route::post('/', [FolderController::class, 'store']);
-        Route::put('{id}', [FolderController::class, 'update']);
-        Route::delete('{id}', [FolderController::class, 'destroy']);
-        Route::post('{id}/move', [FolderController::class, 'move']);
-        Route::get('{id}/download', [FolderController::class, 'download']);
-    });
-
-    Route::prefix('files')->group(function () {
-        Route::post('/', [ApiFileController::class, 'store']);
-        Route::put('{id}', [ApiFileController::class, 'update']);
-        Route::delete('{id}', [ApiFileController::class, 'destroy']);
-        Route::get('{id}/download', [ApiFileController::class, 'download']);
-        Route::post('{id}/move', [ApiFileController::class, 'move']);
-        Route::post('{id}/extract', [ApiFileController::class, 'extract']);
-        Route::get('expiring', [ApiFileController::class, 'expiringFiles']);
-    });
 });

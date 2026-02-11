@@ -404,16 +404,28 @@ class FileController extends Controller
 
     public function expiringFiles(Request $request)
     {
-        $days = $request->get('days', 30); // Por defecto 30 días
+        $days = $request->get('days', 30);
+
+        $now = now()->startOfDay();
+        $futureLimit = now()->addDays($days)->endOfDay();
 
         $files = File::where('usuario_id', auth()->id())
             ->where('tiene_caducidad', true)
             ->whereNotNull('fecha_caducidad')
-            ->where('fecha_caducidad', '<=', now()->addDays($days))
-            ->where('fecha_caducidad', '>=', now())
+            ->whereBetween('fecha_caducidad', [
+                now()->subYears(1), // límite inferior razonable
+                $futureLimit
+            ])
             ->with('folder')
             ->orderBy('fecha_caducidad', 'asc')
-            ->get();
+            ->get()
+            ->map(function ($file) use ($now) {
+                $file->estado_caducidad = $file->fecha_caducidad < $now
+                    ? 'vencido'
+                    : 'proximo';
+
+                return $file;
+            });
 
         return response()->json([
             'files' => $files,

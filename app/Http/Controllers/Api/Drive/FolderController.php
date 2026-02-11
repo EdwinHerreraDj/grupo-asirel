@@ -335,18 +335,11 @@ class FolderController extends Controller
         return false;
     }
 
-   
+
 
     public function download($id)
     {
-        $folder = Folder::with('files')->findOrFail($id);
-
-        // Verificar que tenga archivos
-        if ($folder->files->count() === 0) {
-            return response()->json([
-                'message' => 'Esta carpeta no contiene archivos'
-            ], 422);
-        }
+        $folder = Folder::with(['files', 'children'])->findOrFail($id);
 
         $zipFileName = preg_replace('/[^A-Za-z0-9_\-\s]/', '_', $folder->nombre) . '.zip';
 
@@ -364,59 +357,62 @@ class FolderController extends Controller
         }
 
         try {
+
             $disk = Storage::disk('public');
-            $filesAdded = 0;
 
-            // 🔍 Esto añade TODOS los archivos de la carpeta (incluyendo ZIPs)
-            foreach ($folder->files as $file) {
-                $filePath = $disk->path($file->ruta);
-
-                if (file_exists($filePath) && is_readable($filePath)) {
-                    // Añadir archivo con su nombre original (sin importar la extensión)
-                    if ($zip->addFile($filePath, $file->nombre)) {
-                        $filesAdded++;
-                        Log::debug("✓ Archivo añadido: {$file->nombre}");
-                    }
-                } else {
-                    Log::warning("✗ Archivo no encontrado: {$file->nombre} (ruta: {$file->ruta})");
-                }
-            }
+            $this->addFolderRecursively($folder, $zip, '', $disk);
 
             $zip->close();
 
-            if ($filesAdded === 0) {
-                if (file_exists($zipPath)) {
-                    unlink($zipPath);
-                }
-                return response()->json([
-                    'message' => 'No se encontraron archivos válidos para descargar'
-                ], 422);
+            if (!file_exists($zipPath)) {
+                return response()->json(['message' => 'No se pudo generar el ZIP'], 500);
             }
-
-            $fileSize = filesize($zipPath);
-            Log::info("✓ ZIP creado: '{$folder->nombre}' con {$filesAdded} archivos (" . round($fileSize / 1024 / 1024, 2) . " MB)");
 
             return response()->download($zipPath, $zipFileName, [
                 'Content-Type' => 'application/zip',
             ])->deleteFileAfterSend(true);
         } catch (\Exception $e) {
-            if (isset($zip) && $zip) {
+
+            if (isset($zip)) {
                 @$zip->close();
             }
-            if (isset($zipPath) && file_exists($zipPath)) {
+
+            if (file_exists($zipPath)) {
                 @unlink($zipPath);
             }
 
             Log::error('Error creando ZIP', [
                 'folder_id' => $id,
-                'folder_name' => $folder->nombre,
                 'error' => $e->getMessage(),
-                'line' => $e->getLine()
             ]);
 
             return response()->json([
                 'message' => 'Error al crear el archivo ZIP'
             ], 500);
+        }
+    }
+    private function addFolderRecursively($folder, $zip, $parentPath, $disk)
+    {
+        $currentPath = $parentPath . $folder->nombre . '/';
+
+        // Crear carpeta aunque esté vacía
+        $zip->addEmptyDir($currentPath);
+
+        // Añadir archivos
+        foreach ($folder->files as $file) {
+
+            $filePath = $disk->path($file->ruta);
+
+            if (file_exists($filePath) && is_readable($filePath)) {
+                $zip->addFile($filePath, $currentPath . $file->nombre);
+            }
+        }
+
+        // Cargar hijos dinámicamente
+        $children = $folder->children()->with(['files', 'children'])->get();
+
+        foreach ($children as $child) {
+            $this->addFolderRecursively($child, $zip, $currentPath, $disk);
         }
     }
 }

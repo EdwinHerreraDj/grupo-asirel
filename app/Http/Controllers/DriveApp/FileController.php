@@ -71,21 +71,21 @@ class FileController extends Controller
             $this->agregarCarpetaAlZip($zip, $subfolder, $folderPath);
         }
     }
-    
+
     public function ver(File $file)
     {
-        // Seguridad mínima (ajusta si hay roles)
         if ($file->usuario_id !== auth()->id()) {
             abort(403);
         }
 
-        // Ruta real
-        $path = Storage::disk('local')->path($file->ruta);
+        $storage = Storage::disk('public');
 
-        if (!file_exists($path)) {
+        if (!$storage->exists($file->ruta)) {
             abort(404);
         }
 
-        return response()->file($path);
+        return response()->file(
+            $storage->path($file->ruta)
+        );
     }
 }

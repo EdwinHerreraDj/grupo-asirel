@@ -20,6 +20,12 @@ function DriveAppContent() {
     const [selectedFiles, setSelectedFiles] = useState([]);
     const [extracting, setExtracting] = useState(false);
 
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [showExpiringModal, setShowExpiringModal] = useState(false);
+    const [expiringFiles, setExpiringFiles] = useState([]);
+    const [loadingExpiring, setLoadingExpiring] = useState(false);
+    const [previewFile, setPreviewFile] = useState(null);
+
     const { showSuccess, showError, showWarning, showInfo } = useNotification();
     const { copyItems, cutItems, clipboard, clearClipboard, MAX_SELECTION } =
         useClipboard();
@@ -53,6 +59,36 @@ function DriveAppContent() {
 
     const handleFolderClick = (folderId) => {
         loadFolder(folderId);
+    };
+
+    const handlePreviewFile = (file) => {
+        const extension = file.nombre.split(".").pop().toLowerCase();
+
+        setPreviewFile({
+            id: file.id,
+            name: file.nombre,
+            type: extension,
+            url: `/drive/ver/${file.id}`,
+        });
+    };
+
+    const closePreview = () => {
+        setPreviewFile(null);
+    };
+
+    const loadExpiringFiles = async () => {
+        try {
+            setLoadingExpiring(true);
+
+            const response = await api.get("/files/expiring?days=30");
+
+            setExpiringFiles(response.data.files);
+            setShowExpiringModal(true);
+        } catch (error) {
+            showError("Error al cargar archivos con caducidad");
+        } finally {
+            setLoadingExpiring(false);
+        }
     };
 
     // Selección de archivos
@@ -354,6 +390,14 @@ function DriveAppContent() {
             onSelectFile={handleSelectFile}
             onClearSelection={handleClearSelection}
             onCutSelectedFiles={handleCutSelectedFiles}
+            onOpenExpiringModal={loadExpiringFiles}
+            showExpiringModal={showExpiringModal}
+            expiringFiles={expiringFiles}
+            loadingExpiring={loadingExpiring}
+            onCloseExpiringModal={() => setShowExpiringModal(false)}
+            onPreviewFile={handlePreviewFile}
+            previewFile={previewFile}
+            onClosePreview={closePreview}
         />
     );
 }

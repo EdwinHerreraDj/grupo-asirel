@@ -9,12 +9,20 @@ export default function FileItem({
     isSelected,
     onSelect,
     onExtract,
+    onPreview,
+    previewFile,
+    onClosePreview,
 }) {
     const [showMenu, setShowMenu] = useState(false);
     const [isRenaming, setIsRenaming] = useState(false);
     const [newName, setNewName] = useState(file.nombre);
     const menuRef = useRef(null);
     const inputRef = useRef(null);
+
+    const extension = file.nombre.split(".").pop().toLowerCase();
+    const previewable = ["pdf", "jpg", "jpeg", "png", "gif", "webp"].includes(
+        extension,
+    );
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -193,79 +201,161 @@ export default function FileItem({
                     type="checkbox"
                     checked={isSelected}
                     onChange={handleCheckboxChange}
-                    className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    className="
+                w-5 h-5
+                rounded-md
+                border-gray-300
+                text-indigo-600
+                focus:ring-indigo-500
+                cursor-pointer
+            "
                 />
             </div>
 
+            {/* BADGE CADUCIDAD */}
+            {file.fecha_caducidad &&
+                (() => {
+                    const today = new Date();
+                    const expiry = new Date(file.fecha_caducidad);
+                    const diffDays = Math.ceil(
+                        (expiry - today) / (1000 * 60 * 60 * 24),
+                    );
+
+                    let badgeStyles = "";
+                    let badgeText = "";
+
+                    if (diffDays < 0) {
+                        badgeStyles =
+                            "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400";
+                        badgeText = "Vencido";
+                    } else if (diffDays <= 15) {
+                        badgeStyles =
+                            "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400";
+                        badgeText = `Caduca en ${diffDays}d`;
+                    } else {
+                        badgeStyles =
+                            "bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-700 dark:text-gray-300";
+                        badgeText = expiry.toLocaleDateString();
+                    }
+
+                    return (
+                        <div className="absolute top-2 right-2 z-10">
+                            <div
+                                className={`
+                        px-2 py-1
+                        text-[11px]
+                        font-semibold
+                        rounded-lg
+                        border
+                        backdrop-blur-sm
+                        ${badgeStyles}
+                    `}
+                            >
+                                {badgeText}
+                            </div>
+                        </div>
+                    );
+                })()}
+
             <div
                 className={`
-                    border rounded-lg p-4 transition-all bg-white dark:bg-gray-800
-                    ${
-                        isSelected
-                            ? "border-blue-500 ring-2 ring-blue-200 dark:ring-blue-800"
-                            : "border-gray-200 dark:border-gray-700 hover:border-blue-400 hover:shadow-md"
-                    }
-                `}
+            border
+            rounded-xl
+            p-4
+            transition
+            bg-white dark:bg-gray-900
+
+            ${
+                isSelected
+                    ? "border-indigo-500 ring-2 ring-indigo-200 dark:ring-indigo-800"
+                    : "border-gray-200 dark:border-gray-800 hover:border-gray-300 hover:shadow-sm"
+            }
+        `}
             >
                 <div className="flex items-start justify-between mb-3">
-                    {/* Icono con fondo de color */}
+                    {/* Icono */}
                     <div className="flex-1 flex justify-center">
                         <div
                             className={`
-                            w-16 h-16 rounded-xl flex items-center justify-center
-                            ${iconData.color}
-                        `}
+                        w-16 h-16
+                        rounded-2xl
+                        flex items-center justify-center
+                        ${iconData.color}
+                    `}
                         >
                             <i className={`${iconData.icon} text-3xl`}></i>
                         </div>
                     </div>
 
-                    {/* Menu Button */}
+                    {/* Menu */}
                     <div className="relative" ref={menuRef}>
                         <button
                             onClick={(e) => {
                                 e.stopPropagation();
                                 setShowMenu(!showMenu);
                             }}
-                            className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="
+                        p-2
+                        rounded-xl
+                        hover:bg-gray-100
+                        dark:hover:bg-gray-800
+                        opacity-0
+                        group-hover:opacity-100
+                        transition
+                    "
                         >
                             <i className="mgc_more_2_fill text-gray-600 dark:text-gray-400"></i>
                         </button>
 
-                        {/* Dropdown Menu */}
                         {showMenu && (
-                            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-10">
+                            <div
+                                className="
+                        absolute right-0 mt-2 w-48
+                        bg-white dark:bg-gray-900
+                        rounded-xl
+                        shadow-lg
+                        border border-gray-200 dark:border-gray-800
+                        py-1
+                        z-10
+                    "
+                            >
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         onDownload();
                                         setShowMenu(false);
                                     }}
-                                    className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                                    className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2"
                                 >
                                     <i className="mgc_download_line"></i>
                                     Descargar
                                 </button>
-                                <a
-                                    href={file.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 block"
-                                    onClick={() => setShowMenu(false)}
-                                >
-                                    <i className="mgc_external_link_line"></i>
-                                    Abrir en nueva pestaña
-                                </a>
+
+                                {previewable && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (onPreview) onPreview();
+                                            setShowMenu(false);
+                                        }}
+                                        className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2"
+                                        title="Ver"
+                                    >
+                                        <i className="mgc_eye_2_line"></i>
+                                        Ver
+                                    </button>
+                                )}
+
                                 {isZipFile() && (
                                     <>
-                                        <hr className="my-1 border-gray-200 dark:border-gray-700" />
+                                        <hr className="my-1 border-gray-200 dark:border-gray-800" />
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 onExtract();
                                                 setShowMenu(false);
                                             }}
-                                            className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                                            className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2"
                                         >
                                             <i className="mgc_folder_zip_line"></i>
                                             Extraer aquí
@@ -279,19 +369,26 @@ export default function FileItem({
                                         setIsRenaming(true);
                                         setShowMenu(false);
                                     }}
-                                    className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                                    className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2"
                                 >
                                     <i className="mgc_edit_line"></i>
                                     Renombrar
                                 </button>
-                                <hr className="my-1 border-gray-200 dark:border-gray-700" />
+
+                                <hr className="my-1 border-gray-200 dark:border-gray-800" />
+
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         onDelete();
                                         setShowMenu(false);
                                     }}
-                                    className="w-full text-left px-4 py-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 flex items-center gap-2"
+                                    className="
+                                w-full text-left px-4 py-2
+                                hover:bg-red-50 dark:hover:bg-red-900/20
+                                text-red-600
+                                flex items-center gap-2
+                            "
                                 >
                                     <i className="mgc_delete_line"></i>
                                     Eliminar
@@ -301,7 +398,7 @@ export default function FileItem({
                     </div>
                 </div>
 
-                {/* File Info */}
+                {/* Info */}
                 <div>
                     {isRenaming ? (
                         <input
@@ -312,7 +409,16 @@ export default function FileItem({
                             onBlur={handleRename}
                             onKeyDown={handleKeyDown}
                             onClick={(e) => e.stopPropagation()}
-                            className="w-full px-2 py-1 text-sm border border-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                            className="
+                        w-full px-2 py-1 text-sm
+                        border border-indigo-500
+                        rounded-lg
+                        focus:outline-none
+                        focus:ring-2
+                        focus:ring-indigo-500
+                        dark:bg-gray-800
+                        dark:text-white
+                    "
                         />
                     ) : (
                         <p
@@ -322,6 +428,7 @@ export default function FileItem({
                             {file.nombre}
                         </p>
                     )}
+
                     <div className="flex items-center justify-center gap-2 mt-1">
                         <p className="text-xs text-gray-500">
                             {formatFileSize(file.tamaño)}
