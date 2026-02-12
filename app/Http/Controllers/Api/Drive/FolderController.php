@@ -44,15 +44,15 @@ class FolderController extends Controller
         $validated = $request->validate([
             'nombre' => 'required|string|max:255',
             'parent_id' => 'required|integer|min:0',
-            'tipo' => 'nullable|string'
         ]);
 
         $folder = Folder::create([
             'nombre' => $validated['nombre'],
             'parent_id' => $validated['parent_id'],
-            'tipo' => $validated['tipo'] ?? 'general',
+            'tipo' => 1,
             'usuario_id' => auth()->id()
         ]);
+
 
         return response()->json([
             'message' => 'Carpeta creada exitosamente',
