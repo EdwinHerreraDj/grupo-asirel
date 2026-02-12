@@ -195,24 +195,25 @@ export default function FileItem({
 
     return (
         <div className="relative group">
-            {/* Checkbox de selección */}
-            <div className="absolute top-2 left-2 z-10">
+            {/* Checkbox */}
+            <div className="absolute top-3 left-3 z-20">
                 <input
                     type="checkbox"
                     checked={isSelected}
                     onChange={handleCheckboxChange}
                     className="
                 w-5 h-5
-                rounded-md
-                border-gray-300
+                rounded-lg
+                border-slate-300
                 text-indigo-600
                 focus:ring-indigo-500
                 cursor-pointer
+                shadow-sm
             "
                 />
             </div>
 
-            {/* BADGE CADUCIDAD */}
+            {/* Badge caducidad */}
             {file.fecha_caducidad &&
                 (() => {
                     const today = new Date();
@@ -226,30 +227,31 @@ export default function FileItem({
 
                     if (diffDays < 0) {
                         badgeStyles =
-                            "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400";
+                            "bg-rose-100 text-rose-700 border-rose-200";
                         badgeText = "Vencido";
                     } else if (diffDays <= 15) {
                         badgeStyles =
-                            "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400";
+                            "bg-amber-100 text-amber-700 border-amber-200";
                         badgeText = `Caduca en ${diffDays}d`;
                     } else {
                         badgeStyles =
-                            "bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-700 dark:text-gray-300";
+                            "bg-slate-100 text-slate-600 border-slate-200";
                         badgeText = expiry.toLocaleDateString();
                     }
 
                     return (
-                        <div className="absolute top-2 right-2 z-10">
+                        <div className="absolute top-3 right-3 z-20">
                             <div
                                 className={`
-                        px-2 py-1
-                        text-[11px]
-                        font-semibold
-                        rounded-lg
-                        border
-                        backdrop-blur-sm
-                        ${badgeStyles}
-                    `}
+                            px-2.5 py-1
+                            text-[11px]
+                            font-semibold
+                            rounded-xl
+                            border
+                            backdrop-blur-sm
+                            shadow-sm
+                            ${badgeStyles}
+                        `}
                             >
                                 {badgeText}
                             </div>
@@ -257,29 +259,31 @@ export default function FileItem({
                     );
                 })()}
 
+            {/* Card */}
             <div
                 className={`
+            relative
             border
-            rounded-xl
-            p-4
-            transition
-            bg-white dark:bg-gray-900
-
+            rounded-2xl
+            p-5
+            bg-white
+            transition-all duration-200
             ${
                 isSelected
-                    ? "border-indigo-500 ring-2 ring-indigo-200 dark:ring-indigo-800"
-                    : "border-gray-200 dark:border-gray-800 hover:border-gray-300 hover:shadow-sm"
+                    ? "border-indigo-500 ring-2 ring-indigo-200"
+                    : "border-slate-200 hover:border-indigo-400 hover:shadow-lg"
             }
         `}
             >
-                <div className="flex items-start justify-between mb-3">
-                    {/* Icono */}
+                <div className="flex items-start justify-between mb-4">
+                    {/* Icon */}
                     <div className="flex-1 flex justify-center">
                         <div
                             className={`
                         w-16 h-16
                         rounded-2xl
                         flex items-center justify-center
+                        shadow-inner
                         ${iconData.color}
                     `}
                         >
@@ -295,29 +299,30 @@ export default function FileItem({
                                 setShowMenu(!showMenu);
                             }}
                             className="
-                        p-2
+                        w-9 h-9
+                        flex items-center justify-center
                         rounded-xl
-                        hover:bg-gray-100
-                        dark:hover:bg-gray-800
+                        hover:bg-slate-100
                         opacity-0
                         group-hover:opacity-100
                         transition
                     "
                         >
-                            <i className="mgc_more_2_fill text-gray-600 dark:text-gray-400"></i>
+                            <i className="mgc_more_2_fill text-slate-500"></i>
                         </button>
 
                         {showMenu && (
                             <div
                                 className="
-                        absolute right-0 mt-2 w-48
-                        bg-white dark:bg-gray-900
-                        rounded-xl
-                        shadow-lg
-                        border border-gray-200 dark:border-gray-800
-                        py-1
-                        z-10
-                    "
+                            absolute right-0 top-10
+                            w-52
+                            bg-white
+                            rounded-2xl
+                            shadow-2xl
+                            border border-slate-200
+                            py-2
+                            z-50
+                        "
                             >
                                 <button
                                     onClick={(e) => {
@@ -325,7 +330,7 @@ export default function FileItem({
                                         onDownload();
                                         setShowMenu(false);
                                     }}
-                                    className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2"
+                                    className="w-full text-left px-4 py-2.5 hover:bg-slate-50 flex items-center gap-2 text-sm"
                                 >
                                     <i className="mgc_download_line"></i>
                                     Descargar
@@ -338,8 +343,7 @@ export default function FileItem({
                                             if (onPreview) onPreview();
                                             setShowMenu(false);
                                         }}
-                                        className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2"
-                                        title="Ver"
+                                        className="w-full text-left px-4 py-2.5 hover:bg-slate-50 flex items-center gap-2 text-sm"
                                     >
                                         <i className="mgc_eye_2_line"></i>
                                         Ver
@@ -348,14 +352,14 @@ export default function FileItem({
 
                                 {isZipFile() && (
                                     <>
-                                        <hr className="my-1 border-gray-200 dark:border-gray-800" />
+                                        <div className="my-2 border-t border-slate-200"></div>
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 onExtract();
                                                 setShowMenu(false);
                                             }}
-                                            className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2"
+                                            className="w-full text-left px-4 py-2.5 hover:bg-slate-50 flex items-center gap-2 text-sm"
                                         >
                                             <i className="mgc_folder_zip_line"></i>
                                             Extraer aquí
@@ -369,13 +373,13 @@ export default function FileItem({
                                         setIsRenaming(true);
                                         setShowMenu(false);
                                     }}
-                                    className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2"
+                                    className="w-full text-left px-4 py-2.5 hover:bg-slate-50 flex items-center gap-2 text-sm"
                                 >
                                     <i className="mgc_edit_line"></i>
                                     Renombrar
                                 </button>
 
-                                <hr className="my-1 border-gray-200 dark:border-gray-800" />
+                                <div className="my-2 border-t border-slate-200"></div>
 
                                 <button
                                     onClick={(e) => {
@@ -383,12 +387,7 @@ export default function FileItem({
                                         onDelete();
                                         setShowMenu(false);
                                     }}
-                                    className="
-                                w-full text-left px-4 py-2
-                                hover:bg-red-50 dark:hover:bg-red-900/20
-                                text-red-600
-                                flex items-center gap-2
-                            "
+                                    className="w-full text-left px-4 py-2.5 hover:bg-rose-50 text-rose-600 flex items-center gap-2 text-sm"
                                 >
                                     <i className="mgc_delete_line"></i>
                                     Eliminar
@@ -399,7 +398,7 @@ export default function FileItem({
                 </div>
 
                 {/* Info */}
-                <div>
+                <div className="text-center">
                     {isRenaming ? (
                         <input
                             ref={inputRef}
@@ -410,33 +409,28 @@ export default function FileItem({
                             onKeyDown={handleKeyDown}
                             onClick={(e) => e.stopPropagation()}
                             className="
-                        w-full px-2 py-1 text-sm
+                        w-full px-3 py-2 text-sm
                         border border-indigo-500
-                        rounded-lg
+                        rounded-xl
                         focus:outline-none
-                        focus:ring-2
-                        focus:ring-indigo-500
-                        dark:bg-gray-800
-                        dark:text-white
+                        focus:ring-2 focus:ring-indigo-500
                     "
                         />
                     ) : (
                         <p
-                            className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate text-center"
+                            className="text-sm font-semibold text-slate-700 truncate"
                             title={file.nombre}
                         >
                             {file.nombre}
                         </p>
                     )}
 
-                    <div className="flex items-center justify-center gap-2 mt-1">
-                        <p className="text-xs text-gray-500">
-                            {formatFileSize(file.tamaño)}
-                        </p>
-                        <span className="text-gray-400">•</span>
-                        <p className="text-xs text-gray-500">
+                    <div className="flex items-center justify-center gap-2 mt-2 text-xs text-slate-500">
+                        <span>{formatFileSize(file.tamaño)}</span>
+                        <span className="text-slate-300">•</span>
+                        <span>
                             {new Date(file.created_at).toLocaleDateString()}
-                        </p>
+                        </span>
                     </div>
                 </div>
             </div>

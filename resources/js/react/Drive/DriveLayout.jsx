@@ -55,63 +55,42 @@ export default function DriveLayout({
     return (
         <div className="grid grid-cols-12">
             <div className="col-span-12">
-                <div className="card p-10">
+                <div className="bg-gradient-to-br from-slate-50 to-white border border-slate-200 rounded-3xl shadow-sm p-6 md:p-10">
                     {/* Header */}
-                    <div className="mb-8">
+                    <div className="mb-10">
                         {/* BACK */}
                         <button
                             onClick={onBack}
-                            className="
-                              flex items-center gap-2 
-                              text-sm font-medium 
-                              text-gray-500 hover:text-gray-900 
-                              transition-colors mb-4
-                          "
+                            className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors mb-6"
                         >
                             <i className="mgc_arrow_left_line text-lg"></i>
                             Volver
                         </button>
 
                         {/* HEADER CARD */}
-                        <div
-                            className="
-                           bg-white 
-                           border border-gray-200 
-                           rounded-2xl 
-                           shadow-sm 
-                           px-6 py-5
-                       "
-                        >
-                            <div className="flex items-center justify-between">
+                        <div className="bg-white border border-slate-200 rounded-3xl shadow-sm px-6 py-6">
+                            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                                 {/* LEFT */}
                                 <div>
-                                    <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">
+                                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
                                         Drive Empresarial
                                     </h1>
 
-                                    <p className="text-gray-500 mt-1 text-sm">
+                                    <p className="text-slate-500 mt-2 text-sm max-w-2xl">
                                         Centraliza la documentación operativa de
                                         la empresa, controla caducidades y
                                         mantén el acceso organizado.
                                     </p>
+
+                                    <div className="mt-4 h-1 w-20 bg-gradient-to-r from-indigo-600 to-cyan-500 rounded-full"></div>
                                 </div>
 
                                 {/* ACTIONS */}
-                                <div className="flex items-center gap-3">
+                                <div className="flex flex-wrap items-center gap-3">
                                     {/* ALERT */}
                                     <button
                                         onClick={onOpenExpiringModal}
-                                        className="
-                        inline-flex items-center gap-2
-                        px-4 py-2.5
-                        rounded-xl
-                        bg-red-50
-                        text-red-700
-                        border border-red-100
-                        hover:bg-red-100
-                        transition
-                        font-medium
-                    "
+                                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-rose-50 text-rose-700 border border-rose-100 hover:bg-rose-100 transition font-semibold"
                                     >
                                         <i className="mgc_alert_line text-lg"></i>
                                         Caducidades
@@ -120,17 +99,7 @@ export default function DriveLayout({
                                     {/* CREATE */}
                                     <button
                                         onClick={() => setShowCreateModal(true)}
-                                        className="
-                                        inline-flex items-center gap-2
-                                        px-4 py-2.5
-                                        rounded-xl
-                                        bg-indigo-600
-                                        text-white
-                                        hover:bg-indigo-500
-                                        transition
-                                        font-medium
-                                        shadow-sm
-                                        "
+                                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-600 text-white hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all font-semibold"
                                     >
                                         <i className="mgc_folder_2_line text-lg"></i>
                                         Nueva carpeta
@@ -148,7 +117,7 @@ export default function DriveLayout({
                     </div>
 
                     {/* Barra de búsqueda */}
-                    <div className="mb-5 flex justify-end">
+                    <div className="mb-6 flex justify-end">
                         <SearchBar
                             onSearch={onSearch}
                             onClear={onClearSearch}
@@ -157,18 +126,20 @@ export default function DriveLayout({
 
                     {/* Breadcrumbs */}
                     {!isSearching && (
-                        <Breadcrumbs
-                            items={breadcrumbs}
-                            onNavigate={onFolderClick}
-                        />
+                        <div className="mb-6">
+                            <Breadcrumbs
+                                items={breadcrumbs}
+                                onNavigate={onFolderClick}
+                            />
+                        </div>
                     )}
 
                     {/* CONTENIDO DRIVE */}
                     <div className="mt-6">
                         {loading ? (
-                            <div className="text-center py-12">
-                                <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                                <p className="text-gray-500 mt-4">
+                            <div className="text-center py-16">
+                                <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-indigo-600"></div>
+                                <p className="text-slate-500 mt-4 font-medium">
                                     Cargando...
                                 </p>
                             </div>
@@ -176,8 +147,8 @@ export default function DriveLayout({
                             <>
                                 {/* Carpetas */}
                                 {folders.length > 0 && (
-                                    <div className="mb-8">
-                                        <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
+                                    <div className="mb-10">
+                                        <h3 className="text-lg font-semibold text-slate-700 mb-5 flex items-center gap-2">
                                             <i className="mgc_folder_line text-xl"></i>
                                             Carpetas
                                         </h3>
@@ -193,7 +164,7 @@ export default function DriveLayout({
                                 {/* Archivos */}
                                 {files.length > 0 && (
                                     <div>
-                                        <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
+                                        <h3 className="text-lg font-semibold text-slate-700 mb-5 flex items-center gap-2">
                                             <i className="mgc_file_line text-xl"></i>
                                             Archivos
                                         </h3>
@@ -212,12 +183,14 @@ export default function DriveLayout({
 
                                 {/* Empty State */}
                                 {folders.length === 0 && files.length === 0 && (
-                                    <div className="text-center py-16">
-                                        <i className="mgc_folder_open_line text-7xl text-gray-300 mb-4 block"></i>
-                                        <p className="text-gray-500 text-lg mb-2">
+                                    <div className="text-center py-20">
+                                        <div className="w-24 h-24 mx-auto rounded-full bg-slate-100 flex items-center justify-center mb-6">
+                                            <i className="mgc_folder_open_line text-5xl text-slate-400"></i>
+                                        </div>
+                                        <p className="text-slate-600 text-lg font-semibold mb-2">
                                             Esta carpeta está vacía
                                         </p>
-                                        <p className="text-gray-400 text-sm">
+                                        <p className="text-slate-400 text-sm">
                                             Crea una carpeta o sube archivos
                                             para comenzar
                                         </p>

@@ -14,58 +14,67 @@ export default function ClientesTable({
     onPageChange,
 }) {
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
             {/* Tabla */}
             <div className="overflow-x-auto">
-                <table className="w-full">
-                    <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+                <table className="min-w-full text-sm text-slate-700">
+                    <thead className="bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200">
                         <tr>
-                            <th className="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">
+                            <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-600">
                                 Nombre
                             </th>
-                            <th className="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">
+                            <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-600">
                                 CIF
                             </th>
-                            <th className="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">
+                            <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-600">
                                 Teléfonos
                             </th>
-                            <th className="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">
+                            <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-600">
                                 Emails
                             </th>
-                            <th className="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300 hidden lg:table-cell">
+                            <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-600 hidden lg:table-cell">
                                 Dirección
                             </th>
-                            <th className="px-4 py-3 text-center font-semibold text-gray-700 dark:text-gray-300">
+                            <th className="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-slate-600">
                                 Activo
                             </th>
-                            <th className="px-4 py-3 text-right font-semibold text-gray-700 dark:text-gray-300">
+                            <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-slate-600">
                                 Acción
                             </th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+
+                    <tbody className="divide-y divide-slate-200 bg-white">
                         {loading ? (
                             <tr>
                                 <td
                                     colSpan="7"
-                                    className="px-4 py-12 text-center"
+                                    className="px-6 py-16 text-center"
                                 >
-                                    <div className="flex justify-center">
-                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                                    <div className="flex flex-col items-center justify-center gap-3">
+                                        <div className="animate-spin rounded-full h-10 w-10 border-4 border-slate-200 border-t-blue-600"></div>
+                                        <p className="text-slate-500 font-medium">
+                                            Cargando clientes...
+                                        </p>
                                     </div>
-                                    <p className="text-gray-500 dark:text-gray-400 mt-2">
-                                        Cargando clientes...
-                                    </p>
                                 </td>
                             </tr>
                         ) : clientes.length === 0 ? (
                             <tr>
                                 <td
                                     colSpan="7"
-                                    className="px-4 py-12 text-center text-gray-500 dark:text-gray-400"
+                                    className="px-6 py-16 text-center"
                                 >
-                                    <i className="mgc_user_3_line text-5xl mb-2 block text-gray-300 dark:text-gray-600"></i>
-                                    No se encontraron clientes.
+                                    <div className="flex flex-col items-center justify-center text-slate-400">
+                                        <i className="mgc_user_3_line text-6xl mb-4 text-slate-300"></i>
+                                        <p className="text-base font-medium text-slate-500">
+                                            No se encontraron clientes
+                                        </p>
+                                        <span className="text-sm text-slate-400 mt-1">
+                                            Intenta ajustar los filtros o crear
+                                            uno nuevo
+                                        </span>
+                                    </div>
                                 </td>
                             </tr>
                         ) : (
@@ -84,7 +93,7 @@ export default function ClientesTable({
 
             {/* Paginación */}
             {!loading && clientes.length > 0 && (
-                <div className="px-4 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+                <div className="px-6 py-4 bg-slate-50 border-t border-slate-200">
                     <Pagination
                         currentPage={currentPage}
                         lastPage={lastPage}

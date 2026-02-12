@@ -1,22 +1,28 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef } from "react";
 
 export default function UploadModal({ isOpen, onClose, onUpload }) {
     const [selectedFiles, setSelectedFiles] = useState([]);
     const [hasExpiry, setHasExpiry] = useState(false);
-    const [expiryDate, setExpiryDate] = useState('');
+    const [expiryDate, setExpiryDate] = useState("");
     const [uploading, setUploading] = useState(false);
     const [dragActive, setDragActive] = useState(false);
     const fileInputRef = useRef(null);
+    const [errorMessage, setErrorMessage] = useState("");
 
     const handleFileSelect = (e) => {
+        setErrorMessage("");
+
         const files = Array.from(e.target.files);
-        setSelectedFiles(prev => [...prev, ...files]);
+
+        if (files.length > 0) {
+            setSelectedFiles((prev) => [...prev, ...files]);
+        }
     };
 
     const handleDrag = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        
+
         if (e.type === "dragenter" || e.type === "dragover") {
             setDragActive(true);
         } else if (e.type === "dragleave") {
@@ -28,22 +34,50 @@ export default function UploadModal({ isOpen, onClose, onUpload }) {
         e.preventDefault();
         e.stopPropagation();
         setDragActive(false);
+        setErrorMessage("");
 
-        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            const files = Array.from(e.dataTransfer.files);
-            setSelectedFiles(prev => [...prev, ...files]);
+        const items = e.dataTransfer.items;
+        if (!items) return;
+
+        const newFiles = [];
+        let folderDetected = false;
+
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+
+            if (item.kind === "file") {
+                const entry = item.webkitGetAsEntry?.();
+
+                if (entry && entry.isDirectory) {
+                    folderDetected = true;
+                    continue;
+                }
+
+                const file = item.getAsFile();
+                if (file) newFiles.push(file);
+            }
+        }
+
+        if (folderDetected) {
+            setErrorMessage(
+                "No se pueden subir carpetas. Solo archivos individuales.",
+            );
+        }
+
+        if (newFiles.length > 0) {
+            setSelectedFiles((prev) => [...prev, ...newFiles]);
         }
     };
 
     const handleRemoveFile = (index) => {
-        setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+        setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
     };
 
     const handleSubmit = async () => {
         if (selectedFiles.length === 0) return;
 
         if (hasExpiry && !expiryDate) {
-            alert('Por favor selecciona una fecha de caducidad');
+            alert("Por favor selecciona una fecha de caducidad");
             return;
         }
 
@@ -51,7 +85,7 @@ export default function UploadModal({ isOpen, onClose, onUpload }) {
 
         try {
             let successCount = 0;
-            
+
             // Subir archivos uno por uno
             for (const file of selectedFiles) {
                 const success = await onUpload(file, hasExpiry, expiryDate);
@@ -59,60 +93,68 @@ export default function UploadModal({ isOpen, onClose, onUpload }) {
                     successCount++;
                 }
             }
-            
+
             // Limpiar y cerrar
             setSelectedFiles([]);
             setHasExpiry(false);
-            setExpiryDate('');
-            onClose(true); // ✅ Pasar true para indicar que se subieron archivos
+            setExpiryDate("");
+            onClose(true);
         } catch (error) {
-            console.error('Error uploading files:', error);
+            console.error("Error uploading files:", error);
         } finally {
             setUploading(false);
         }
     };
 
     const formatFileSize = (bytes) => {
-        if (!bytes) return '0 B';
-        const sizes = ['B', 'KB', 'MB', 'GB'];
+        if (!bytes) return "0 B";
+        const sizes = ["B", "KB", "MB", "GB"];
         const i = Math.floor(Math.log(bytes) / Math.log(1024));
-        return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+        return (
+            Math.round((bytes / Math.pow(1024, i)) * 100) / 100 + " " + sizes[i]
+        );
     };
 
     const handleClose = () => {
         if (!uploading) {
             setSelectedFiles([]);
             setHasExpiry(false);
-            setExpiryDate('');
-            onClose(false); // ✅ Pasar false para indicar cancelación
+            setExpiryDate("");
+            onClose(false);
         }
     };
 
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col border border-slate-200">
                 {/* Header */}
-                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <div className="px-6 py-5 border-b border-slate-200">
                     <div className="flex items-center justify-between">
-                        <h3 className="text-xl font-semibold text-gray-800 dark:text-white">
-                            Subir Archivos
-                        </h3>
+                        <div>
+                            <h3 className="text-2xl font-bold text-slate-800">
+                                Subir Archivos
+                            </h3>
+                            <p className="text-sm text-slate-500 mt-1">
+                                Añade documentos al Drive empresarial
+                            </p>
+                        </div>
+
                         <button
                             onClick={handleClose}
                             disabled={uploading}
-                            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
+                            className="w-10 h-10 flex items-center justify-center rounded-2xl hover:bg-slate-100 transition disabled:opacity-50"
                         >
-                            <i className="mgc_close_line text-xl text-gray-600 dark:text-gray-400"></i>
+                            <i className="mgc_close_line text-xl text-slate-500"></i>
                         </button>
                     </div>
                 </div>
 
                 {/* Body */}
-                <div className="flex-1 overflow-y-auto px-6 py-4">
-                    {/* Selector de archivos con Drag & Drop */}
-                    <div className="mb-6">
+                <div className="flex-1 overflow-y-auto px-6 py-6 space-y-8">
+                    {/* Drag & Drop */}
+                    <div>
                         <input
                             ref={fileInputRef}
                             type="file"
@@ -121,71 +163,94 @@ export default function UploadModal({ isOpen, onClose, onUpload }) {
                             className="hidden"
                             disabled={uploading}
                         />
+
                         <div
                             onDragEnter={handleDrag}
                             onDragLeave={handleDrag}
                             onDragOver={handleDrag}
                             onDrop={handleDrop}
-                            onClick={() => !uploading && fileInputRef.current?.click()}
+                            onClick={() =>
+                                !uploading && fileInputRef.current?.click()
+                            }
                             className={`
-                                w-full border-2 border-dashed rounded-lg p-8 transition-all cursor-pointer
-                                ${dragActive 
-                                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
-                                    : 'border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500'
-                                }
-                                ${uploading ? 'opacity-50 cursor-not-allowed' : ''}
-                            `}
+                        w-full border-2 border-dashed rounded-3xl p-10 transition-all cursor-pointer
+                        ${
+                            dragActive
+                                ? "border-indigo-500 bg-indigo-50"
+                                : "border-slate-300 hover:border-indigo-400"
+                        }
+                        ${uploading ? "opacity-50 cursor-not-allowed" : ""}
+                    `}
                         >
                             <div className="text-center">
-                                <i className={`
-                                    mgc_upload_line text-5xl mb-3 block transition-colors
-                                    ${dragActive 
-                                        ? 'text-blue-500' 
-                                        : 'text-gray-400 dark:text-gray-500'
-                                    }
-                                `}></i>
-                                <p className="text-gray-600 dark:text-gray-400 font-medium">
-                                    {dragActive 
-                                        ? 'Suelta los archivos aquí' 
-                                        : 'Click para seleccionar archivos'
-                                    }
+                                <i
+                                    className={`
+                                mgc_upload_line text-6xl mb-4 block transition-colors
+                                ${
+                                    dragActive
+                                        ? "text-indigo-500"
+                                        : "text-slate-400"
+                                }
+                            `}
+                                ></i>
+
+                                <p className="text-slate-700 font-semibold">
+                                    {dragActive
+                                        ? "Suelta los archivos aquí"
+                                        : "Haz click para seleccionar archivos"}
                                 </p>
-                                <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
-                                    o arrastra y suelta aquí
+
+                                <p className="text-sm text-slate-500 mt-2">
+                                    o arrastra y suéltalos en esta área
                                 </p>
                             </div>
                         </div>
                     </div>
+                    {errorMessage && (
+                        <div className="mt-4 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-sm">
+                            <div className="flex items-start gap-2">
+                                <i className="mgc_warning_line text-lg mt-0.5"></i>
+                                <span>{errorMessage}</span>
+                            </div>
+                        </div>
+                    )}
 
-                    {/* Lista de archivos seleccionados */}
+                    {/* Lista de archivos */}
                     {selectedFiles.length > 0 && (
-                        <div className="mb-6">
-                            <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                        <div>
+                            <h4 className="text-sm font-semibold text-slate-700 mb-4">
                                 Archivos seleccionados ({selectedFiles.length})
                             </h4>
-                            <div className="space-y-2 max-h-48 overflow-y-auto">
+
+                            <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
                                 {selectedFiles.map((file, index) => (
                                     <div
                                         key={index}
-                                        className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                                        className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-2xl"
                                     >
                                         <div className="flex items-center gap-3 flex-1 min-w-0">
-                                            <i className="mgc_file_line text-xl text-gray-500 dark:text-gray-400 flex-shrink-0"></i>
+                                            <div className="w-10 h-10 rounded-xl bg-slate-200 flex items-center justify-center">
+                                                <i className="mgc_file_line text-lg text-slate-500"></i>
+                                            </div>
+
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
+                                                <p className="text-sm font-medium text-slate-700 truncate">
                                                     {file.name}
                                                 </p>
-                                                <p className="text-xs text-gray-500 dark:text-gray-500">
+                                                <p className="text-xs text-slate-500">
                                                     {formatFileSize(file.size)}
                                                 </p>
                                             </div>
                                         </div>
+
                                         <button
-                                            onClick={() => handleRemoveFile(index)}
+                                            onClick={() =>
+                                                handleRemoveFile(index)
+                                            }
                                             disabled={uploading}
-                                            className="p-1 hover:bg-red-100 dark:hover:bg-red-900/20 rounded transition-colors disabled:opacity-50"
+                                            className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-rose-50 transition disabled:opacity-50"
                                         >
-                                            <i className="mgc_close_line text-red-600"></i>
+                                            <i className="mgc_close_line text-rose-600"></i>
                                         </button>
                                     </div>
                                 ))}
@@ -193,8 +258,8 @@ export default function UploadModal({ isOpen, onClose, onUpload }) {
                         </div>
                     )}
 
-                    {/* Opciones de caducidad */}
-                    <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                    {/* Caducidad */}
+                    <div className="border-t border-slate-200 pt-6">
                         <div className="flex items-center gap-3 mb-4">
                             <input
                                 type="checkbox"
@@ -202,31 +267,36 @@ export default function UploadModal({ isOpen, onClose, onUpload }) {
                                 checked={hasExpiry}
                                 onChange={(e) => setHasExpiry(e.target.checked)}
                                 disabled={uploading}
-                                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                className="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                             />
                             <label
                                 htmlFor="hasExpiry"
-                                className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer"
+                                className="text-sm font-medium text-slate-700 cursor-pointer"
                             >
                                 Estos archivos tienen fecha de caducidad
                             </label>
                         </div>
 
                         {hasExpiry && (
-                            <div className="ml-7 animate-fade-in">
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <div className="ml-8 space-y-3">
+                                <label className="block text-sm font-medium text-slate-700">
                                     Fecha de caducidad
                                 </label>
+
                                 <input
                                     type="date"
                                     value={expiryDate}
-                                    onChange={(e) => setExpiryDate(e.target.value)}
+                                    onChange={(e) =>
+                                        setExpiryDate(e.target.value)
+                                    }
                                     disabled={uploading}
-                                    min={new Date().toISOString().split('T')[0]}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white disabled:opacity-50"
+                                    min={new Date().toISOString().split("T")[0]}
+                                    className="w-full px-4 py-3 border border-slate-300 rounded-2xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-sm disabled:opacity-50"
                                 />
-                                <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                                    Esta fecha se aplicará a todos los archivos seleccionados
+
+                                <p className="text-xs text-slate-500">
+                                    Esta fecha se aplicará a todos los archivos
+                                    seleccionados
                                 </p>
                             </div>
                         )}
@@ -234,18 +304,19 @@ export default function UploadModal({ isOpen, onClose, onUpload }) {
                 </div>
 
                 {/* Footer */}
-                <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
+                <div className="px-6 py-5 border-t border-slate-200 flex flex-col sm:flex-row justify-end gap-3">
                     <button
                         onClick={handleClose}
                         disabled={uploading}
-                        className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
+                        className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-white border border-slate-300 text-slate-600 font-medium hover:bg-slate-100 transition-all disabled:opacity-50"
                     >
                         Cancelar
                     </button>
+
                     <button
                         onClick={handleSubmit}
                         disabled={selectedFiles.length === 0 || uploading}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-semibold shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                         {uploading ? (
                             <>
@@ -255,7 +326,10 @@ export default function UploadModal({ isOpen, onClose, onUpload }) {
                         ) : (
                             <>
                                 <i className="mgc_upload_line"></i>
-                                Subir {selectedFiles.length} {selectedFiles.length === 1 ? 'archivo' : 'archivos'}
+                                Subir {selectedFiles.length}{" "}
+                                {selectedFiles.length === 1
+                                    ? "archivo"
+                                    : "archivos"}
                             </>
                         )}
                     </button>

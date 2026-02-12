@@ -23,7 +23,8 @@ export default function FolderItem({ folder, onClick, onDelete, onRename }) {
         };
 
         document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
+        return () =>
+            document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
     useEffect(() => {
@@ -82,16 +83,24 @@ export default function FolderItem({ folder, onClick, onDelete, onRename }) {
             link.remove();
             window.URL.revokeObjectURL(url);
 
-            showSuccess(`Archivos de "${folder.nombre}" descargados exitosamente`);
+            showSuccess(
+                `Archivos de "${folder.nombre}" descargados exitosamente`,
+            );
         } catch (error) {
             console.error("Error downloading folder:", error);
-            
+
             if (error.response?.status === 422) {
-                showWarning(error.response.data.message || "Esta carpeta no contiene archivos");
-            } else if (error.code === 'ECONNABORTED') {
+                showWarning(
+                    error.response.data.message ||
+                        "Esta carpeta no contiene archivos",
+                );
+            } else if (error.code === "ECONNABORTED") {
                 showError("La descarga tardó demasiado tiempo");
             } else {
-                showError(error.response?.data?.message || "Error al descargar la carpeta");
+                showError(
+                    error.response?.data?.message ||
+                        "Error al descargar la carpeta",
+                );
             }
         } finally {
             setDownloading(false);
@@ -102,12 +111,24 @@ export default function FolderItem({ folder, onClick, onDelete, onRename }) {
         <>
             <div className="relative group">
                 <div
-                    className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-blue-400 hover:shadow-md transition-all cursor-pointer bg-white dark:bg-gray-800"
+                    className="
+                relative
+                border border-slate-200
+                rounded-2xl
+                p-5
+                bg-white
+                hover:border-indigo-400
+                hover:shadow-lg
+                transition-all
+                cursor-pointer
+            "
                     onDoubleClick={onClick}
                 >
-                    <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-start justify-between mb-4">
                         <div className="flex-1" onClick={onClick}>
-                            <i className="mgc_folder_fill text-5xl text-yellow-500"></i>
+                            <div className="w-14 h-14 rounded-2xl bg-amber-100 flex items-center justify-center">
+                                <i className="mgc_folder_fill text-4xl text-amber-500"></i>
+                            </div>
                         </div>
 
                         {/* Menu Button */}
@@ -117,66 +138,91 @@ export default function FolderItem({ folder, onClick, onDelete, onRename }) {
                                     e.stopPropagation();
                                     setShowMenu(!showMenu);
                                 }}
-                                className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="
+                            w-9 h-9
+                            flex items-center justify-center
+                            rounded-xl
+                            hover:bg-slate-100
+                            opacity-0 group-hover:opacity-100
+                            transition
+                        "
                             >
-                                <i className="mgc_more_2_fill text-gray-600 dark:text-gray-400"></i>
+                                <i className="mgc_more_2_fill text-slate-500"></i>
                             </button>
 
                             {/* Dropdown Menu */}
                             {showMenu && (
-                                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-10">
+                                <div
+                                    className="
+                                absolute right-0 top-10
+                                w-52
+                                bg-white
+                                rounded-2xl
+                                shadow-2xl
+                                border border-slate-200
+                                py-2
+                                z-50
+                            "
+                                >
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             onClick();
                                             setShowMenu(false);
                                         }}
-                                        className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                                        className="w-full text-left px-4 py-2.5 hover:bg-slate-50 flex items-center gap-2 text-sm"
                                     >
                                         <i className="mgc_folder_open_line"></i>
                                         Abrir
                                     </button>
+
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             setIsRenaming(true);
                                             setShowMenu(false);
                                         }}
-                                        className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                                        className="w-full text-left px-4 py-2.5 hover:bg-slate-50 flex items-center gap-2 text-sm"
                                     >
                                         <i className="mgc_edit_line"></i>
                                         Renombrar
                                     </button>
-                                    <hr className="my-1 border-gray-200 dark:border-gray-700" />
+
+                                    <div className="my-2 border-t border-slate-200"></div>
+
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             handleDownloadFolder();
                                         }}
-                                        className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                                        className="w-full text-left px-4 py-2.5 hover:bg-slate-50 flex items-center gap-2 text-sm"
                                     >
                                         <i className="mgc_download_line"></i>
                                         Descargar archivos
                                     </button>
-                                    <hr className="my-1 border-gray-200 dark:border-gray-700" />
+
+                                    <div className="my-2 border-t border-slate-200"></div>
+
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             handleCut();
                                         }}
-                                        className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                                        className="w-full text-left px-4 py-2.5 hover:bg-slate-50 flex items-center gap-2 text-sm"
                                     >
                                         <i className="mgc_scissors_line"></i>
                                         Cortar
                                     </button>
-                                    <hr className="my-1 border-gray-200 dark:border-gray-700" />
+
+                                    <div className="my-2 border-t border-slate-200"></div>
+
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             onDelete();
                                             setShowMenu(false);
                                         }}
-                                        className="w-full text-left px-4 py-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 flex items-center gap-2"
+                                        className="w-full text-left px-4 py-2.5 hover:bg-rose-50 text-rose-600 flex items-center gap-2 text-sm"
                                     >
                                         <i className="mgc_delete_line"></i>
                                         Eliminar
@@ -197,14 +243,21 @@ export default function FolderItem({ folder, onClick, onDelete, onRename }) {
                                 onBlur={handleRename}
                                 onKeyDown={handleKeyDown}
                                 onClick={(e) => e.stopPropagation()}
-                                className="w-full px-2 py-1 text-sm border border-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                                className="
+                            w-full px-3 py-2 text-sm
+                            border border-indigo-500
+                            rounded-xl
+                            focus:outline-none
+                            focus:ring-2 focus:ring-indigo-500
+                        "
                             />
                         ) : (
-                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
+                            <p className="text-sm font-semibold text-slate-700 truncate">
                                 {folder.nombre}
                             </p>
                         )}
-                        <p className="text-xs text-gray-500 mt-1">
+
+                        <p className="text-xs text-slate-500 mt-1">
                             {new Date(folder.created_at).toLocaleDateString()}
                         </p>
                     </div>
@@ -212,10 +265,7 @@ export default function FolderItem({ folder, onClick, onDelete, onRename }) {
             </div>
 
             {/* Modal de descarga */}
-            <DownloadModal
-                isOpen={downloading}
-                folderName={folder.nombre}
-            />
+            <DownloadModal isOpen={downloading} folderName={folder.nombre} />
         </>
     );
 }

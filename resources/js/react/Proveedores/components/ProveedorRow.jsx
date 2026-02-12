@@ -1,40 +1,37 @@
-// resources/js/react/Clientes/components/ClienteRow.jsx
+// resources/js/react/Proveedores/components/ProveedorRow.jsx
 import React from "react";
 
-export default function ClienteRow({ cliente, onEditar, onEliminar }) {
+export default function ProveedorRow({ proveedor, onEditar, onEliminar }) {
     const getTodosLosTelefonos = () => {
         const telefonos = [];
 
-        // Teléfono principal (string)
-        if (cliente.telefono) {
+        // Teléfono principal
+        if (proveedor.telefono) {
             telefonos.push({
-                numero: cliente.telefono,
+                numero: proveedor.telefono,
                 etiqueta: "Principal",
             });
         }
 
         // Teléfonos adicionales
-        if (cliente.telefonos && Array.isArray(cliente.telefonos)) {
-            cliente.telefonos.forEach((t) => {
-                if (typeof t === "string") {
-                    telefonos.push({
-                        numero: t,
-                        etiqueta: "",
-                    });
-                } else if (t?.numero) {
-                    telefonos.push(t);
+        if (proveedor.telefonos && Array.isArray(proveedor.telefonos)) {
+            proveedor.telefonos.forEach((tel) => {
+                if (typeof tel === "string") {
+                    telefonos.push({ numero: tel, etiqueta: "" });
+                } else if (tel.numero) {
+                    telefonos.push(tel);
                 }
             });
         }
 
-        return telefonos;
+        return telefonos.filter((t) => t.numero);
     };
 
     const getTodosLosEmails = () => {
         const emails = [];
-        if (cliente.email) emails.push(cliente.email);
-        if (cliente.emails && Array.isArray(cliente.emails)) {
-            emails.push(...cliente.emails);
+        if (proveedor.email) emails.push(proveedor.email);
+        if (proveedor.emails && Array.isArray(proveedor.emails)) {
+            emails.push(...proveedor.emails);
         }
         return emails.filter(Boolean);
     };
@@ -42,48 +39,68 @@ export default function ClienteRow({ cliente, onEditar, onEliminar }) {
     const telefonos = getTodosLosTelefonos();
     const emails = getTodosLosEmails();
 
+    const getTipoBadge = (tipo) => {
+        const tipos = {
+            servicios:
+                "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+            productos:
+                "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+            mixto: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+        };
+        return (
+            tipos[tipo] ||
+            "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400"
+        );
+    };
+
     return (
         <tr className="group hover:bg-slate-50 transition-colors duration-150">
             {/* Nombre */}
             <td className="px-6 py-4 align-top">
                 <div className="font-semibold text-slate-800">
-                    {cliente.nombre}
+                    {proveedor.nombre}
                 </div>
-                {cliente.descripcion && (
-                    <div className="text-xs text-slate-500 mt-1 line-clamp-2 lg:hidden leading-relaxed">
-                        {cliente.descripcion}
+                {proveedor.direccion && (
+                    <div className="text-xs text-slate-500 mt-1 line-clamp-1 lg:hidden leading-relaxed">
+                        {proveedor.direccion}
                     </div>
                 )}
             </td>
 
             {/* CIF */}
             <td className="px-6 py-4 text-slate-600 align-top">
-                {cliente.cif || "—"}
+                {proveedor.cif || "—"}
             </td>
 
-            {/* Teléfonos */}
+            {/* Teléfonos con etiquetas */}
             <td className="px-6 py-4 align-top">
-                <div className="space-y-1">
+                <div className="space-y-2">
                     {telefonos.length > 0 ? (
                         <>
-                            <div className="font-medium text-slate-800">
-                                {telefonos[0].numero}
-                                {telefonos[0].etiqueta && (
-                                    <span className="text-xs text-slate-500 ml-2">
-                                        ({telefonos[0].etiqueta})
+                            {telefonos[0] && (
+                                <div className="flex items-center gap-2">
+                                    <span className="font-medium text-slate-800">
+                                        {telefonos[0].numero}
                                     </span>
-                                )}
-                            </div>
+                                    {telefonos[0].etiqueta && (
+                                        <span className="px-2.5 py-0.5 text-xs font-semibold bg-cyan-100 text-cyan-700 rounded-full">
+                                            {telefonos[0].etiqueta}
+                                        </span>
+                                    )}
+                                </div>
+                            )}
 
                             {telefonos.slice(1).map((tel, index) => (
                                 <div
                                     key={index}
-                                    className="text-xs text-slate-500"
+                                    className="flex items-center gap-2"
                                 >
-                                    {tel.numero}
+                                    <span className="text-xs text-slate-500">
+                                        {tel.numero}
+                                    </span>
                                     {tel.etiqueta && (
-                                        <span className="ml-1">
-                                            ({tel.etiqueta})
+                                        <span className="px-2 py-0.5 text-xs font-medium bg-slate-100 text-slate-600 rounded-full">
+                                            {tel.etiqueta}
                                         </span>
                                     )}
                                 </div>
@@ -118,9 +135,16 @@ export default function ClienteRow({ cliente, onEditar, onEliminar }) {
                 </div>
             </td>
 
-            {/* Dirección - oculta en móvil */}
-            <td className="px-6 py-4 text-slate-600 hidden lg:table-cell max-w-xs align-top">
-                <div className="truncate">{cliente.direccion || "—"}</div>
+            {/* Tipo - oculta en móvil */}
+            <td className="px-6 py-4 hidden xl:table-cell align-top">
+                {proveedor.tipo && (
+                    <span
+                        className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full ${getTipoBadge(proveedor.tipo)}`}
+                    >
+                        {proveedor.tipo.charAt(0).toUpperCase() +
+                            proveedor.tipo.slice(1)}
+                    </span>
+                )}
             </td>
 
             {/* Activo */}
@@ -129,13 +153,13 @@ export default function ClienteRow({ cliente, onEditar, onEliminar }) {
                     className={`
                 inline-flex items-center justify-center px-3 py-1 text-xs font-semibold rounded-full
                 ${
-                    cliente.activo
+                    proveedor.activo
                         ? "bg-emerald-100 text-emerald-700"
                         : "bg-rose-100 text-rose-600"
                 }
             `}
                 >
-                    {cliente.activo ? "Activo" : "Inactivo"}
+                    {proveedor.activo ? "Activo" : "Inactivo"}
                 </span>
             </td>
 
@@ -143,7 +167,7 @@ export default function ClienteRow({ cliente, onEditar, onEliminar }) {
             <td className="px-6 py-4 align-top">
                 <div className="flex justify-end gap-2 opacity-80 group-hover:opacity-100 transition">
                     <button
-                        onClick={() => onEditar(cliente)}
+                        onClick={() => onEditar(proveedor)}
                         className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all"
                         title="Editar"
                     >
@@ -151,7 +175,7 @@ export default function ClienteRow({ cliente, onEditar, onEliminar }) {
                     </button>
 
                     <button
-                        onClick={() => onEliminar(cliente)}
+                        onClick={() => onEliminar(proveedor)}
                         className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-all"
                         title="Eliminar"
                     >

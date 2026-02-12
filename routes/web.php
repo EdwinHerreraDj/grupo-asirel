@@ -32,13 +32,15 @@ use App\Http\Controllers\FacturaSeriesController;
 use App\Http\Controllers\PresupuestoVentaController;
 use App\Http\Controllers\Api\Drive\FolderController;
 use App\Http\Controllers\Api\Drive\FileController as ApiFileController;
+use App\Http\Controllers\Api\ProveedorController as ApiProveedorController;
 use App\Http\Controllers\Api\Drive\SearchController;
 use App\Models\File;
+use Spatie\FlareClient\Api;
 
 /* Drive React (API-style, session-based) */
 
 Route::middleware('auth')->prefix('api')->group(function () {
-    
+
     /* Clientes API */
     Route::get('clientes', [ApiClienteController::class, 'index']);
     Route::post('clientes', [ApiClienteController::class, 'store']);
@@ -46,9 +48,16 @@ Route::middleware('auth')->prefix('api')->group(function () {
     Route::put('clientes/{id}', [ApiClienteController::class, 'update']);
     Route::delete('clientes/{id}', [ApiClienteController::class, 'destroy']);
 
+    /* Rutas para proveedores */
+    Route::get('proveedores', [ApiProveedorController::class, 'index']);
+    Route::post('proveedores', [ApiProveedorController::class, 'store']);
+    Route::get('proveedores/{id}', [ApiProveedorController::class, 'show']);
+    Route::put('proveedores/{id}', [ApiProveedorController::class, 'update']);
+    Route::delete('proveedores/{id}', [ApiProveedorController::class, 'destroy']);
+
     /* Buscador de folder files */
     Route::get('drive/search', [SearchController::class, 'search'])->name('api.drive.search');
-    
+
     /* Rutas de folder Componentes DRIVE */
     Route::prefix('folders')->group(function () {
         Route::get('{id}/content', [FolderController::class, 'getContent']);

@@ -1,16 +1,17 @@
 <?php
+// app/Http/Controllers/Api/ProveedorController.php
 
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Cliente;
+use App\Models\Proveedor;
 use Illuminate\Http\Request;
 
-class ClienteController extends Controller
+class ProveedorController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Cliente::query();
+        $query = Proveedor::query();
 
         // Filtro de búsqueda
         if ($request->has('search') && $request->search != '') {
@@ -28,11 +29,16 @@ class ClienteController extends Controller
             $query->where('activo', $request->filtroActivo);
         }
 
+        // Filtro de tipo
+        if ($request->has('filtroTipo') && $request->filtroTipo !== '') {
+            $query->where('tipo', $request->filtroTipo);
+        }
+
         // Paginación
-        $clientes = $query->orderBy('nombre', 'asc')
+        $proveedores = $query->orderBy('nombre', 'asc')
             ->paginate(10);
 
-        return response()->json($clientes);
+        return response()->json($proveedores);
     }
 
     public function store(Request $request)
@@ -42,72 +48,72 @@ class ClienteController extends Controller
             'cif' => 'nullable|string|max:20',
             'email' => 'required|email|max:255',
             'telefono' => 'required|string|max:20',
-
             'emails' => 'nullable|array',
             'emails.*' => 'nullable|email|max:255',
-
             'telefonos' => 'nullable|array',
             'telefonos.*.numero' => 'required|string|max:20',
-            'telefonos.*.etiqueta' => 'nullable|string|max:100',
-
+            'telefonos.*.etiqueta' => 'nullable|string|max:50',
             'direccion' => 'nullable|string|max:500',
-            'descripcion' => 'nullable|string|max:1000',
+            'tipo' => 'required|in:servicios,productos,mixto',
             'activo' => 'boolean',
         ]);
 
-        $cliente = Cliente::create($validated);
+        $proveedor = Proveedor::create($validated);
 
         return response()->json([
-            'message' => 'Cliente creado exitosamente',
-            'cliente' => $cliente
+            'message' => 'Proveedor creado exitosamente',
+            'proveedor' => $proveedor
         ], 201);
     }
 
-
     public function show($id)
     {
-        $cliente = Cliente::findOrFail($id);
-        return response()->json($cliente);
+        $proveedor = Proveedor::findOrFail($id);
+        return response()->json($proveedor);
     }
 
     public function update(Request $request, $id)
     {
-        $cliente = Cliente::findOrFail($id);
+        $proveedor = Proveedor::findOrFail($id);
 
         $validated = $request->validate([
             'nombre' => 'required|string|max:255',
             'cif' => 'nullable|string|max:20',
             'email' => 'required|email|max:255',
             'telefono' => 'required|string|max:20',
-
             'emails' => 'nullable|array',
             'emails.*' => 'nullable|email|max:255',
-
             'telefonos' => 'nullable|array',
             'telefonos.*.numero' => 'required|string|max:20',
-            'telefonos.*.etiqueta' => 'nullable|string|max:100',
-
+            'telefonos.*.etiqueta' => 'nullable|string|max:50',
             'direccion' => 'nullable|string|max:500',
-            'descripcion' => 'nullable|string|max:1000',
+            'tipo' => 'required|in:servicios,productos,mixto',
             'activo' => 'boolean',
         ]);
 
-        $cliente->update($validated);
+        $proveedor->update($validated);
 
         return response()->json([
-            'message' => 'Cliente actualizado exitosamente',
-            'cliente' => $cliente
+            'message' => 'Proveedor actualizado exitosamente',
+            'proveedor' => $proveedor
         ]);
     }
 
-
     public function destroy($id)
     {
-        $cliente = Cliente::findOrFail($id);
-        $cliente->delete();
+        $proveedor = Proveedor::findOrFail($id);
+
+        // Verificar si tiene facturas asociadas
+        if ($proveedor->facturas()->count() > 0) {
+            return response()->json([
+                'message' => 'No se puede eliminar el proveedor porque tiene facturas asociadas'
+            ], 422);
+        }
+
+        $proveedor->delete();
 
         return response()->json([
-            'message' => 'Cliente eliminado exitosamente'
+            'message' => 'Proveedor eliminado exitosamente'
         ]);
     }
 }

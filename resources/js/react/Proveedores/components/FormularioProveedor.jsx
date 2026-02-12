@@ -1,14 +1,18 @@
-// resources/js/react/Clientes/components/FormularioCliente.jsx
+// resources/js/react/Proveedores/components/FormularioProveedor.jsx
 import React, { useState, useEffect } from "react";
 
-export default function FormularioCliente({ cliente, onGuardar, onCancelar }) {
+export default function FormularioProveedor({
+    proveedor,
+    onGuardar,
+    onCancelar,
+}) {
     const [formData, setFormData] = useState({
         nombre: "",
         cif: "",
         email: "",
         telefono: "",
         direccion: "",
-        descripcion: "",
+        tipo: "servicios",
         activo: true,
     });
 
@@ -21,26 +25,26 @@ export default function FormularioCliente({ cliente, onGuardar, onCancelar }) {
     const [saving, setSaving] = useState(false);
 
     useEffect(() => {
-        if (cliente) {
+        if (proveedor) {
             setFormData({
-                nombre: cliente.nombre || "",
-                cif: cliente.cif || "",
-                email: cliente.email || "",
-                telefono: cliente.telefono || "",
-                direccion: cliente.direccion || "",
-                descripcion: cliente.descripcion || "",
-                activo: cliente.activo ?? true,
+                nombre: proveedor.nombre || "",
+                cif: proveedor.cif || "",
+                email: proveedor.email || "",
+                telefono: proveedor.telefono || "",
+                direccion: proveedor.direccion || "",
+                tipo: proveedor.tipo || "servicios",
+                activo: proveedor.activo ?? true,
             });
 
             setEmailsAdicionales(
-                cliente.emails && cliente.emails.length > 0
-                    ? cliente.emails
+                proveedor.emails && proveedor.emails.length > 0
+                    ? proveedor.emails
                     : [""],
             );
 
             setTelefonosAdicionales(
-                cliente.telefonos && cliente.telefonos.length > 0
-                    ? cliente.telefonos.map((t) =>
+                proveedor.telefonos && proveedor.telefonos.length > 0
+                    ? proveedor.telefonos.map((t) =>
                           typeof t === "string"
                               ? { numero: t, etiqueta: "" }
                               : t,
@@ -48,7 +52,7 @@ export default function FormularioCliente({ cliente, onGuardar, onCancelar }) {
                     : [{ numero: "", etiqueta: "" }],
             );
         }
-    }, [cliente]);
+    }, [proveedor]);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -56,7 +60,6 @@ export default function FormularioCliente({ cliente, onGuardar, onCancelar }) {
             ...prev,
             [name]: type === "checkbox" ? checked : value,
         }));
-        // Limpiar error del campo
         if (errors[name]) {
             setErrors((prev) => ({ ...prev, [name]: null }));
         }
@@ -92,7 +95,11 @@ export default function FormularioCliente({ cliente, onGuardar, onCancelar }) {
 
     const eliminarTelefono = (index) => {
         const newTelefonos = telefonosAdicionales.filter((_, i) => i !== index);
-        setTelefonosAdicionales(newTelefonos.length > 0 ? newTelefonos : [""]);
+        setTelefonosAdicionales(
+            newTelefonos.length > 0
+                ? newTelefonos
+                : [{ numero: "", etiqueta: "" }],
+        );
     };
 
     const validateForm = () => {
@@ -156,14 +163,16 @@ export default function FormularioCliente({ cliente, onGuardar, onCancelar }) {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-10">
+            {/* Header */}
             <div>
                 <h3 className="text-2xl font-bold text-slate-800">
-                    {cliente ? "Editar Cliente" : "Nuevo Cliente"}
+                    {proveedor ? "Editar Proveedor" : "Nuevo Proveedor"}
                 </h3>
                 <p className="text-sm text-slate-500 mt-1">
-                    Completa la información del cliente
+                    Completa la información general del proveedor
                 </p>
+                <div className="mt-3 h-1 w-14 bg-gradient-to-r from-blue-600 to-cyan-400 rounded-full"></div>
             </div>
 
             {/* Información básica */}
@@ -178,12 +187,12 @@ export default function FormularioCliente({ cliente, onGuardar, onCancelar }) {
                         name="nombre"
                         value={formData.nombre}
                         onChange={handleChange}
-                        className={`w-full px-4 py-3 rounded-xl border bg-slate-50 focus:bg-white transition-all shadow-sm ${
+                        className={`w-full px-4 py-3 rounded-2xl border bg-slate-50 focus:bg-white transition-all shadow-sm ${
                             errors.nombre
                                 ? "border-rose-500 focus:ring-2 focus:ring-rose-500"
                                 : "border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         }`}
-                        placeholder="Nombre del cliente"
+                        placeholder="Nombre del proveedor"
                     />
                     {errors.nombre && (
                         <span className="text-rose-500 text-xs mt-1 block">
@@ -202,13 +211,30 @@ export default function FormularioCliente({ cliente, onGuardar, onCancelar }) {
                         name="cif"
                         value={formData.cif}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
+                        className="w-full px-4 py-3 rounded-2xl border border-slate-300 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
                         placeholder="A12345678"
                     />
                 </div>
 
-                {/* Email Principal */}
+                {/* Tipo */}
                 <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                        Tipo de proveedor
+                    </label>
+                    <select
+                        name="tipo"
+                        value={formData.tipo}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 rounded-2xl border border-slate-300 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
+                    >
+                        <option value="servicios">Servicios</option>
+                        <option value="productos">Productos</option>
+                        <option value="mixto">Mixto</option>
+                    </select>
+                </div>
+
+                {/* Email Principal */}
+                <div className="md:col-span-2">
                     <label className="block text-sm font-semibold text-slate-700 mb-2">
                         Email Principal <span className="text-rose-500">*</span>
                     </label>
@@ -217,7 +243,7 @@ export default function FormularioCliente({ cliente, onGuardar, onCancelar }) {
                         name="email"
                         value={formData.email}
                         onChange={handleChange}
-                        className={`w-full px-4 py-3 rounded-xl border bg-slate-50 focus:bg-white transition-all shadow-sm ${
+                        className={`w-full px-4 py-3 rounded-2xl border bg-slate-50 focus:bg-white transition-all shadow-sm ${
                             errors.email
                                 ? "border-rose-500 focus:ring-2 focus:ring-rose-500"
                                 : "border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -233,15 +259,15 @@ export default function FormularioCliente({ cliente, onGuardar, onCancelar }) {
             </div>
 
             {/* Emails Adicionales */}
-            <div>
-                <div className="flex justify-between items-center mb-3">
+            <div className="bg-slate-50/60 border border-slate-200 rounded-2xl p-5">
+                <div className="flex justify-between items-center mb-4">
                     <label className="text-sm font-semibold text-slate-700">
                         Emails Adicionales
                     </label>
                     <button
                         type="button"
                         onClick={agregarEmail}
-                        className="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1 transition"
+                        className="text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition"
                     >
                         <i className="mgc_add_line"></i> Agregar
                     </button>
@@ -260,7 +286,7 @@ export default function FormularioCliente({ cliente, onGuardar, onCancelar }) {
                                     )
                                 }
                                 placeholder="email@ejemplo.com"
-                                className={`flex-1 px-4 py-3 rounded-xl border bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm ${
+                                className={`flex-1 px-4 py-3 rounded-2xl border bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm ${
                                     errors[`email_${index}`]
                                         ? "border-rose-500"
                                         : "border-slate-300"
@@ -270,7 +296,7 @@ export default function FormularioCliente({ cliente, onGuardar, onCancelar }) {
                                 <button
                                     type="button"
                                     onClick={() => eliminarEmail(index)}
-                                    className="w-11 h-11 flex items-center justify-center rounded-xl border border-slate-200 text-rose-600 hover:bg-rose-50 transition"
+                                    className="w-11 h-11 flex items-center justify-center rounded-2xl border border-slate-200 text-rose-600 hover:bg-rose-50 transition"
                                 >
                                     <i className="mgc_delete_line text-lg"></i>
                                 </button>
@@ -290,7 +316,7 @@ export default function FormularioCliente({ cliente, onGuardar, onCancelar }) {
                     name="telefono"
                     value={formData.telefono}
                     onChange={handleChange}
-                    className={`w-full px-4 py-3 rounded-xl border bg-slate-50 focus:bg-white transition-all shadow-sm ${
+                    className={`w-full px-4 py-3 rounded-2xl border bg-slate-50 focus:bg-white transition-all shadow-sm ${
                         errors.telefono
                             ? "border-rose-500 focus:ring-2 focus:ring-rose-500"
                             : "border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -305,15 +331,15 @@ export default function FormularioCliente({ cliente, onGuardar, onCancelar }) {
             </div>
 
             {/* Teléfonos Adicionales */}
-            <div>
-                <div className="flex justify-between items-center mb-3">
+            <div className="bg-slate-50/60 border border-slate-200 rounded-2xl p-5">
+                <div className="flex justify-between items-center mb-4">
                     <label className="text-sm font-semibold text-slate-700">
                         Teléfonos Adicionales
                     </label>
                     <button
                         type="button"
                         onClick={agregarTelefono}
-                        className="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1 transition"
+                        className="text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition"
                     >
                         <i className="mgc_add_line"></i> Agregar
                     </button>
@@ -336,7 +362,7 @@ export default function FormularioCliente({ cliente, onGuardar, onCancelar }) {
                                     )
                                 }
                                 placeholder="Número"
-                                className="flex-1 px-4 py-3 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
+                                className="flex-1 px-4 py-3 rounded-2xl border border-slate-300 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
                             />
 
                             <input
@@ -350,14 +376,14 @@ export default function FormularioCliente({ cliente, onGuardar, onCancelar }) {
                                     )
                                 }
                                 placeholder="Etiqueta (Ej: Facturación)"
-                                className="sm:w-52 px-4 py-3 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
+                                className="sm:w-52 px-4 py-3 rounded-2xl border border-slate-300 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
                             />
 
                             {telefonosAdicionales.length > 1 && (
                                 <button
                                     type="button"
                                     onClick={() => eliminarTelefono(index)}
-                                    className="w-11 h-11 flex items-center justify-center rounded-xl border border-slate-200 text-rose-600 hover:bg-rose-50 transition"
+                                    className="w-11 h-11 flex items-center justify-center rounded-2xl border border-slate-200 text-rose-600 hover:bg-rose-50 transition"
                                 >
                                     <i className="mgc_delete_line text-lg"></i>
                                 </button>
@@ -377,23 +403,8 @@ export default function FormularioCliente({ cliente, onGuardar, onCancelar }) {
                     value={formData.direccion}
                     onChange={handleChange}
                     rows="2"
-                    className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
+                    className="w-full px-4 py-3 rounded-2xl border border-slate-300 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
                     placeholder="Dirección completa"
-                />
-            </div>
-
-            {/* Descripción */}
-            <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Descripción
-                </label>
-                <textarea
-                    name="descripcion"
-                    value={formData.descripcion}
-                    onChange={handleChange}
-                    rows="3"
-                    className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
-                    placeholder="Información adicional del cliente"
                 />
             </div>
 
@@ -411,7 +422,7 @@ export default function FormularioCliente({ cliente, onGuardar, onCancelar }) {
                     htmlFor="activo"
                     className="text-sm font-medium text-slate-700"
                 >
-                    Cliente activo
+                    Proveedor activo
                 </label>
             </div>
 
@@ -420,7 +431,7 @@ export default function FormularioCliente({ cliente, onGuardar, onCancelar }) {
                 <button
                     type="button"
                     onClick={onCancelar}
-                    className="w-full sm:w-auto px-5 py-3 rounded-xl bg-white border border-slate-300 text-slate-600 font-medium hover:bg-slate-100 transition-all"
+                    className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-white border border-slate-300 text-slate-600 font-medium hover:bg-slate-100 transition-all"
                     disabled={saving}
                 >
                     Cancelar
@@ -429,7 +440,7 @@ export default function FormularioCliente({ cliente, onGuardar, onCancelar }) {
                 <button
                     type="submit"
                     disabled={saving}
-                    className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                     {saving ? (
                         <>
@@ -439,7 +450,7 @@ export default function FormularioCliente({ cliente, onGuardar, onCancelar }) {
                     ) : (
                         <>
                             <i className="mgc_save_line"></i>
-                            {cliente ? "Actualizar" : "Guardar"}
+                            {proveedor ? "Actualizar" : "Guardar"}
                         </>
                     )}
                 </button>

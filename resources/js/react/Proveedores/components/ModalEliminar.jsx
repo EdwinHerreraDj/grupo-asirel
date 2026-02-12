@@ -1,10 +1,10 @@
-// resources/js/react/Clientes/components/ModalEliminar.jsx
+// resources/js/react/Proveedores/components/ModalEliminar.jsx
 import React from "react";
 
-export default function ModalEliminar({ cliente, onConfirmar, onCancelar }) {
+export default function ModalEliminar({ proveedor, onConfirmar, onCancelar }) {
     return (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
-            <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 p-6 sm:p-8 animate-in fade-in zoom-in-95 duration-200">
+            <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-200 p-6 sm:p-8 animate-in fade-in zoom-in-95 duration-200">
                 {/* Icono */}
                 <div className="flex justify-center mb-6">
                     <div className="w-20 h-20 rounded-full bg-gradient-to-br from-rose-100 to-red-200 flex items-center justify-center shadow-inner">
@@ -14,14 +14,14 @@ export default function ModalEliminar({ cliente, onConfirmar, onCancelar }) {
 
                 {/* Título */}
                 <h3 className="text-2xl font-bold text-slate-800 text-center mb-3">
-                    Eliminar Cliente
+                    Eliminar Proveedor
                 </h3>
 
                 {/* Mensaje */}
                 <p className="text-slate-600 text-center leading-relaxed mb-8">
-                    ¿Estás seguro de que deseas eliminar al cliente{" "}
+                    ¿Estás seguro de que deseas eliminar al proveedor{" "}
                     <strong className="text-rose-600 font-semibold">
-                        {cliente?.nombre}
+                        {proveedor?.nombre}
                     </strong>
                     ?
                     <br />
@@ -34,14 +34,14 @@ export default function ModalEliminar({ cliente, onConfirmar, onCancelar }) {
                 <div className="flex flex-col sm:flex-row gap-3">
                     <button
                         onClick={onCancelar}
-                        className="w-full px-5 py-3 rounded-xl bg-white border border-slate-300 text-slate-600 font-medium hover:bg-slate-100 hover:text-slate-800 transition-all shadow-sm"
+                        className="w-full px-5 py-3 rounded-2xl bg-white border border-slate-300 text-slate-600 font-medium hover:bg-slate-100 transition-all shadow-sm"
                     >
                         Cancelar
                     </button>
 
                     <button
                         onClick={onConfirmar}
-                        className="w-full px-5 py-3 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 text-white font-semibold shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+                        className="w-full px-5 py-3 rounded-2xl bg-gradient-to-r from-rose-600 to-red-600 text-white font-semibold shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
                     >
                         Eliminar
                     </button>

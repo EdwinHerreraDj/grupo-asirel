@@ -1,17 +1,19 @@
-// resources/js/react/Clientes/ClientesLayout.jsx
+// resources/js/react/Proveedores/ProveedoresLayout.jsx
 import React from "react";
-import ClientesTable from "./components/ClientesTable";
-import FormularioCliente from "./components/FormularioCliente";
+import ProveedoresTable from "./components/ProveedoresTable";
+import FormularioProveedor from "./components/FormularioProveedor";
 import ModalEliminar from "./components/ModalEliminar";
 import Filters from "./components/Filters";
 
-export default function ClientesLayout({
-    clientes,
+export default function ProveedoresLayout({
+    proveedores,
     loading,
     search,
     setSearch,
     filtroActivo,
     setFiltroActivo,
+    filtroTipo,
+    setFiltroTipo,
     onAplicarFiltros,
     onLimpiarFiltros,
     onAbrirModalCrear,
@@ -19,12 +21,12 @@ export default function ClientesLayout({
     onAbrirModalEliminar,
     showModal,
     setShowModal,
-    clienteToEdit,
-    onGuardarCliente,
+    proveedorToEdit,
+    onGuardarProveedor,
     showDeleteModal,
     setShowDeleteModal,
-    clienteToDelete,
-    onEliminarCliente,
+    proveedorToDelete,
+    onEliminarProveedor,
     currentPage,
     lastPage,
     total,
@@ -50,17 +52,17 @@ export default function ClientesLayout({
                     className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-xl shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 font-semibold"
                 >
                     <i className="mgc_add_line text-lg"></i>
-                    Nuevo cliente
+                    Nuevo proveedor
                 </button>
             </div>
 
             {/* Título */}
             <div className="mb-6">
                 <h2 className="text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">
-                    Clientes
+                    Proveedores
                 </h2>
                 <p className="text-sm text-slate-500 mt-1">
-                    Gestión y administración de clientes registrados
+                    Gestión y administración de proveedores registrados
                 </p>
                 <div className="mt-3 h-1 w-16 bg-gradient-to-r from-blue-600 to-cyan-400 rounded-full"></div>
             </div>
@@ -72,14 +74,15 @@ export default function ClientesLayout({
                 setSearch={setSearch}
                 filtroActivo={filtroActivo}
                 setFiltroActivo={setFiltroActivo}
+                filtroTipo={filtroTipo}
+                setFiltroTipo={setFiltroTipo}
                 onAplicarFiltros={onAplicarFiltros}
                 onLimpiarFiltros={onLimpiarFiltros}
             />
 
             {/* Tabla */}
-
-            <ClientesTable
-                clientes={clientes}
+            <ProveedoresTable
+                proveedores={proveedores}
                 loading={loading}
                 onEditar={onAbrirModalEditar}
                 onEliminar={onAbrirModalEliminar}
@@ -91,18 +94,18 @@ export default function ClientesLayout({
 
             {/* Modal Formulario */}
             {showModal && (
-                <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
                     <div className="relative bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl border border-slate-200 p-6 sm:p-8 animate-in fade-in zoom-in-95 duration-200">
                         <button
                             onClick={() => setShowModal(false)}
-                            className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-red-100 hover:text-red-600 transition-colors text-xl"
+                            className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-rose-100 hover:text-rose-600 transition-colors text-xl"
                         >
                             ×
                         </button>
 
-                        <FormularioCliente
-                            cliente={clienteToEdit}
-                            onGuardar={onGuardarCliente}
+                        <FormularioProveedor
+                            proveedor={proveedorToEdit}
+                            onGuardar={onGuardarProveedor}
                             onCancelar={() => setShowModal(false)}
                         />
                     </div>
@@ -112,8 +115,8 @@ export default function ClientesLayout({
             {/* Modal Eliminar */}
             {showDeleteModal && (
                 <ModalEliminar
-                    cliente={clienteToDelete}
-                    onConfirmar={onEliminarCliente}
+                    proveedor={proveedorToDelete}
+                    onConfirmar={onEliminarProveedor}
                     onCancelar={() => setShowDeleteModal(false)}
                 />
             )}

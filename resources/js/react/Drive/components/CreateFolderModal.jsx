@@ -33,40 +33,39 @@ export default function CreateFolderModal({ onClose, onSubmit }) {
         <div
             className="
         fixed inset-0 
-        bg-black/70 backdrop-blur-sm
+        bg-slate-900/70 backdrop-blur-sm
         flex items-center justify-center 
         z-50 p-4
-        animate-[fadeIn_.12s_ease-out]
+        animate-[fadeIn_.15s_ease-out]
     "
             onClick={onClose}
         >
             <div
                 className="
             w-full max-w-md
-            bg-white dark:bg-gray-900
-            rounded-2xl
-            border border-gray-200 dark:border-gray-800
-            shadow-[0_25px_70px_-20px_rgba(0,0,0,0.45)]
-            onClick={(e) => e.stopPropagation()}
+            bg-white
+            rounded-3xl
+            border border-slate-200
+            shadow-2xl
         "
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* HEADER */}
-                <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200 dark:border-gray-800">
-                    <div className="flex items-center gap-3">
+                <div className="flex items-center justify-between px-7 py-6 border-b border-slate-200">
+                    <div className="flex items-center gap-4">
                         <div
                             className="
-                    h-10 w-10
-                    rounded-xl
-                    bg-indigo-50
-                    dark:bg-indigo-900/20
-                    flex items-center justify-center
-                "
+                        h-11 w-11
+                        rounded-2xl
+                        bg-gradient-to-br from-indigo-100 to-blue-100
+                        flex items-center justify-center
+                        shadow-inner
+                    "
                         >
                             <i className="mgc_folder_2_fill text-indigo-600 text-xl"></i>
                         </div>
 
-                        <h3 className="text-lg font-semibold tracking-tight text-gray-900 dark:text-white">
+                        <h3 className="text-lg font-semibold tracking-tight text-slate-900">
                             Nueva carpeta
                         </h3>
                     </div>
@@ -74,12 +73,12 @@ export default function CreateFolderModal({ onClose, onSubmit }) {
                     <button
                         onClick={onClose}
                         className="
-                    p-2 rounded-xl
-                    text-gray-500
-                    hover:bg-gray-100
-                    dark:hover:bg-gray-800
-                    hover:text-gray-700
-                    dark:hover:text-gray-300
+                    w-9 h-9
+                    flex items-center justify-center
+                    rounded-2xl
+                    text-slate-500
+                    hover:bg-slate-100
+                    hover:text-slate-700
                     transition
                 "
                     >
@@ -88,9 +87,9 @@ export default function CreateFolderModal({ onClose, onSubmit }) {
                 </div>
 
                 {/* BODY */}
-                <form onSubmit={handleSubmit} className="px-6 py-6">
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <form onSubmit={handleSubmit} className="px-7 py-7">
+                    <div className="space-y-3">
+                        <label className="text-sm font-semibold text-slate-700">
                             Nombre de la carpeta
                         </label>
 
@@ -102,38 +101,41 @@ export default function CreateFolderModal({ onClose, onSubmit }) {
                             onKeyDown={handleKeyDown}
                             placeholder="Ej: Contratos, Facturación, Personal…"
                             className="
-                        w-full px-4 py-2.5
-                        rounded-xl
-                        border border-gray-300 dark:border-gray-700
-                        bg-white dark:bg-gray-800
-                        text-gray-900 dark:text-white
-                        placeholder-gray-400
+                        w-full px-4 py-3
+                        rounded-2xl
+                        border border-slate-300
+                        bg-slate-50
+                        text-slate-900
+                        placeholder-slate-400
                         focus:outline-none
                         focus:ring-2
-                        focus:ring-indigo-500/30
+                        focus:ring-indigo-500
                         focus:border-indigo-500
-                        transition
+                        transition-all
+                        shadow-sm
                     "
                         />
 
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                        <p className="text-xs text-slate-500">
                             Usa nombres claros para facilitar la organización
                             documental.
                         </p>
                     </div>
 
                     {/* FOOTER */}
-                    <div className="flex justify-end gap-3 mt-8">
+                    <div className="flex flex-col sm:flex-row justify-end gap-3 mt-10">
                         <button
                             type="button"
                             onClick={onClose}
                             className="
-                        px-4 py-2.5
-                        rounded-xl
+                        w-full sm:w-auto
+                        px-5 py-2.5
+                        rounded-2xl
                         font-medium
-                        text-gray-700 dark:text-gray-300
-                        hover:bg-gray-100
-                        dark:hover:bg-gray-800
+                        text-slate-600
+                        bg-white
+                        border border-slate-300
+                        hover:bg-slate-100
                         transition
                     "
                         >
@@ -144,15 +146,18 @@ export default function CreateFolderModal({ onClose, onSubmit }) {
                             type="submit"
                             disabled={loading || !folderName.trim()}
                             className="
-                        inline-flex items-center gap-2
-                        px-5 py-2.5
-                        rounded-xl
-                        bg-indigo-600
+                        w-full sm:w-auto
+                        inline-flex items-center justify-center gap-2
+                        px-6 py-2.5
+                        rounded-2xl
+                        bg-gradient-to-r from-indigo-600 to-blue-600
                         text-white
-                        font-medium
-                        hover:bg-indigo-500
-                        transition
-                        shadow-sm
+                        font-semibold
+                        shadow-md
+                        hover:shadow-lg
+                        hover:scale-[1.02]
+                        active:scale-[0.98]
+                        transition-all
                         disabled:opacity-50
                         disabled:cursor-not-allowed
                     "

@@ -17,18 +17,22 @@ export default function UploadButton({ onUpload }) {
             <button
                 onClick={() => setShowModal(true)}
                 className="
-        inline-flex items-center gap-2
-        px-4 py-2.5
-        bg-white
-        text-gray-800
-        border border-gray-300
-        rounded-xl
-        hover:bg-gray-50
-        transition
-        font-medium
-    "
+            inline-flex items-center gap-2
+            px-4 py-2.5
+            rounded-2xl
+            bg-white
+            border border-slate-300
+            text-slate-700
+            font-semibold
+            shadow-sm
+            hover:bg-slate-50
+            hover:border-slate-400
+            hover:shadow
+            active:scale-[0.98]
+            transition-all duration-200
+        "
             >
-                <i className="mgc_upload_line text-lg"></i>
+                <i className="mgc_upload_line text-lg text-indigo-600"></i>
                 Subir archivos
             </button>
 
