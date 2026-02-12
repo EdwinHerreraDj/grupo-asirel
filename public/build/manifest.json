@@ -126,7 +126,7 @@
     "src": "node_modules/tippy.js/dist/tippy.css"
   },
   "resources/css/app.css": {
-    "file": "assets/app-97d4598e.css",
+    "file": "assets/app-90e1fd45.css",
     "isEntry": true,
     "src": "resources/css/app.css"
   },
@@ -400,7 +400,7 @@
     "src": "resources/js/pages/tables-datatable.js"
   },
   "resources/js/react/app.jsx": {
-    "file": "assets/app-4890d0c4.js",
+    "file": "assets/app-6af9d70b.js",
     "imports": [
       "__commonjsHelpers-725317a4.js"
     ],
@@ -421,7 +421,7 @@
     "src": "resources/js/visor-pdf.js"
   },
   "resources/scss/app.scss": {
-    "file": "assets/app-5bde7b11.css",
+    "file": "assets/app-d26cd911.css",
     "isEntry": true,
     "src": "resources/scss/app.scss"
   },
