@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Cliente;
 use Illuminate\Http\Request;
+use Illuminate\Database\QueryException;
 
 class ClienteController extends Controller
 {
@@ -101,13 +102,29 @@ class ClienteController extends Controller
     }
 
 
-    public function destroy($id)
+    public function destroy(Cliente $cliente)
     {
-        $cliente = Cliente::findOrFail($id);
-        $cliente->delete();
+        try {
+            $cliente->delete();
 
-        return response()->json([
-            'message' => 'Cliente eliminado exitosamente'
-        ]);
+            return response()->json([
+                'message' => 'Cliente eliminado correctamente'
+            ], 200);
+        } catch (\Throwable $e) {
+
+            // QueryException de MySQL -> errorInfo[1] = 1451
+            if ($e instanceof QueryException) {
+                if (($e->errorInfo[1] ?? null) === 1451) {
+                    return response()->json([
+                        'message' => 'No se puede eliminar el cliente porque está siendo utilizado en certificaciones u otros documentos.'
+                    ], 409);
+                }
+            }
+
+            // Cualquier otro error real
+            return response()->json([
+                'message' => 'Error al eliminar el cliente.'
+            ], 500);
+        }
     }
 }
