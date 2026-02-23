@@ -400,7 +400,7 @@
     "src": "resources/js/pages/tables-datatable.js"
   },
   "resources/js/react/app.jsx": {
-    "file": "assets/app-6af9d70b.js",
+    "file": "assets/app-d4efdd4a.js",
     "imports": [
       "__commonjsHelpers-725317a4.js"
     ],
@@ -421,7 +421,7 @@
     "src": "resources/js/visor-pdf.js"
   },
   "resources/scss/app.scss": {
-    "file": "assets/app-d26cd911.css",
+    "file": "assets/app-65b76759.css",
     "isEntry": true,
     "src": "resources/scss/app.scss"
   },
