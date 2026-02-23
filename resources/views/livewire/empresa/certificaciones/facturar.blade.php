@@ -142,9 +142,11 @@
                             </p>
                         </div>
 
-                        <button wire:click="cancelarFacturacion"
+                        <button wire:click="cancelarFacturacion" wire:loading.attr="disabled"
+                            wire:target="emitirFactura"
                             class="inline-flex items-center justify-center w-10 h-10 rounded-xl
-                               text-gray-500 hover:text-red-600 hover:bg-red-50 transition">
+           text-gray-500 hover:text-red-600 hover:bg-red-50 transition
+           disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-gray-500">
                             <i class="mgc_close_line text-xl"></i>
                         </button>
                     </div>
@@ -278,18 +280,35 @@
 
                     {{-- Footer --}}
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3 p-5 border-t bg-gray-50">
-                        <x-btns.cancelar wire:click="cancelarFacturacion" class="w-full sm:w-auto">
+                        <x-btns.cancelar wire:click="cancelarFacturacion" wire:loading.attr="disabled"
+                            wire:target="emitirFactura"
+                            class="w-full sm:w-auto disabled:opacity-40 disabled:cursor-not-allowed">
                             Cancelar
                         </x-btns.cancelar>
 
-                        <button wire:click="emitirFactura"
+                        <button wire:click="emitirFactura" wire:loading.attr="disabled" wire:target="emitirFactura"
                             class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl
-                               bg-primary text-white text-sm font-semibold
-                               hover:bg-primary/90 active:scale-[0.98]
-                               focus:outline-none focus:ring-2 focus:ring-primary/40
-                               transition shadow w-full sm:w-auto">
-                            <i class="mgc_check_line text-base"></i>
-                            Emitir factura
+                                bg-primary text-white text-sm font-semibold
+                                hover:bg-primary/90 active:scale-[0.98]
+                                focus:outline-none focus:ring-2 focus:ring-primary/40
+                                transition shadow w-full sm:w-auto
+                                disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100">
+
+                            <span wire:loading.remove wire:target="emitirFactura"
+                                class="inline-flex items-center gap-2">
+                                <i class="mgc_check_line text-base"></i>
+                                Emitir factura
+                            </span>
+
+                            <span wire:loading wire:target="emitirFactura" class="inline-flex items-center gap-2">
+                                <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10"
+                                        stroke="currentColor" stroke-width="4" fill="none"></circle>
+                                    <path class="opacity-75" fill="currentColor"
+                                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                                </svg>
+                                Emitiendo...
+                            </span>
                         </button>
                     </div>
 

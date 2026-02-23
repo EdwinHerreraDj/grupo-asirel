@@ -1,7 +1,7 @@
 // resources/js/react/Clientes/components/ModalEliminar.jsx
 import React from "react";
 
-export default function ModalEliminar({ cliente, onConfirmar, onCancelar }) {
+export default function ModalEliminar({ cliente, errorMessage, onConfirmar, onCancelar }) {
     return (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
             <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 p-6 sm:p-8 animate-in fade-in zoom-in-95 duration-200">
@@ -30,6 +30,12 @@ export default function ModalEliminar({ cliente, onConfirmar, onCancelar }) {
                     </span>
                 </p>
 
+                {errorMessage && (
+                    <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                        {errorMessage}
+                    </div>
+                )}
+
                 {/* Botones */}
                 <div className="flex flex-col sm:flex-row gap-3">
                     <button
@@ -38,7 +44,7 @@ export default function ModalEliminar({ cliente, onConfirmar, onCancelar }) {
                     >
                         Cancelar
                     </button>
-
+                
                     <button
                         onClick={onConfirmar}
                         className="w-full px-5 py-3 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 text-white font-semibold shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"

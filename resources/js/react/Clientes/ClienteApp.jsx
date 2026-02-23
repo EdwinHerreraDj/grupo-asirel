@@ -14,6 +14,7 @@ function ClientesAppContent() {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [clienteToEdit, setClienteToEdit] = useState(null);
     const [clienteToDelete, setClienteToDelete] = useState(null);
+    const [deleteError, setDeleteError] = useState(null);
 
     // Filtros
     const [search, setSearch] = useState("");
@@ -74,6 +75,7 @@ function ClientesAppContent() {
 
     const handleAbrirModalEliminar = (cliente) => {
         setClienteToDelete(cliente);
+        setDeleteError(null);
         setShowDeleteModal(true);
     };
 
@@ -99,16 +101,27 @@ function ClientesAppContent() {
     };
 
     const handleEliminarCliente = async () => {
+        setDeleteError(null);
+
         try {
             await api.delete(`/clientes/${clienteToDelete.id}`);
-            showSuccess("Cliente eliminado exitosamente");
+
             setShowDeleteModal(false);
+            showSuccess("Cliente eliminado correctamente");
             loadClientes(currentPage);
         } catch (error) {
-            console.error("Error deleting cliente:", error);
-            showError(
-                error.response?.data?.message || "Error al eliminar el cliente",
-            );
+            console.log("STATUS", error.response?.status);
+            console.log("DATA", error.response?.data);
+            console.log("HEADERS", error.response?.headers);
+            if (error.response?.status === 409) {
+                setDeleteError(
+                    error.response.data?.message ||
+                        "No se puede eliminar el cliente porque está siendo utilizado.",
+                );
+                return;
+            }
+
+            setDeleteError("Error inesperado del servidor.");
         }
     };
 
@@ -142,6 +155,8 @@ function ClientesAppContent() {
             total={total}
             onPageChange={loadClientes}
             onBack={handleBack}
+            deleteError={deleteError}
+            setDeleteError={setDeleteError}
         />
     );
 }

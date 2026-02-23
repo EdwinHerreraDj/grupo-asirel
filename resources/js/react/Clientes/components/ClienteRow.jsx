@@ -46,33 +46,36 @@ export default function ClienteRow({ cliente, onEditar, onEliminar }) {
         <tr className="group hover:bg-slate-50 transition-colors duration-150">
             {/* Nombre */}
             <td className="px-6 py-4 align-top">
-                <div className="font-semibold text-slate-800">
+                <div className="font-semibold text-slate-800 text-sm sm:text-base leading-tight">
                     {cliente.nombre}
                 </div>
-                {cliente.descripcion && (
-                    <div className="text-xs text-slate-500 mt-1 line-clamp-2 lg:hidden leading-relaxed">
-                        {cliente.descripcion}
-                    </div>
-                )}
+
+                {/* Info secundaria visible en móvil */}
+                <div className="mt-1 space-y-1 lg:hidden text-xs text-slate-500">
+                    {cliente.cif && <div>CIF: {cliente.cif}</div>}
+
+                    {telefonos.length > 0 && (
+                        <div>Tel: {telefonos[0].numero}</div>
+                    )}
+
+                    {cliente.direccion && (
+                        <div className="line-clamp-1">{cliente.direccion}</div>
+                    )}
+                </div>
             </td>
 
             {/* CIF */}
-            <td className="px-6 py-4 text-slate-600 align-top">
+            <td className="hidden sm:table-cell px-6 py-4 text-slate-600 align-top">
                 {cliente.cif || "—"}
             </td>
 
             {/* Teléfonos */}
-            <td className="px-6 py-4 align-top">
+            <td className="hidden md:table-cell px-6 py-4 align-top">
                 <div className="space-y-1">
                     {telefonos.length > 0 ? (
                         <>
                             <div className="font-medium text-slate-800">
                                 {telefonos[0].numero}
-                                {telefonos[0].etiqueta && (
-                                    <span className="text-xs text-slate-500 ml-2">
-                                        ({telefonos[0].etiqueta})
-                                    </span>
-                                )}
                             </div>
 
                             {telefonos.slice(1).map((tel, index) => (
@@ -81,11 +84,6 @@ export default function ClienteRow({ cliente, onEditar, onEliminar }) {
                                     className="text-xs text-slate-500"
                                 >
                                     {tel.numero}
-                                    {tel.etiqueta && (
-                                        <span className="ml-1">
-                                            ({tel.etiqueta})
-                                        </span>
-                                    )}
                                 </div>
                             ))}
                         </>
@@ -96,13 +94,14 @@ export default function ClienteRow({ cliente, onEditar, onEliminar }) {
             </td>
 
             {/* Emails */}
-            <td className="px-6 py-4 align-top">
+            <td className="hidden lg:table-cell px-6 py-4 align-top">
                 <div className="space-y-1 max-w-xs">
                     {emails.length > 0 ? (
                         <>
                             <div className="font-medium text-slate-800 truncate">
                                 {emails[0]}
                             </div>
+
                             {emails.slice(1).map((email, index) => (
                                 <div
                                     key={index}
@@ -118,9 +117,11 @@ export default function ClienteRow({ cliente, onEditar, onEliminar }) {
                 </div>
             </td>
 
-            {/* Dirección - oculta en móvil */}
-            <td className="px-6 py-4 text-slate-600 hidden lg:table-cell max-w-xs align-top">
-                <div className="truncate">{cliente.direccion || "—"}</div>
+            {/* Dirección */}
+            <td className="hidden xl:table-cell px-6 py-4 text-slate-600 align-top">
+                <div className="truncate max-w-xs">
+                    {cliente.direccion || "—"}
+                </div>
             </td>
 
             {/* Activo */}
@@ -145,7 +146,6 @@ export default function ClienteRow({ cliente, onEditar, onEliminar }) {
                     <button
                         onClick={() => onEditar(cliente)}
                         className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all"
-                        title="Editar"
                     >
                         <i className="mgc_edit_2_line text-lg"></i>
                     </button>
@@ -153,7 +153,6 @@ export default function ClienteRow({ cliente, onEditar, onEliminar }) {
                     <button
                         onClick={() => onEliminar(cliente)}
                         className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-all"
-                        title="Eliminar"
                     >
                         <i className="mgc_delete_line text-lg"></i>
                     </button>

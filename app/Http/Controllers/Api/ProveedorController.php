@@ -54,7 +54,7 @@ class ProveedorController extends Controller
             'telefonos.*.numero' => 'required|string|max:20',
             'telefonos.*.etiqueta' => 'nullable|string|max:50',
             'direccion' => 'nullable|string|max:500',
-            'tipo' => 'required|in:servicios,productos,mixto',
+            'tipo' => 'required|in:material,mano_obra,servicio,mixto',
             'activo' => 'boolean',
         ]);
 

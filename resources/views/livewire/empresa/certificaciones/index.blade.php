@@ -165,6 +165,7 @@
 
 
         <x-slot name="columns">
+            <th class="px-0 py-2 w-2"></th>
             <th class="px-4 py-2 w-36 text-left">Nº Certificación</th>
             <th class="px-4 py-2 w-28 text-left">Fecha cert.</th>
             <th class="px-4 py-2 w-28 text-left">Fecha cont.</th>
@@ -181,11 +182,44 @@
 
 
         <x-slot name="rows">
+
+            @php
+                $prevNumero = null;
+                $groupIndex = -1;
+
+                // paleta corta y repetible (Tailwind)
+                $groupThemes = [
+                    ['row' => 'bg-amber-50', 'badge' => 'bg-amber-100 text-amber-800', 'bar' => 'bg-amber-400'],
+                    ['row' => 'bg-emerald-50', 'badge' => 'bg-emerald-100 text-emerald-800', 'bar' => 'bg-emerald-400'],
+                    ['row' => 'bg-sky-50', 'badge' => 'bg-sky-100 text-sky-800', 'bar' => 'bg-sky-400'],
+                    ['row' => 'bg-violet-50', 'badge' => 'bg-violet-100 text-violet-800', 'bar' => 'bg-violet-400'],
+                    ['row' => 'bg-rose-50', 'badge' => 'bg-rose-100 text-rose-800', 'bar' => 'bg-rose-400'],
+                    ['row' => 'bg-lime-50', 'badge' => 'bg-lime-100 text-lime-800', 'bar' => 'bg-lime-400'],
+                ];
+            @endphp
             @forelse ($certificaciones as $cert)
-                <tr class="border-b hover:bg-gray-50 transition">
+                @php
+                    $numero = $cert->numero_certificacion ?? '—';
+
+                    // Si cambia el número, nuevo grupo/color
+                    if ($numero !== $prevNumero) {
+                        $groupIndex++;
+                        $prevNumero = $numero;
+                    }
+
+                    $theme = $groupThemes[$groupIndex % count($groupThemes)];
+                @endphp
+
+                <tr class="border-b hover:bg-gray-50 transition {{ $theme['row'] }}">
+                    {{-- barra izquierda para reforzar “grupo” --}}
+                    <td class="px-0 py-2 w-2">
+                        <div class="h-full w-1 {{ $theme['bar'] }}"></div>
+                    </td>
 
                     <td class="px-4 py-2">
-                        {{ $cert->numero_certificacion ?? '-' }}
+                        <span class="px-2 py-1 rounded-md text-xs font-semibold {{ $theme['badge'] }}">
+                            {{ $numero }}
+                        </span>
                     </td>
 
                     <td class="px-4 py-2">
@@ -195,7 +229,6 @@
                     <td class="px-4 py-2">
                         {{ $cert->fecha_contable ? \Carbon\Carbon::parse($cert->fecha_contable)->format('d/m/Y') : '-' }}
                     </td>
-
 
                     <td class="px-4 py-2">
                         {{ $cert->cliente->nombre ?? '-' }}
@@ -235,17 +268,16 @@
 
                     <td class="px-4 py-3 text-center">
                         <button wire:click="abrirAcciones({{ $cert->id }})"
-                            class="p-2 rounded-full hover:bg-gray-100
-               focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            class="p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             title="Acciones">
                             <i class="mgc_more_2_line text-xl"></i>
                         </button>
                     </td>
-
                 </tr>
+
             @empty
                 <tr>
-                    <td colspan="10" class="px-4 py-4 text-center text-gray-500">
+                    <td colspan="12" class="px-4 py-4 text-center text-gray-500">
                         No hay certificaciones registradas.
                     </td>
                 </tr>

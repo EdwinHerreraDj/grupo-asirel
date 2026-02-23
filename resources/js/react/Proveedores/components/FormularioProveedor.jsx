@@ -32,7 +32,7 @@ export default function FormularioProveedor({
                 email: proveedor.email || "",
                 telefono: proveedor.telefono || "",
                 direccion: proveedor.direccion || "",
-                tipo: proveedor.tipo || "servicios",
+                tipo: proveedor.tipo || "servicio",
                 activo: proveedor.activo ?? true,
             });
 
@@ -162,6 +162,13 @@ export default function FormularioProveedor({
         }
     };
 
+    const TIPOS = {
+        material: "Material",
+        mano_obra: "Mano de obra",
+        servicio: "Servicio",
+        mixto: "Mixto",
+    };
+
     return (
         <form onSubmit={handleSubmit} className="space-y-10">
             {/* Header */}
@@ -227,9 +234,11 @@ export default function FormularioProveedor({
                         onChange={handleChange}
                         className="w-full px-4 py-3 rounded-2xl border border-slate-300 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
                     >
-                        <option value="servicios">Servicios</option>
-                        <option value="productos">Productos</option>
-                        <option value="mixto">Mixto</option>
+                        {Object.entries(TIPOS).map(([key, value]) => (
+                            <option key={key} value={key}>
+                                {value}
+                            </option>
+                        ))}
                     </select>
                 </div>
 
