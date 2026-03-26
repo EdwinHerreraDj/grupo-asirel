@@ -11,6 +11,7 @@ class CertificacionDetalle extends Model
 
     protected $fillable = [
         'certificacion_id',
+        'presupuesto_venta_partida_id',
         'concepto',
         'unidad',
         'cantidad',

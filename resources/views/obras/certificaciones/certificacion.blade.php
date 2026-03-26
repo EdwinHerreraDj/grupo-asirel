@@ -8,14 +8,9 @@
 @endsection
 
 @section('content')
-    <div class="grid grid-cols-12">
-        <div class="col-span-12 card p-10">
-            @livewire('empresa.certificaciones.index', ['obraId' => $obra->id])
-        </div>
-    </div>
+    <div id="react-certificaciones-listado" data-obra-id="{{ $obra->id }}"></div>
 @endsection
 
 @section('script')
     @vite(['resources/js/pages/highlight.js'])
-    @vite(['resources/js/visor-pdf.js'])
 @endsection

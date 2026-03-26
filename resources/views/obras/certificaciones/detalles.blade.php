@@ -1,9 +1,9 @@
-@extends('layouts.vertical', ['title' => 'Detalle Certificación', 'sub_title' => 'Pages', 'mode' => $mode ?? '', 'demo' => $demo ?? ''])
+@extends('layouts.vertical', [
+    'title' => 'Detalle Certificación',
+    'sub_title' => 'Obras',
+])
 
 @section('content')
-    <div class="grid grid-cols-12">
-        <div class="col-span-12 card p-10">
-            @livewire('empresa.certificaciones.detalle', ['certificacionId' => $certificacion->id])
-        </div>
-    </div>
+    <div id="react-certificaciones-detalle" data-certificacion-id="{{ $certificacion->id }}"
+        data-url-volver="{{ route('obras.certificaciones', $certificacion->obra_id) }}"></div>
 @endsection
