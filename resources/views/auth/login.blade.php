@@ -24,11 +24,11 @@
                             <a href="{{ route('any', 'index') }}" class="block mb-10 text-center">
 
                                 <img class="h-32 mx-auto block dark:hidden"
-                                    src="{{ $empresa->logo ? Storage::url($empresa->logo) : asset('images/logo-alminares-500x500.png') }}"
+                                    src="{{ !empty($empresa?->logo) ? Storage::url($empresa->logo) : asset('images/logo-alminares-500x500.png') }}"
                                     alt="Logo">
 
                                 <img class="h-14 mx-auto hidden dark:block"
-                                    src="{{ $empresa->logo ? Storage::url($empresa->logo) : asset('images/logo-alminares-500x500.png') }}"
+                                    src="{{ !empty($empresa?->logo) ? Storage::url($empresa->logo) : asset('images/logo-alminares-500x500.png') }}"
                                     alt="Logo">
 
                             </a>
