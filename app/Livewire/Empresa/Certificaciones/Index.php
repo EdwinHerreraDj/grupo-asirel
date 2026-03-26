@@ -470,14 +470,15 @@ class Index extends Component
 
         return view('livewire.empresa.certificaciones.index', [
             'certificaciones' => $query
+                ->orderByRaw("COALESCE(numero_certificacion, '') ASC")
                 ->orderBy('fecha_ingreso', 'desc')
+                ->orderBy('obra_gasto_categoria_id')
                 ->paginate(10),
 
             'oficios' => ObraGastoCategoria::where('obra_id', $this->obraId)
                 ->orderBy('nombre')
                 ->get(),
 
-            // NECESARIO para el filtro
             'clientes' => Cliente::orderBy('nombre')->get(),
         ]);
     }

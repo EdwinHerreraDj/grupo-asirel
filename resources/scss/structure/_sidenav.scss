@@ -5,7 +5,6 @@
 @use "../config/variables" as *;
 @use "../config/theme-config" as *;
 
-
 // Sidenav Menu
 .app-menu {
     width: $sidenav-width;
@@ -15,6 +14,7 @@
 
     .srcollbar {
         height: calc(100% - $topbar-height);
+        overflow: visible;
         @apply border-t border-dashed border-gray-500/25;
     }
 }
@@ -81,11 +81,12 @@ html[data-menu-color="gradient"] {
     .menu-title {
         color: $menu-item-color;
         font-size: calc($menu-item-font-size * 0.8);
-        padding: $menu-link-padding-y calc($menu-link-padding-x + $menu-item-padding-x);
+        padding: $menu-link-padding-y
+            calc($menu-link-padding-x + $menu-item-padding-x);
         @apply font-medium opacity-75 cursor-default tracking-widest whitespace-nowrap;
     }
 
-    >.menu-item {
+    > .menu-item {
         padding: 0 $menu-item-padding-x;
     }
 
@@ -96,7 +97,7 @@ html[data-menu-color="gradient"] {
             padding: $menu-link-padding-y $menu-link-padding-x;
             @apply relative flex items-center transition-all whitespace-nowrap rounded-lg bg-transparent;
 
-            >.menu-icon {
+            > .menu-icon {
                 width: $menu-item-icon-size;
                 height: $menu-item-icon-size;
                 font-size: $menu-item-icon-size;
@@ -110,13 +111,13 @@ html[data-menu-color="gradient"] {
                 }
             }
 
-            >.menu-text {
+            > .menu-text {
                 font-size: $menu-item-font-size;
                 line-height: $menu-item-font-size;
                 @apply whitespace-nowrap transition-all;
             }
 
-            >.menu-arrow {
+            > .menu-arrow {
                 font-size: $menu-item-font-size;
                 line-height: $menu-item-font-size;
                 font-family: "MingCute";
@@ -127,14 +128,13 @@ html[data-menu-color="gradient"] {
                 }
             }
 
-            >.badge {
+            > .badge {
                 @apply flex justify-center items-center h-5 px-2 ms-auto font-semibold text-white text-center whitespace-nowrap align-baseline;
-                font-size: calc($menu-item-font-size * 0.80);
+                font-size: calc($menu-item-font-size * 0.8);
             }
 
-
             &:is(.open) {
-                >.menu-arrow {
+                > .menu-arrow {
                     transform: rotate(90deg);
                 }
             }
@@ -149,8 +149,8 @@ html[data-menu-color="gradient"] {
         }
     }
 
-    >.menu-item {
-        >.menu-link {
+    > .menu-item {
+        > .menu-link {
             &:is(.open, .active, :active, :focus) {
                 background-color: $menu-item-active-bg;
             }
@@ -163,7 +163,8 @@ html[data-menu-color="gradient"] {
 
     // Sub Level Menu
     .sub-menu {
-        @apply w-full overflow-hidden transition-all duration-300;
+        @apply w-full transition-all duration-300;
+        overflow: visible;
         padding-inline-start: calc($menu-item-icon-size + $menu-link-item-gap);
 
         .menu-item:first-of-type {
@@ -192,7 +193,6 @@ html[data-menu-color="gradient"] {
 
 // Small Hover
 html[data-sidenav-view="hover"] {
-
     // Content Page
     .app-menu:not(:hover) {
         width: $sidenav-width-sm;
@@ -208,14 +208,12 @@ html[data-sidenav-view="hover"] {
             }
         }
 
-
         #button-hover-toggle {
             display: none;
         }
 
         .menu-item {
             .menu-link {
-
                 .menu-text,
                 .menu-arrow,
                 .badge {
@@ -250,7 +248,7 @@ html[data-sidenav-view="hover"] {
         display: none;
     }
 
-    .app-menu+.page-content {
+    .app-menu + .page-content {
         margin-inline-start: $sidenav-width-sm;
         @apply transition-all ease-in-out duration-300;
     }
@@ -294,7 +292,7 @@ html[data-sidenav-view="hover-active"] {
         }
     }
 
-    .app-menu+.page-content {
+    .app-menu + .page-content {
         margin-inline-start: $sidenav-width;
         @apply transition-all ease-in-out duration-300;
     }
@@ -307,7 +305,6 @@ html[data-sidenav-view="hover-active"] {
 
 // Small Sidenav Width ( 'sm' width || item Hover View )
 html[data-sidenav-view="sm"] {
-
     // Side menu
     .app-menu {
         width: $sidenav-width-sm;
@@ -345,12 +342,12 @@ html[data-sidenav-view="sm"] {
             .menu-item {
                 position: relative;
 
-                >.menu-link {
+                > .menu-link {
                     transition: none;
 
-                    >.menu-text,
-                    >.menu-arrow,
-                    >.badge {
+                    > .menu-text,
+                    > .menu-arrow,
+                    > .badge {
                         transition: none;
                         display: none;
                     }
@@ -362,7 +359,7 @@ html[data-sidenav-view="sm"] {
                 }
 
                 &:hover {
-                    >.sub-menu {
+                    > .sub-menu {
                         display: block;
                         inset-inline-start: 100%;
                         overflow: visible;
@@ -374,12 +371,12 @@ html[data-sidenav-view="sm"] {
                         width: calc($sidenav-width - $sidenav-width-sm);
                         @apply border border-solid border-gray-500/20;
 
-                        >.menu-item {
-                            >.menu-link {
+                        > .menu-item {
+                            > .menu-link {
                                 z-index: 5;
 
-                                >.menu-arrow,
-                                >.menu-text {
+                                > .menu-arrow,
+                                > .menu-text {
                                     display: block;
                                 }
                             }
@@ -392,18 +389,18 @@ html[data-sidenav-view="sm"] {
                 }
             }
 
-            >.menu-item {
-                >.menu-link {
+            > .menu-item {
+                > .menu-link {
                     @apply flex text-center justify-center;
                 }
 
                 &:hover {
-                    >.menu-link {
+                    > .menu-link {
                         color: $menu-item-hover-color;
                         background-color: $menu-item-hover-bg;
                     }
 
-                    >.menu-link {
+                    > .menu-link {
                         &::after {
                             content: "";
                             inset: 0;
@@ -411,32 +408,34 @@ html[data-sidenav-view="sm"] {
                             width: $sidenav-width;
                         }
 
-                        >.menu-text {
+                        > .menu-text {
                             background: $menu-bg;
                             line-height: $menu-item-icon-size;
                             width: calc($sidenav-width - $sidenav-width-sm);
                             padding: $menu-link-padding-y $menu-link-padding-x;
-                            inset-inline-start: calc($sidenav-width-sm - $menu-item-padding-x);
+                            inset-inline-start: calc(
+                                $sidenav-width-sm - $menu-item-padding-x
+                            );
                             @apply absolute flex items-center border border-solid border-gray-500/20;
                         }
                     }
                 }
 
-                >.menu-link {
+                > .menu-link {
                     &[data-fc-type="collapse"] {
-                        >.menu-text {
+                        > .menu-text {
                             @apply rounded-t-md;
                         }
                     }
 
                     &:not([data-fc-type="collapse"]) {
-                        >.menu-text {
+                        > .menu-text {
                             @apply rounded-md;
                         }
                     }
                 }
 
-                >.sub-menu {
+                > .sub-menu {
                     @apply rounded-b-md;
 
                     .sub-menu {
@@ -444,7 +443,7 @@ html[data-sidenav-view="sm"] {
                     }
                 }
 
-                >.menu-link>.menu-text,
+                > .menu-link > .menu-text,
                 .sub-menu {
                     @apply ms-1.5 shadow-lg;
                 }
@@ -524,7 +523,7 @@ html[data-sidenav-view="hidden"] {
 // Layout-boxed (Content layout width)
 html[data-layout-width="boxed"] {
     .page-content {
-        >.flex-grow {
+        > .flex-grow {
             @apply w-full mx-auto max-w-[1440px];
         }
     }
@@ -532,7 +531,6 @@ html[data-layout-width="boxed"] {
 
 // Scrollable layout
 html[data-layout-position="scrollable"] {
-
     .logo-box,
     .app-header {
         position: unset;

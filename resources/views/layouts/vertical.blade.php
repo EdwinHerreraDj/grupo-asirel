@@ -24,11 +24,11 @@
 
         @include('layouts.shared/sidebar')
 
-        <div class="page-content">
+        <div class="page-content flex flex-col flex-1 min-w-0">
 
             @include('layouts.shared/topbar')
 
-            <main class="flex-grow p-6">
+            <main class="flex-1 p-6 min-w-0">
 
                 @include('layouts.shared/page-title', [
                     'title' => $title,
@@ -52,7 +52,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.datatables.net/v/dt/dt-2.1.8/datatables.min.js"></script>
     @vite(['resources/js/pages/tables-datatable.js', 'resources/js/app.js', 'resources/js/react/app.jsx'])
-    
+
     @livewireScripts
 
     <script>

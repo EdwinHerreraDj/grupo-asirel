@@ -46,7 +46,7 @@ Route::middleware('auth')->prefix('api')->group(function () {
     Route::post('clientes', [ApiClienteController::class, 'store']);
     Route::get('clientes/{id}', [ApiClienteController::class, 'show']);
     Route::put('clientes/{id}', [ApiClienteController::class, 'update']);
-    Route::delete('clientes/{id}', [ApiClienteController::class, 'destroy']);
+    Route::delete('clientes/{cliente}', [ApiClienteController::class, 'destroy']);
 
     /* Rutas para proveedores */
     Route::get('proveedores', [ApiProveedorController::class, 'index']);

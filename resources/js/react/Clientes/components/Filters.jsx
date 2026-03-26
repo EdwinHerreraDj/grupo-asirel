@@ -17,15 +17,17 @@ export default function Filters({
     return (
         <div className="mb-8 bg-white border border-slate-200 rounded-2xl shadow-sm p-4 sm:p-6">
             <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
-                {/* Izquierda: Grupo de filtros */}
-                <div className="flex flex-col sm:flex-row gap-4 flex-1">
+                {/* IZQUIERDA */}
+                <div className="flex flex-col sm:flex-row flex-wrap gap-4 flex-1">
                     {/* Buscar */}
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-[220px]">
                         <label className="block text-sm font-semibold text-slate-700 mb-2">
                             Buscar cliente
                         </label>
+
                         <div className="relative">
                             <i className="mgc_search_3_line absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg"></i>
+
                             <input
                                 type="text"
                                 value={search}
@@ -42,6 +44,7 @@ export default function Filters({
                         <label className="block text-sm font-semibold text-slate-700 mb-2">
                             Estado
                         </label>
+
                         <select
                             value={filtroActivo}
                             onChange={(e) => setFiltroActivo(e.target.value)}
@@ -54,7 +57,7 @@ export default function Filters({
                     </div>
                 </div>
 
-                {/* Derecha: Botones */}
+                {/* DERECHA */}
                 <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
                     <button
                         onClick={onLimpiarFiltros}

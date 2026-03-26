@@ -271,9 +271,10 @@ class FileController extends Controller
             $baseFolder = Folder::create([
                 'nombre' => $baseFolderName,
                 'parent_id' => $targetFolderId,
-                'tipo' => 'general',
+                'tipo' => 1,
                 'usuario_id' => auth()->id()
             ]);
+
 
             // Extraer contenido
             $tempExtractPath = storage_path('app' . DIRECTORY_SEPARATOR . 'temp' . DIRECTORY_SEPARATOR . uniqid());
@@ -339,7 +340,7 @@ class FileController extends Controller
                 $folder = Folder::create([
                     'nombre' => $item,
                     'parent_id' => $parentFolderId,
-                    'tipo' => 'general',
+                    'tipo' => 1,
                     'usuario_id' => auth()->id()
                 ]);
 
