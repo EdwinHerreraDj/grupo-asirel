@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ObraPresupuestoVenta extends Model
 {
@@ -27,40 +29,60 @@ class ObraPresupuestoVenta extends Model
         'importe_total'   => 'float',
     ];
 
-    /* =========================
-     * RELACIONES
-     * ========================= */
+    // -------------------------
+    // RELACIONES
+    // -------------------------
 
-    public function obra()
+    public function obra(): BelongsTo
     {
         return $this->belongsTo(Obra::class);
     }
 
-    public function oficio()
+    public function oficio(): BelongsTo
     {
-        return $this->belongsTo(
-            ObraGastoCategoria::class,
-            'obra_gasto_categoria_id'
-        );
+        return $this->belongsTo(ObraGastoCategoria::class, 'obra_gasto_categoria_id');
     }
 
-    /* =========================
-     * LÓGICA DE CÁLCULO
-     * ========================= */
+    public function partidas(): HasMany
+    {
+        return $this->hasMany(PresupuestoVentaPartida::class, 'obra_presupuesto_venta_id')
+            ->orderBy('orden')
+            ->orderBy('id');
+    }
 
-    protected static function booted()
+    // -------------------------
+    // CÁLCULO
+    // El booted() original se mantiene intacto para compatibilidad.
+    // recalcularDesdePartidas() es el método canónico cuando hay partidas.
+    // -------------------------
+
+    protected static function booted(): void
     {
         static::saving(function ($presupuesto) {
-
             if (
                 !is_null($presupuesto->cantidad) &&
                 !is_null($presupuesto->precio_unitario)
             ) {
                 $presupuesto->importe_total =
-                    $presupuesto->cantidad * $presupuesto->precio_unitario;
+                    round($presupuesto->cantidad * $presupuesto->precio_unitario, 2);
             } else {
                 $presupuesto->importe_total = null;
             }
+        });
+    }
+
+    /**
+     * Recalcula importe_total sumando el importe de todas las partidas.
+     * Se llama desde el booted() de PresupuestoVentaPartida.
+     */
+    public function recalcularDesdePartidas(): void
+    {
+        $total = $this->partidas()->sum('importe');
+
+        // Actualizamos directo a BD sin pasar por el booted()
+        // para evitar que sobrescriba con cantidad × precio_unitario
+        static::withoutEvents(function () use ($total) {
+            $this->update(['importe_total' => round($total, 2)]);
         });
     }
 }

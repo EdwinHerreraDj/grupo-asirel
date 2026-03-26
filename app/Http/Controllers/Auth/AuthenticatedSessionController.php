@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Empresa;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -15,7 +16,8 @@ class AuthenticatedSessionController extends Controller
 
     public function create()
     {
-        return view('auth.login');
+        $empresa = Empresa::first();
+        return view('auth.login', compact('empresa'));
     }
 
     public function store(LoginRequest $request)

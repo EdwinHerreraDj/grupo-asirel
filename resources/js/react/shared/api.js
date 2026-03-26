@@ -1,6 +1,9 @@
 // resources/js/react/shared/api.js
 import axios from "axios";
 
+axios.defaults.withCredentials = true;
+axios.defaults.withXSRFToken = true;
+
 const api = axios.create({
     baseURL: "/api",
     withCredentials: true,
@@ -29,9 +32,13 @@ api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
-            // Redirigir a login si no está autenticado
-            window.location.href = "/login";
+            console.error("No autenticado en API", error.response);
         }
+
+        if (error.response?.status === 419) {
+            console.error("Error CSRF / sesión expirada", error.response);
+        }
+
         return Promise.reject(error);
     },
 );

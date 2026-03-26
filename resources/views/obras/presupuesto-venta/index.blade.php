@@ -8,7 +8,9 @@
 @endsection
 
 @section('content')
-    @livewire('obras.presupuesto-venta', ['obra' => $obra], key('presupuesto-venta-' . $obra->id))
+    {{-- Ahora --}}
+    <div id="react-presupuesto-obra" data-obra-id="{{ $obra->id }}" data-obra-nombre="{{ $obra->nombre }}"
+        data-url-regresar="{{ route('unidad') }}"></div>
 @endsection
 
 @section('script')
