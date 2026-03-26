@@ -2,9 +2,9 @@
 <div class="offcanvas offcanvas-end settings-offcanvas" tabindex="-1" id="theme-settings-offcanvas">
 
     <h6 class="fw-semibold px-3 m-0 py-2 font-16 bg-light">
-        <span class="d-block py-2">Theme Settings</span>
+        <span class="d-block py-2">Personalizacion</span>
     </h6>
-
+    
     <div class="offcanvas-body">
         <div class="alert alert-warning" role="alert">
             <strong>Customize </strong> the overall color scheme, sidebar menu, etc.

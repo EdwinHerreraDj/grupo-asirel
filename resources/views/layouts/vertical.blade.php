@@ -6,21 +6,23 @@
     @yield('css')
     @include('layouts.shared/head-css')
 
-    <link href="https://cdn.datatables.net/v/dt/dt-2.1.8/datatables.min.css" rel="stylesheet">
-    <!-- CSS de Notyf -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    @vite(['resources/css/app.css'])
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf/notyf.min.css">
-    <!-- JS de Notyf -->
     <script src="https://cdn.jsdelivr.net/npm/notyf/notyf.min.js"></script>
-    <!-- CSS de SweetAlert2 -->
+
+    <link href="https://cdn.datatables.net/v/dt/dt-2.1.8/datatables.min.css" rel="stylesheet">
+
     @vite(['node_modules/sweetalert2/dist/sweetalert2.min.css'])
 
     @livewireStyles
-
 </head>
 
 <body>
 
-    <div class="flex wrapper">
+    <div class="flex min-h-screen">
 
         @include('layouts.shared/sidebar')
 
@@ -28,7 +30,7 @@
 
             @include('layouts.shared/topbar')
 
-            <main class="flex-1 p-6 min-w-0">
+            <main class="flex-1 overflow-auto p-6">
 
                 @include('layouts.shared/page-title', [
                     'title' => $title,
@@ -46,17 +48,17 @@
     </div>
 
     @include('layouts.shared/customizer')
-
     @include('layouts.shared/footer-scripts')
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.datatables.net/v/dt/dt-2.1.8/datatables.min.js"></script>
-    @vite(['resources/js/pages/tables-datatable.js', 'resources/js/app.js', 'resources/js/react/app.jsx'])
+
+    @vite(['resources/js/app.js', 'resources/js/react/app.jsx', 'resources/js/pages/tables-datatable.js'])
 
     @livewireScripts
 
     <script>
-        // Crear instancia global de Notyf
         const notyf = new Notyf({
             duration: 3000,
             position: {
@@ -66,12 +68,12 @@
             dismissible: true,
         });
 
-        // Escuchar los eventos Livewire tipo "toast"
         window.addEventListener('toast', (event) => {
             const {
                 type,
                 text
             } = event.detail;
+
             if (type === 'success') {
                 notyf.success(text);
             } else if (type === 'error') {
@@ -84,7 +86,6 @@
             }
         });
 
-        // Mantener sesión viva mientras la pestaña esté abierta
         setInterval(() => {
             fetch("{{ route('ping') }}", {
                 method: 'GET',
@@ -93,7 +94,7 @@
                     'X-Requested-With': 'XMLHttpRequest'
                 }
             });
-        }, 5 * 60 * 1000); // cada 5 minutos
+        }, 5 * 60 * 1000);
     </script>
 
     <script>
@@ -108,7 +109,7 @@
         });
     </script>
 
-
+    @stack('scripts')
 
 </body>
 
