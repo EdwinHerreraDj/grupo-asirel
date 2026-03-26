@@ -400,11 +400,7 @@
     "src": "resources/js/pages/tables-datatable.js"
   },
   "resources/js/react/app.jsx": {
-<<<<<<< HEAD
-    "file": "assets/app-f8a3e323.js",
-=======
-    "file": "assets/app-d4efdd4a.js",
->>>>>>> main
+    "file": "assets/app-8f2078ac.js",
     "imports": [
       "__commonjsHelpers-725317a4.js"
     ],
@@ -425,11 +421,7 @@
     "src": "resources/js/visor-pdf.js"
   },
   "resources/scss/app.scss": {
-<<<<<<< HEAD
-    "file": "assets/app-e6c0db11.css",
-=======
-    "file": "assets/app-65b76759.css",
->>>>>>> main
+    "file": "assets/app-9cc6e993.css",
     "isEntry": true,
     "src": "resources/scss/app.scss"
   },
