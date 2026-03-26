@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Facturas;
+namespace App\Services\facturas;
 
 use App\Models\FacturaVenta;
 use App\Models\Empresa;
