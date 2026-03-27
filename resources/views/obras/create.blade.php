@@ -10,31 +10,6 @@
     @include('notifications.notyf')
 
 
-    {{-- Mensaje explicación --}}
-    <div x-data="{ show: true }" x-show="show"
-        class="relative mb-6 p-4 bg-blue-50 border-l-4 border-blue-500 text-blue-800 rounded-md dark:bg-blue-900 dark:text-blue-100 dark:border-blue-400">
-        <button @click="show=false" class="absolute top-2 right-2 text-blue-800 dark:text-blue-100 hover:text-red-500">
-            &times;
-        </button>
-
-        <h2 class="text-lg font-semibold mb-2">Alta de nueva obra</h2>
-        <p>
-            En este formulario podrás <strong>dar de alta una nueva obra</strong> en el sistema.
-            Asegúrate de completar todos los campos requeridos.
-        </p>
-        <p class="mt-2">
-            Es especialmente importante introducir de forma correcta la <strong>latitud, longitud y el radio de fichaje (en
-                metros)</strong>, ya que estos datos son fundamentales para la plataforma de <strong>control de
-                presencia</strong> que trabaja en paralelo.
-        </p>
-        <ul class="mt-2 list-disc list-inside">
-            <li>Verificar si los empleados fichan dentro del área autorizada.</li>
-            <li>Calcular las <strong>horas trabajadas reales</strong> por cada empleado.</li>
-            <li>Generar informes automáticos de mano de obra por obra.</li>
-            <li>Cumplir con los requisitos legales del registro de jornada.</li>
-        </ul>
-    </div>
-
 
 
     <div class="grid grid-cols-12">
@@ -140,68 +115,6 @@
                                 @enderror
                             </div>
                         </div>
-                    </div>
-
-
-                    <!-- CARD 2: GEOLOCALIZACIÓN -->
-                    <div class="bg-white rounded-xl shadow p-6 border border-gray-200">
-
-                        <h2 class="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
-                            <span class="w-1.5 h-5 bg-primary rounded"></span>
-                            Geolocalización de la obra
-                        </h2>
-
-                        <p class="text-sm text-gray-600 mb-4">
-                            Esta información se utilizará en la <strong>app de presencia</strong> para validar fichajes
-                            dentro del área permitida.
-                        </p>
-
-                        <div class="flex justify-end mb-6">
-                            <button type="button" onclick="abrirMapa()"
-                                class="px-4 py-2 bg-primary text-white rounded-md shadow hover:bg-primary/90 transition text-sm">
-                                Seleccionar en mapa
-                            </button>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-                            <!-- Latitud -->
-                            <div>
-                                <label class="text-sm font-medium text-gray-700">Latitud</label>
-                                <input type="text" name="latitud" class="mt-1 form-input w-full"
-                                    value="{{ old('latitud') }}" placeholder="Ej: 37.123456">
-                                @error('latitud')
-                                    <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                            <!-- Longitud -->
-                            <div>
-                                <label class="text-sm font-medium text-gray-700">Longitud</label>
-                                <input type="text" name="longitud" class="mt-1 form-input w-full"
-                                    value="{{ old('longitud') }}" placeholder="Ej: -3.123456">
-                                @error('longitud')
-                                    <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                            <!-- Radio -->
-                            <div>
-                                <label class="text-sm font-medium text-gray-700">Radio permitido (metros)</label>
-                                <input type="number" name="radio" class="mt-1 form-input w-full"
-                                    value="{{ old('radio') }}" placeholder="Ej: 50">
-                                @error('radio')
-                                    <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                        </div>
-                    </div>
-
-
-                    <!-- CARD 3: GASTOS INICIALES -->
-                    <div class="bg-white rounded-xl shadow p-6 border border-gray-200">
-                        @livewire('obras.gastos-iniciales', ['obra' => $obra ?? null])
                     </div>
 
 
