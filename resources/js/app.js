@@ -7,6 +7,7 @@
 import "@frostui/tailwindcss"
 
 import feather from 'feather-icons';
+import './notify';
 
 class App {
 

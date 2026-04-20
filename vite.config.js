@@ -74,7 +74,6 @@ export default defineConfig({
                 'resources/js/table-users.js',
                 'resources/js/visor-pdf.js',
                 'resources/js/pages/empresa.js',
-                'resources/js/pages/obras-docs.js',
                 // Code Highlight Js
                 'resources/js/pages/highlight.js',
                 'resources/js/react/app.jsx',

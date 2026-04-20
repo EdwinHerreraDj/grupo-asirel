@@ -96,7 +96,6 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
 
     /* Control de CRUDS para los users */
     Route::resource('users', UserController::class);
-    Route::resource('obras', ObraController::class);
     Route::get('/login-logs', [LoginLogController::class, 'index'])->name('login.logs');
 
     // Mi Unidad

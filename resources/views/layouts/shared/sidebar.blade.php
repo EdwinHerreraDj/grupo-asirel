@@ -40,7 +40,7 @@
             @if (Auth::user()->role === 'admin' || Auth::user()->role === 'super_admin')
 
                 <li class="menu-item">
-                    <a href="{{ route('obras.create') }}" class="menu-link">
+                    <a href="{{ route('unidad') }}" class="menu-link">
                         <span class="menu-icon">
                             <i class="mgc_building_2_line"></i>
                         </span>

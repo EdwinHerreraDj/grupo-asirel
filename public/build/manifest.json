@@ -151,8 +151,15 @@
     "file": "assets/MingCute-9cae076c.woff",
     "src": "resources/fonts/MingCute.woff"
   },
+  "resources/js/app.css": {
+    "file": "assets/app-ccf187d2.css",
+    "src": "resources/js/app.css"
+  },
   "resources/js/app.js": {
-    "file": "assets/app-b537e037.js",
+    "css": [
+      "assets/app-ccf187d2.css"
+    ],
+    "file": "assets/app-635f1179.js",
     "imports": [
       "__commonjsHelpers-725317a4.js"
     ],
@@ -381,14 +388,6 @@
     "isEntry": true,
     "src": "resources/js/pages/maps-vector.js"
   },
-  "resources/js/pages/obras-docs.js": {
-    "file": "assets/obras-docs-8717e244.js",
-    "imports": [
-      "_sweetalert2.esm.all-509645c6.js"
-    ],
-    "isEntry": true,
-    "src": "resources/js/pages/obras-docs.js"
-  },
   "resources/js/pages/table-gridjs.js": {
     "file": "assets/table-gridjs-800f051f.js",
     "isEntry": true,
@@ -421,7 +420,7 @@
     "src": "resources/js/visor-pdf.js"
   },
   "resources/scss/app.scss": {
-    "file": "assets/app-0c6c8ab8.css",
+    "file": "assets/app-7ebd873f.css",
     "isEntry": true,
     "src": "resources/scss/app.scss"
   },

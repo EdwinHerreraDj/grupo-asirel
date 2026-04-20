@@ -14,7 +14,7 @@
 
             @include('./notifications/notyf')
 
-            <livewire:filtro-obras />
+            <livewire:obras.index />
 
         </div>
     </div>

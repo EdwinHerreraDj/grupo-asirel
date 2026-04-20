@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php artisan *)",
+      "Bash(php -l app/Livewire/Obras/Index.php)",
+      "Bash(php -l app/Livewire/Obras/FormModal.php)",
+      "Bash(php -l app/Services/ObraService.php)",
+      "Bash(php -l app/Http/Controllers/ObraController.php)",
+      "Bash(php -l app/Models/DocumentoTipo.php)",
+      "Bash(php -l app/Models/Documento.php)",
+      "Bash(php -l app/Services/DocumentoService.php)",
+      "Bash(php -l database/migrations/2026_04_20_174727_create_documento_tipos_table.php)",
+      "Bash(php -l database/migrations/2026_04_20_174742_add_fields_to_documentos_table.php)",
+      "Bash(php -l app/Livewire/Documentos/Index.php)",
+      "Bash(php -l app/Livewire/Documentos/FormModal.php)",
+      "Bash(php -l app/Livewire/Documentos/TiposModal.php)",
+      "Bash(npm run *)"
+    ]
+  }
+}

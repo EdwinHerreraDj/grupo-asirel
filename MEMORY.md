@@ -1,0 +1,2 @@
+- [Project overview — ERP Obras ASIREL](memory/project_overview.md) — Stack Laravel 10 + Livewire 3, dominio control económico por obra, invariantes fiscales críticas, riesgos detectados
+- [No dialogs nativos del navegador](memory/feedback_no_native_dialogs.md) — Nunca usar alert/confirm/prompt/wire:confirm; usar modales Livewire+Alpine con estilo de la app
