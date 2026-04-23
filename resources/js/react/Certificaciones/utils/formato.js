@@ -1,11 +1,13 @@
-export const formatEuro = (valor) =>
-    new Intl.NumberFormat("es-ES", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-    }).format(valor ?? 0) + " €";
+// Re-export de formateadores compartidos (fuente \u00fanica)
+export {
+    formatEuro,
+    formatNumero,
+    formatPorcentaje,
+    redondear,
+} from "../../shared/formato";
 
 export const formatFecha = (fecha) => {
-    if (!fecha) return "—";
+    if (!fecha) return "\u2014";
     return new Date(fecha).toLocaleDateString("es-ES");
 };
 

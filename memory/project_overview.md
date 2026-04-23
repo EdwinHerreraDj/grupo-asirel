@@ -4,7 +4,7 @@ description: Stack, domain, architecture y puntos críticos del ERP de obras de 
 type: project
 ---
 
-**Stack:** Laravel 10 + Livewire 3 + MySQL. Frontend dual: Livewire (la mayoría) + React 19 (solo módulo Drive, estilo API). Tailwind 3, Vite, PowerGrid 6.7, dompdf, maatwebsite/excel.
+**Stack:** Laravel 10 + Livewire 3 + React 19 + MySQL. Estrategia strangler fig: los módulos económicos (Presupuesto Obra, Certificaciones) viven en React sobre API JSON; módulos de obra y operativos (Obras, Documentos, Gastos, Drive) siguen en Livewire. Tailwind 3, Vite, PowerGrid 6.7, dompdf, maatwebsite/excel.
 
 **Dominio:** ERP de control económico por obra (no CRM, no contabilidad). Ejes: Contratado (presupuesto venta) → Ejecutado (certificaciones) → Facturado (FacturaVenta) → Pendiente.
 
@@ -32,12 +32,12 @@ type: project
 - `Jobs/` 3 (CopiarDrive, EliminarDrive, Export)
 
 **Riesgos detectados:**
-1. Dos flujos de partidas: `GastoInicialPartida` + `PresupuestoVentaPartida` con cross-links recientes (migraciones 2026-03-24/25) → riesgo de desincronización.
+1. ~~Dos flujos de partidas~~ **RESUELTO Fase 4-A (2026-04-20)**: tabla pivot `obra_gastos_iniciales` dropeada, `GastoBase` eliminado, FK inversa `gasto_inicial_partidas.presupuesto_venta_partida_id` dropeada. FK venta→coste renombrada a `coste_partida_id` con relation `costePartida()`. Vinculación unidireccional limpia.
 2. Sin tests reales: solo 2 stubs `ExampleTest`.
 3. Ruta catch-all dinámica (`{any}`, `{first}/{second}`, `{first}/{second}/{third}`) al final de `routes/web.php` — puede tragar rutas nuevas si se colocan después.
 4. Sin config central para reglas fiscales/numeración (dispersa entre servicios).
 5. Controllers root sprawl: 25 archivos sin subcarpetas por dominio.
-6. React + Livewire conviviendo (Drive es React-only) → cuidado al proponer soluciones mixtas.
+6. React + Livewire conviviendo por decisión estratégica — React cubre Drive, Presupuesto Obra (Coste Teórico + Venta) y Certificaciones; Livewire cubre el resto. No proponer migraciones mixtas sin alinear primero con el usuario.
 
 **Rama activa:** `develop` (main = producción). Último commit b94b738 "Modificacion en la vista de creacion de obra".
 

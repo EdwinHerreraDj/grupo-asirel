@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Obra;
 use App\Models\GastoInicialPartida;
+use App\Models\PresupuestoVentaPartida;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\ObraGastoCategoria;
@@ -40,7 +41,32 @@ class GastoInicialController extends Controller
             ];
         });
 
-        return response()->json(['capitulos' => $capitulos]);
+        $indicador = $this->indicadorImportadasAVenta($obra);
+
+        return response()->json([
+            'capitulos'  => $capitulos,
+            'indicador'  => $indicador,
+        ]);
+    }
+
+    /**
+     * Indicador "N de M partidas de coste ya importadas a venta" —
+     * cuenta partidas de coste referenciadas por al menos una partida
+     * de venta via coste_partida_id.
+     */
+    private function indicadorImportadasAVenta(Obra $obra): array
+    {
+        $totalCoste = GastoInicialPartida::where('obra_id', $obra->id)->count();
+
+        $importadas = PresupuestoVentaPartida::where('obra_id', $obra->id)
+            ->whereNotNull('coste_partida_id')
+            ->distinct('coste_partida_id')
+            ->count('coste_partida_id');
+
+        return [
+            'importadas_a_venta' => $importadas,
+            'total_coste'        => $totalCoste,
+        ];
     }
 
     // -------------------------

@@ -1,20 +1,40 @@
 <div>
     {{-- BARRA SUPERIOR --}}
-    <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-2">
+    <div class="flex flex-col gap-3 mb-4 lg:flex-row lg:items-center lg:justify-between">
         <button type="button" x-data x-on:click="$dispatch('abrir-form-obra')"
-            class="btn bg-primary/10 text-primary hover:bg-primary hover:text-white">
+            class="btn bg-primary/10 text-primary hover:bg-primary hover:text-white shrink-0 self-start lg:self-auto">
             <i class="mgc_add_line me-2"></i>Añadir obra
         </button>
 
-        <div class="flex items-center gap-2">
-            <label for="estado" class="text-sm font-medium text-gray-600">Filtrado de obras:</label>
-            <select wire:model.live="estado"
-                class="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                <option value="">Todas</option>
-                <option value="planificacion">Planificación</option>
-                <option value="ejecucion">Ejecución</option>
-                <option value="finalizada">Finalizada</option>
-            </select>
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3 lg:flex-1 lg:justify-end">
+            {{-- Buscador --}}
+            <div class="relative w-full sm:w-72">
+                <i class="mgc_search_line absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                <input type="text"
+                    wire:model.live.debounce.400ms="search"
+                    placeholder="Buscar obra por nombre…"
+                    class="w-full pl-9 pr-9 py-2 rounded-lg border border-gray-300 bg-white text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none">
+                @if ($search !== '')
+                    <button type="button"
+                        wire:click="$set('search', '')"
+                        title="Limpiar búsqueda"
+                        class="absolute right-2 top-1/2 -translate-y-1/2 inline-flex h-6 w-6 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+                        <i class="mgc_close_line text-sm"></i>
+                    </button>
+                @endif
+            </div>
+
+            {{-- Estado --}}
+            <div class="flex items-center gap-2">
+                <label for="estado" class="text-sm font-medium text-gray-600 hidden sm:inline">Estado:</label>
+                <select id="estado" wire:model.live="estado"
+                    class="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    <option value="">Todas</option>
+                    <option value="planificacion">Planificación</option>
+                    <option value="ejecucion">Ejecución</option>
+                    <option value="finalizada">Finalizada</option>
+                </select>
+            </div>
         </div>
     </div>
 
@@ -91,10 +111,16 @@
                                     class="absolute right-0 mt-2 w-56 z-50 bg-white rounded-xl shadow-lg ring-1 ring-black/5 py-1"
                                     style="display: none;">
 
-                                    <a href="{{ route('obras.gastos', $obra->id) }}"
+                                    <a href="{{ route('obras.facturas-recibidas', $obra->id) }}"
                                         class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-amber-50">
                                         <i class="mgc_receive_money_line text-amber-600"></i>
-                                        <span>Gastos</span>
+                                        <span>Facturas recibidas</span>
+                                    </a>
+
+                                    <a href="{{ route('obras.coste-teorico', $obra->id) }}"
+                                        class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-cyan-50">
+                                        <i class="mgc_chart_line_line text-cyan-600"></i>
+                                        <span>Coste teórico</span>
                                     </a>
 
                                     <a href="{{ route('obras.presupuesto-venta', $obra->id) }}"

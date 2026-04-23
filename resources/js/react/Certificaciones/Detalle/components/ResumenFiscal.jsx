@@ -1,5 +1,5 @@
 import React from "react";
-import { formatEuro } from "../../utils/formato";
+import { formatEuro, formatPorcentaje } from "../../utils/formato";
 
 export default function ResumenFiscal({ certificacion, presupuesto }) {
     const pctCertificado =
@@ -38,7 +38,7 @@ export default function ResumenFiscal({ certificacion, presupuesto }) {
 
                     <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-sm">
                         <span className="text-slate-600">
-                            IVA ({certificacion.iva_porcentaje}%)
+                            IVA ({formatPorcentaje(certificacion.iva_porcentaje)})
                         </span>
                         <span className="font-semibold text-slate-900">
                             {formatEuro(certificacion.iva_importe)}
@@ -48,8 +48,7 @@ export default function ResumenFiscal({ certificacion, presupuesto }) {
                     {certificacion.retencion_porcentaje > 0 && (
                         <div className="flex items-center justify-between rounded-2xl border border-red-200 bg-red-50/70 px-4 py-3 text-sm">
                             <span className="text-slate-600">
-                                Retención ({certificacion.retencion_porcentaje}
-                                %)
+                                Retención ({formatPorcentaje(certificacion.retencion_porcentaje)})
                             </span>
                             <span className="font-semibold text-red-600">
                                 -{formatEuro(certificacion.retencion_importe)}
@@ -103,13 +102,13 @@ export default function ResumenFiscal({ certificacion, presupuesto }) {
                         </div>
 
                         <div
-                            className="flex items-center justify-between rounded-2xl border px-4 py-3 text-sm ${
-                    presupuesto.importe_contratado -
-                        presupuesto.importe_certificado <
-                    0
-                        ? 'border-red-200 bg-red-50/70'
-                        : 'border-emerald-200 bg-emerald-50/70'
-                }"
+                            className={`flex items-center justify-between rounded-2xl border px-4 py-3 text-sm ${
+                                presupuesto.importe_contratado -
+                                    presupuesto.importe_certificado <
+                                0
+                                    ? "border-red-200 bg-red-50/70"
+                                    : "border-emerald-200 bg-emerald-50/70"
+                            }`}
                         >
                             <span className="font-semibold text-slate-700">
                                 Pendiente
@@ -133,7 +132,7 @@ export default function ResumenFiscal({ certificacion, presupuesto }) {
                         <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
                             <div className="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
                                 <span>Ejecutado</span>
-                                <span>{pctCertificado}%</span>
+                                <span>{formatPorcentaje(pctCertificado)}</span>
                             </div>
 
                             <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-200">

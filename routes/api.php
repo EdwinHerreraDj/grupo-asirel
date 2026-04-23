@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\Certificaciones\CertificacionDetalleController;
 use App\Http\Controllers\Api\Certificaciones\CertificacionInformeController;
 use App\Http\Controllers\Api\Certificaciones\ComparativaMensualController;
 use App\Http\Controllers\Api\Certificaciones\CertificacionFacturarController;
+use App\Http\Controllers\Api\TareaController;
 
 // Drive — mantiene sanctum
 Route::middleware('auth:sanctum')->group(function () {
@@ -61,6 +62,16 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
 
+    // Tareas (kanban)
+    Route::prefix('tareas')->group(function () {
+        Route::get('/', [TareaController::class, 'index']);
+        Route::post('/', [TareaController::class, 'store']);
+        Route::get('{tarea}', [TareaController::class, 'show']);
+        Route::put('{tarea}', [TareaController::class, 'update']);
+        Route::patch('{tarea}/estado', [TareaController::class, 'cambiarEstado']);
+        Route::delete('{tarea}', [TareaController::class, 'destroy']);
+    });
+
     Route::prefix('certificaciones')->group(function () {
         Route::delete('{certificacion}', [CertificacionController::class, 'destroy']);
         Route::get('{certificacion}', [CertificacionDetalleController::class, 'show']);
@@ -69,6 +80,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('{certificacion}/lineas/{detalle}', [CertificacionDetalleController::class, 'destroy']);
         Route::put('{certificacion}/impuestos', [CertificacionDetalleController::class, 'impuestos']);
         Route::post('{certificacion}/aceptar', [CertificacionDetalleController::class, 'aceptar']);
+        Route::post('{certificacion}/anular', [CertificacionDetalleController::class, 'anular']);
         Route::post('informe-pdf', [CertificacionInformeController::class, 'pdf']);
     });
 });

@@ -13,4 +13,11 @@ class EmpresaController extends Controller
 
         return view('empresa.index', compact('empresa'));
     }
+
+    public function configuracion(Request $request)
+    {
+        $empresa = Empresa::first();
+
+        return view('empresa.configuracion', compact('empresa'));
+    }
 }

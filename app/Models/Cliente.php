@@ -14,11 +14,15 @@ class Cliente extends Model
     protected $fillable = [
         'nombre',
         'cif',
-        'email',        
-        'emails',       
-        'telefono',     
-        'telefonos',    
+        'email',
+        'emails',
+        'telefono',
+        'telefonos',
         'direccion',
+        'codigo_postal',
+        'poblacion',
+        'provincia',
+        'pais',
         'descripcion',
         'activo',
     ];
@@ -49,15 +53,27 @@ class Cliente extends Model
     public function getTodosLosTelefonosAttribute()
     {
         $telefonos = [];
-        
+
         if ($this->telefono) {
             $telefonos[] = $this->telefono;
         }
-        
+
         if ($this->telefonos) {
             $telefonos = array_merge($telefonos, $this->telefonos);
         }
-        
+
         return array_filter($telefonos);
+    }
+
+    // Dirección completa formateada en una línea
+    public function getDireccionCompletaAttribute(): ?string
+    {
+        $linea1 = trim((string) $this->direccion);
+        $cpPob  = trim(implode(' ', array_filter([$this->codigo_postal, $this->poblacion])));
+        $provPais = trim(implode(', ', array_filter([$this->provincia, $this->pais])));
+
+        $partes = array_filter([$linea1, $cpPob, $provPais]);
+
+        return $partes ? implode(', ', $partes) : null;
     }
 }

@@ -1,5 +1,5 @@
 import React from "react";
-import { formatEuro } from "../../utils/formato";
+import { formatEuro, formatNumero } from "../../utils/formato";
 import ModalConfirmar from "../../../PresupuestoObra/components/ModalConfirmar";
 import { useState } from "react";
 
@@ -7,6 +7,7 @@ export default function TablaLineas({
     lineas,
     editable,
     onNuevaLinea,
+    onEditar,
     onEliminar,
 }) {
     const [modalEliminar, setModalEliminar] = useState(false);
@@ -64,7 +65,7 @@ export default function TablaLineas({
                                         Importe
                                     </th>
                                     {editable && (
-                                        <th className="w-16 px-4 py-3.5 sm:px-5"></th>
+                                        <th className="w-28 px-4 py-3.5 sm:px-5"></th>
                                     )}
                                 </tr>
                             </thead>
@@ -111,12 +112,7 @@ export default function TablaLineas({
                                             </td>
 
                                             <td className="px-4 py-3.5 text-right text-slate-700 sm:px-5">
-                                                {new Intl.NumberFormat(
-                                                    "es-ES",
-                                                    {
-                                                        minimumFractionDigits: 4,
-                                                    },
-                                                ).format(linea.cantidad)}
+                                                {formatNumero(linea.cantidad)}
                                             </td>
 
                                             <td className="px-4 py-3.5 text-right text-slate-700 sm:px-5">
@@ -135,19 +131,29 @@ export default function TablaLineas({
 
                                             {editable && (
                                                 <td className="px-4 py-3.5 text-right sm:px-5">
-                                                    <button
-                                                        onClick={() => {
-                                                            setLineaAEliminar(
-                                                                linea,
-                                                            );
-                                                            setModalEliminar(
-                                                                true,
-                                                            );
-                                                        }}
-                                                        className="inline-flex items-center rounded-lg px-2.5 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-50"
-                                                    >
-                                                        Eliminar
-                                                    </button>
+                                                    <div className="flex justify-end gap-1">
+                                                        <button
+                                                            onClick={() =>
+                                                                onEditar(linea)
+                                                            }
+                                                            className="inline-flex items-center rounded-lg px-2.5 py-1.5 text-xs font-semibold text-cyan-700 transition hover:bg-cyan-50"
+                                                        >
+                                                            Editar
+                                                        </button>
+                                                        <button
+                                                            onClick={() => {
+                                                                setLineaAEliminar(
+                                                                    linea,
+                                                                );
+                                                                setModalEliminar(
+                                                                    true,
+                                                                );
+                                                            }}
+                                                            className="inline-flex items-center rounded-lg px-2.5 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-50"
+                                                        >
+                                                            Eliminar
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             )}
                                         </tr>

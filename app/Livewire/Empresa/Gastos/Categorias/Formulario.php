@@ -145,9 +145,9 @@ class Formulario extends Component
         // Si tiene hijos → NO permitir cambiar parent_id
         if ($this->tieneHijos && $this->parent_id !== null) {
             $this->dispatch(
-                'toast',
+                'notify',
                 type: 'error',
-                text: 'Esta categoría tiene subcategorías. No puedes convertirla en subcategoría.'
+                message: 'Esta categoría tiene subcategorías. No puedes convertirla en subcategoría.'
             );
             return;
         }
@@ -166,9 +166,9 @@ class Formulario extends Component
 
         // Notificación global
         $this->dispatch(
-            'toast',
+            'notify',
             type: 'success',
-            text: $this->categoria_id ? 'Categoría actualizada' : 'Categoría creada'
+            message: $this->categoria_id ? 'Categoría actualizada.' : 'Categoría creada.'
         );
 
         if ($this->esModal) {

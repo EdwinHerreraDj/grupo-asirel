@@ -89,24 +89,11 @@ class ThemeCustomizer {
     }
 
     initSidenav() {
-        var self = this;
-        var pageUrl = window.location.href.split(/[?#]/)[0];
-        document.querySelectorAll('ul.menu a.menu-link').forEach((element) => {
-            if (element.href === pageUrl) {
-                element.classList.add('active');
-                let parentMenu = element.parentElement.parentElement.parentElement;
-                if (parentMenu && parentMenu.classList.contains('menu-item')) {
-                    const collapseElement = parentMenu.querySelector('[data-fc-type="collapse"]');
-                    if (collapseElement && frost != null) {
-                        const collapse = frost.Collapse.getInstanceOrCreate(collapseElement);
-                        collapse.show();
-                    }
-                }
-            }
-        })
-
+        // La deteccion de ruta activa y el auto-expandido de submenus los gestiona
+        // el sidebar en Blade (clase .active) + Alpine.js. Aqui solo hacemos
+        // scroll para que el item activo sea visible al abrir la pagina.
         setTimeout(function () {
-            var activatedItem = document.querySelector('ul.menu .active');
+            var activatedItem = document.querySelector('.app-menu .active');
             if (activatedItem != null) {
                 var simplebarContent = document.querySelector('.app-menu .simplebar-content-wrapper');
                 var offset = activatedItem.offsetTop - 300;

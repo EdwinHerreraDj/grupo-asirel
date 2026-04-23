@@ -15,11 +15,15 @@ class Proveedor extends Model
     protected $fillable = [
         'nombre',
         'cif',
-        'telefono',      // Teléfono principal
-        'telefonos',     // Array de objetos {numero, etiqueta}
-        'email',         // Email principal
-        'emails',        // Array de emails adicionales
+        'telefono',
+        'telefonos',
+        'email',
+        'emails',
         'direccion',
+        'codigo_postal',
+        'poblacion',
+        'provincia',
+        'pais',
         'tipo',
         'activo',
     ];
@@ -73,7 +77,19 @@ class Proveedor extends Model
                 }
             }
         }
-        
+
         return $telefonos;
+    }
+
+    // Dirección completa formateada en una línea
+    public function getDireccionCompletaAttribute(): ?string
+    {
+        $linea1 = trim((string) $this->direccion);
+        $cpPob  = trim(implode(' ', array_filter([$this->codigo_postal, $this->poblacion])));
+        $provPais = trim(implode(', ', array_filter([$this->provincia, $this->pais])));
+
+        $partes = array_filter([$linea1, $cpPob, $provPais]);
+
+        return $partes ? implode(', ', $partes) : null;
     }
 }

@@ -1,11 +1,6 @@
 import React, { useState, useEffect } from "react";
 import api from "../../shared/api";
-
-const fmt = (n, dec = 2) =>
-    new Intl.NumberFormat("es-ES", {
-        minimumFractionDigits: dec,
-        maximumFractionDigits: dec,
-    }).format(n ?? 0);
+import { formatEuro, formatNumero } from "../utils/formato";
 
 export default function ComparativaMensual({ obraId }) {
     const [periodo, setPeriodo] = useState(
@@ -192,21 +187,21 @@ export default function ComparativaMensual({ obraId }) {
                                         </td>
 
                                         <td className="px-3 py-3 text-right text-slate-700 sm:px-4">
-                                            {fmt(fila.contrato, 4)}
+                                            {formatNumero(fila.contrato)}
                                         </td>
 
                                         <td className="px-3 py-3 text-right text-slate-700 sm:px-4">
-                                            {fmt(fila.origen_anterior, 4)}
+                                            {formatNumero(fila.origen_anterior)}
                                         </td>
 
                                         <td className="px-3 py-3 text-right sm:px-4">
                                             <span className="font-semibold text-slate-900">
-                                                {fmt(fila.mes, 4)}
+                                                {formatNumero(fila.mes)}
                                             </span>
                                         </td>
 
                                         <td className="px-3 py-3 text-right text-slate-700 sm:px-4">
-                                            {fmt(fila.a_origen, 4)}
+                                            {formatNumero(fila.a_origen)}
                                         </td>
 
                                         <td
@@ -216,16 +211,16 @@ export default function ComparativaMensual({ obraId }) {
                                                     : "text-slate-700"
                                             }`}
                                         >
-                                            {fmt(fila.pendiente, 4)}
+                                            {formatNumero(fila.pendiente)}
                                         </td>
 
                                         <td className="px-3 py-3 text-right text-slate-700 sm:px-4">
-                                            {fmt(fila.importe_mes)} €
+                                            {formatEuro(fila.importe_mes)}
                                         </td>
 
                                         <td className="px-3 py-3 text-right sm:px-4">
                                             <span className="font-semibold text-slate-900">
-                                                {fmt(fila.importe_origen)} €
+                                                {formatEuro(fila.importe_origen)}
                                             </span>
                                         </td>
                                     </tr>

@@ -2,11 +2,10 @@
 
 namespace App\Livewire\Empresa\FacturasVentas;
 
+use App\Models\FacturaVenta;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Models\FacturaVenta;
-use Illuminate\Support\Facades\DB;
-use Livewire\Attributes\On;
 
 class Index extends Component
 {
@@ -14,81 +13,56 @@ class Index extends Component
 
     protected $paginationTheme = 'tailwind';
 
-    /* =======================
-        ESTADO UI
-    ======================= */
+    // UI modal formulario
     public bool $showFormulario = false;
     public ?int $facturaId = null;
 
-    /* =======================
-    FILTROS APLICADOS
-======================= */
+    // Filtros aplicados
     public ?string $estado = null;
     public ?string $search = null;
     public ?string $codigo = null;
     public ?string $fechaDesde = null;
     public ?string $fechaHasta = null;
 
-    /* =======================
-    FILTROS TEMPORALES (UI)
-======================= */
+    // Filtros temporales (UI)
     public ?string $tmpEstado = null;
     public ?string $tmpSearch = null;
     public ?string $tmpCodigo = null;
-
-
     public ?string $tmpFechaDesde = null;
     public ?string $tmpFechaHasta = null;
 
-    /* Modal para las acciones del registro */
+    // Modal acciones
     public bool $showAccionesModal = false;
     public ?int $facturaAccionesId = null;
 
-
-
-
     public function aplicarFiltros(): void
     {
-        if ($this->tmpFechaDesde && $this->tmpFechaHasta) {
-            if ($this->tmpFechaDesde > $this->tmpFechaHasta) {
-                $this->dispatch('toast', type: 'error', text: 'La fecha desde no puede ser mayor que la fecha hasta');
-                return;
-            }
+        if ($this->tmpFechaDesde && $this->tmpFechaHasta
+            && $this->tmpFechaDesde > $this->tmpFechaHasta) {
+            $this->dispatch('notify', type: 'error', message: 'La fecha desde no puede ser mayor que la fecha hasta.');
+
+            return;
         }
 
-        $this->estado = $this->tmpEstado;
-        $this->search = $this->tmpSearch;
-        $this->codigo = $this->tmpCodigo;
+        $this->estado     = $this->tmpEstado;
+        $this->search     = $this->tmpSearch;
+        $this->codigo     = $this->tmpCodigo;
         $this->fechaDesde = $this->tmpFechaDesde;
         $this->fechaHasta = $this->tmpFechaHasta;
 
         $this->resetPage();
     }
 
-
     public function limpiarFiltros(): void
     {
         $this->reset([
-            'estado',
-            'search',
-            'codigo',
-            'tmpEstado',
-            'tmpSearch',
-            'tmpCodigo',
-            'fechaDesde',
-            'fechaHasta',
-            'tmpFechaDesde',
-            'tmpFechaHasta',
+            'estado', 'search', 'codigo', 'fechaDesde', 'fechaHasta',
+            'tmpEstado', 'tmpSearch', 'tmpCodigo', 'tmpFechaDesde', 'tmpFechaHasta',
         ]);
-
         $this->resetPage();
     }
 
-
-
-    /* =======================
-        MODAL
-    ======================= */
+    // Modal formulario
     public function nuevaFactura(): void
     {
         $this->facturaId = null;
@@ -98,9 +72,10 @@ class Index extends Component
     public function editarFactura(int $id): void
     {
         $factura = FacturaVenta::findOrFail($id);
+        if (! $factura->esEditable()) {
+            $this->dispatch('notify', type: 'error', message: 'Solo se pueden editar facturas en borrador.');
 
-        if ($factura->estado !== 'borrador') {
-            abort(403);
+            return;
         }
 
         $this->facturaId = $id;
@@ -114,39 +89,13 @@ class Index extends Component
         $this->reset('showFormulario', 'facturaId');
     }
 
-    /* =======================
-        GUARDAR (ÚNICO PUNTO)
-    ======================= */
-    #[On('guardarFactura')]
-    public function guardarFactura(array $data)
+    #[On('factura-guardada')]
+    public function onFacturaGuardada(): void
     {
-        DB::transaction(function () use ($data) {
-
-            if ($this->facturaId) {
-
-                $factura = FacturaVenta::lockForUpdate()->findOrFail($this->facturaId);
-
-                if ($factura->estado !== 'borrador') {
-                    abort(403);
-                }
-
-                $factura->update($data);
-            } else {
-
-                FacturaVenta::create(array_merge($data, [
-                    'origen'         => 'manual',
-                    'numero_factura' => null,
-                    'estado'         => 'borrador',
-                ]));
-            }
-        });
-
-        return redirect()->route('empresa.facturas-ventas');
+        // Provoca re-render del listado
     }
 
-    /* =======================
-        METODOS PARA EL MODAL DE LAS ACCIONES
-    ======================= */
+    // Modal acciones
     public function abrirAcciones(int $id): void
     {
         $this->facturaAccionesId = $id;
@@ -158,28 +107,21 @@ class Index extends Component
         $this->reset('showAccionesModal', 'facturaAccionesId');
     }
 
-
-    /* =======================
-        LISTADO
-    ======================= */
     public function render()
     {
-        $query = FacturaVenta::query();
+        $query = FacturaVenta::query()
+            ->with(['cliente:id,nombre', 'obra:id,nombre'])
+            ->withSum('pagos as total_pagado', 'importe');
 
         if ($this->estado) {
             $query->where('estado', $this->estado);
         }
 
-        if ($this->search !== '') {
-
+        if ($this->search) {
             $search = trim($this->search);
-
             $query->where(function ($q) use ($search) {
-
                 if (str_contains($search, '-')) {
-
                     [$serie, $numero] = explode('-', $search, 2);
-
                     $q->where('serie', $serie)
                         ->where('numero_factura', ltrim($numero, '0'));
                 } else {
@@ -204,8 +146,9 @@ class Index extends Component
         return view('livewire.empresa.facturas-ventas.index', [
             'facturas' => $query->orderByDesc('fecha_emision')->paginate(10),
             'facturaAcciones' => $this->facturaAccionesId
-                ? FacturaVenta::find($this->facturaAccionesId)
+                ? FacturaVenta::with(['cliente:id,nombre'])->find($this->facturaAccionesId)
                 : null,
+            'estadosMeta' => FacturaVenta::ESTADOS_META,
         ]);
     }
 }

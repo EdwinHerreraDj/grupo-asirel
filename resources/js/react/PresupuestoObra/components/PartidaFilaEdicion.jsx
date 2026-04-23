@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { calcularImporte, formatEuro } from "../utils/calculos";
+import { calcularImporte, formatEuro, redondear } from "../utils/calculos";
 
 export default function PartidaFilaEdicion({
     inicial,
@@ -15,8 +15,15 @@ export default function PartidaFilaEdicion({
         codigo: inicial.codigo ?? "",
         descripcion: inicial.descripcion ?? "",
         unidad: inicial.unidad ?? "",
-        medicion: inicial.medicion ?? "",
-        precio_unitario: inicial.precio_unitario ?? "",
+        medicion:
+            inicial.medicion === null || inicial.medicion === undefined
+                ? ""
+                : redondear(inicial.medicion),
+        precio_unitario:
+            inicial.precio_unitario === null ||
+            inicial.precio_unitario === undefined
+                ? ""
+                : redondear(inicial.precio_unitario),
     });
 
     const [errores, setErrores] = useState({});

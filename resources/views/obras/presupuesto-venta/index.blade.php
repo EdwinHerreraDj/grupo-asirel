@@ -8,8 +8,7 @@
 @endsection
 
 @section('content')
-    {{-- Ahora --}}
-    <div id="react-presupuesto-obra" data-obra-id="{{ $obra->id }}" data-obra-nombre="{{ $obra->nombre }}"
+    <div id="react-presupuesto-venta" data-obra-id="{{ $obra->id }}" data-obra-nombre="{{ $obra->nombre }}"
         data-url-regresar="{{ route('unidad') }}"></div>
 @endsection
 

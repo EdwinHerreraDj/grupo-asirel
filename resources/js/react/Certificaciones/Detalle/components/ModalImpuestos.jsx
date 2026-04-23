@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { redondear } from "../../utils/formato";
 
 export default function ModalImpuestos({
     certificacion,
@@ -7,9 +8,8 @@ export default function ModalImpuestos({
     guardando,
 }) {
     const [form, setForm] = useState({
-        iva_porcentaje: parseFloat(certificacion.iva_porcentaje) || 0,
-        retencion_porcentaje:
-            parseFloat(certificacion.retencion_porcentaje) || 0,
+        iva_porcentaje: redondear(certificacion.iva_porcentaje),
+        retencion_porcentaje: redondear(certificacion.retencion_porcentaje),
     });
 
     return (

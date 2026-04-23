@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Obra;
-use Illuminate\Http\Request;
 
 class PresupuestoVentaController extends Controller
 {
@@ -13,6 +12,22 @@ class PresupuestoVentaController extends Controller
 
         return view('obras.presupuesto-venta.index', [
             'obra' => $obra,
+        ]);
+    }
+
+    public function global()
+    {
+        $obras = Obra::orderBy('nombre')
+            ->get(['id', 'nombre', 'estado'])
+            ->map(fn ($o) => [
+                'id'     => $o->id,
+                'nombre' => $o->nombre,
+                'estado' => $o->estado ? ucfirst($o->estado) : null,
+            ])
+            ->values();
+
+        return view('obras.presupuesto-venta.global', [
+            'obras' => $obras,
         ]);
     }
 }

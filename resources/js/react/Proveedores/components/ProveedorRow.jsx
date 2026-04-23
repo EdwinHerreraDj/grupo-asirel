@@ -1,188 +1,261 @@
-// resources/js/react/Proveedores/components/ProveedorRow.jsx
 import React from "react";
 
+const TIPO_META = {
+    material: {
+        label: "Material",
+        classes: "border-blue-200 bg-blue-50 text-blue-700",
+    },
+    mano_obra: {
+        label: "Mano de obra",
+        classes: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    },
+    servicio: {
+        label: "Servicio",
+        classes: "border-amber-200 bg-amber-50 text-amber-700",
+    },
+    mixto: {
+        label: "Mixto",
+        classes: "border-purple-200 bg-purple-50 text-purple-700",
+    },
+};
+
+function recolectarTelefonos(proveedor) {
+    const telefonos = [];
+    if (proveedor.telefono) {
+        telefonos.push({ numero: proveedor.telefono, etiqueta: "Principal" });
+    }
+    if (Array.isArray(proveedor.telefonos)) {
+        proveedor.telefonos.forEach((tel) => {
+            if (typeof tel === "string" && tel) {
+                telefonos.push({ numero: tel, etiqueta: "" });
+            } else if (tel && tel.numero) {
+                telefonos.push(tel);
+            }
+        });
+    }
+    return telefonos.filter((t) => t.numero);
+}
+
+function recolectarEmails(proveedor) {
+    const emails = [];
+    if (proveedor.email) emails.push(proveedor.email);
+    if (Array.isArray(proveedor.emails)) emails.push(...proveedor.emails);
+    return emails.filter(Boolean);
+}
+
+export function iniciales(nombre) {
+    if (!nombre) return "?";
+    const partes = nombre.trim().split(/\s+/);
+    if (partes.length === 1) return partes[0].substring(0, 2).toUpperCase();
+    return (partes[0][0] + partes[1][0]).toUpperCase();
+}
+
 export default function ProveedorRow({ proveedor, onEditar, onEliminar }) {
-    const getTodosLosTelefonos = () => {
-        const telefonos = [];
-
-        // Teléfono principal
-        if (proveedor.telefono) {
-            telefonos.push({
-                numero: proveedor.telefono,
-                etiqueta: "Principal",
-            });
-        }
-
-        // Teléfonos adicionales
-        if (proveedor.telefonos && Array.isArray(proveedor.telefonos)) {
-            proveedor.telefonos.forEach((tel) => {
-                if (typeof tel === "string") {
-                    telefonos.push({ numero: tel, etiqueta: "" });
-                } else if (tel.numero) {
-                    telefonos.push(tel);
-                }
-            });
-        }
-
-        return telefonos.filter((t) => t.numero);
-    };
-
-    const getTodosLosEmails = () => {
-        const emails = [];
-        if (proveedor.email) emails.push(proveedor.email);
-        if (proveedor.emails && Array.isArray(proveedor.emails)) {
-            emails.push(...proveedor.emails);
-        }
-        return emails.filter(Boolean);
-    };
-
-    const telefonos = getTodosLosTelefonos();
-    const emails = getTodosLosEmails();
-
-    const getTipoBadge = (tipo) => {
-        const tipos = {
-            servicios:
-                "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-            productos:
-                "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-            mixto: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-        };
-        return (
-            tipos[tipo] ||
-            "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400"
-        );
-    };
+    const telefonos = recolectarTelefonos(proveedor);
+    const emails = recolectarEmails(proveedor);
+    const tipo = TIPO_META[proveedor.tipo];
 
     return (
-        <tr className="group hover:bg-slate-50 transition-colors duration-150">
-            {/* Nombre */}
-            <td className="px-6 py-4 align-top">
-                <div className="font-semibold text-slate-800">
-                    {proveedor.nombre}
+        <tr className="hover:bg-slate-50/70 transition-colors">
+            {/* Nombre + CIF */}
+            <td className="px-4 py-3 align-top">
+                <div className="flex items-start gap-3 min-w-0">
+                    <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-cyan-50 text-cyan-700 text-xs font-semibold">
+                        {iniciales(proveedor.nombre)}
+                    </span>
+                    <div className="min-w-0">
+                        <p className="font-semibold text-slate-900 truncate">
+                            {proveedor.nombre}
+                        </p>
+                        <p className="text-xs text-slate-500 font-mono">
+                            {proveedor.cif || "—"}
+                        </p>
+                    </div>
                 </div>
-                {proveedor.direccion && (
-                    <div className="text-xs text-slate-500 mt-1 line-clamp-1 lg:hidden leading-relaxed">
-                        {proveedor.direccion}
+            </td>
+
+            {/* Contacto */}
+            <td className="px-4 py-3 align-top">
+                {telefonos.length === 0 && emails.length === 0 ? (
+                    <span className="text-slate-400">—</span>
+                ) : (
+                    <div className="space-y-1 text-xs">
+                        {telefonos.slice(0, 2).map((tel, idx) => (
+                            <div
+                                key={`tel-${idx}`}
+                                className="flex items-center gap-1.5 text-slate-700"
+                            >
+                                <i className="mgc_phone_line text-slate-400"></i>
+                                <span className="font-medium">
+                                    {tel.numero}
+                                </span>
+                                {tel.etiqueta && (
+                                    <span className="text-[10px] text-slate-500">
+                                        · {tel.etiqueta}
+                                    </span>
+                                )}
+                            </div>
+                        ))}
+                        {telefonos.length > 2 && (
+                            <div className="text-[10px] text-slate-400">
+                                +{telefonos.length - 2} tel. más
+                            </div>
+                        )}
+                        {emails.slice(0, 2).map((em, idx) => (
+                            <div
+                                key={`em-${idx}`}
+                                className="flex items-center gap-1.5 text-slate-600 truncate"
+                            >
+                                <i className="mgc_mail_line text-slate-400"></i>
+                                <span className="truncate">{em}</span>
+                            </div>
+                        ))}
+                        {emails.length > 2 && (
+                            <div className="text-[10px] text-slate-400">
+                                +{emails.length - 2} email más
+                            </div>
+                        )}
                     </div>
                 )}
             </td>
 
-            {/* CIF */}
-            <td className="px-6 py-4 text-slate-600 align-top">
-                {proveedor.cif || "—"}
-            </td>
-
-            {/* Teléfonos con etiquetas */}
-            <td className="px-6 py-4 align-top">
-                <div className="space-y-2">
-                    {telefonos.length > 0 ? (
-                        <>
-                            {telefonos[0] && (
-                                <div className="flex items-center gap-2">
-                                    <span className="font-medium text-slate-800">
-                                        {telefonos[0].numero}
-                                    </span>
-                                    {telefonos[0].etiqueta && (
-                                        <span className="px-2.5 py-0.5 text-xs font-semibold bg-cyan-100 text-cyan-700 rounded-full">
-                                            {telefonos[0].etiqueta}
-                                        </span>
-                                    )}
-                                </div>
-                            )}
-
-                            {telefonos.slice(1).map((tel, index) => (
-                                <div
-                                    key={index}
-                                    className="flex items-center gap-2"
-                                >
-                                    <span className="text-xs text-slate-500">
-                                        {tel.numero}
-                                    </span>
-                                    {tel.etiqueta && (
-                                        <span className="px-2 py-0.5 text-xs font-medium bg-slate-100 text-slate-600 rounded-full">
-                                            {tel.etiqueta}
-                                        </span>
-                                    )}
-                                </div>
-                            ))}
-                        </>
-                    ) : (
-                        <span className="text-slate-400">—</span>
-                    )}
-                </div>
-            </td>
-
-            {/* Emails */}
-            <td className="px-6 py-4 align-top">
-                <div className="space-y-1 max-w-xs">
-                    {emails.length > 0 ? (
-                        <>
-                            <div className="font-medium text-slate-800 truncate">
-                                {emails[0]}
-                            </div>
-                            {emails.slice(1).map((email, index) => (
-                                <div
-                                    key={index}
-                                    className="text-xs text-slate-500 truncate"
-                                >
-                                    {email}
-                                </div>
-                            ))}
-                        </>
-                    ) : (
-                        <span className="text-slate-400">—</span>
-                    )}
-                </div>
-            </td>
-
-            {/* Tipo - oculta en móvil */}
-            <td className="px-6 py-4 hidden xl:table-cell align-top">
-                {proveedor.tipo && (
+            {/* Tipo */}
+            <td className="px-4 py-3 align-top hidden xl:table-cell">
+                {tipo ? (
                     <span
-                        className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full ${getTipoBadge(proveedor.tipo)}`}
+                        className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium ${tipo.classes}`}
                     >
-                        {proveedor.tipo.charAt(0).toUpperCase() +
-                            proveedor.tipo.slice(1)}
+                        {tipo.label}
+                    </span>
+                ) : (
+                    <span className="text-slate-400 text-xs">—</span>
+                )}
+            </td>
+
+            {/* Estado */}
+            <td className="px-4 py-3 text-center align-top">
+                {proveedor.activo ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                        Activo
+                    </span>
+                ) : (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600">
+                        <span className="h-1.5 w-1.5 rounded-full bg-slate-400"></span>
+                        Inactivo
                     </span>
                 )}
             </td>
 
-            {/* Activo */}
-            <td className="px-6 py-4 text-center align-top">
-                <span
-                    className={`
-                inline-flex items-center justify-center px-3 py-1 text-xs font-semibold rounded-full
-                ${
-                    proveedor.activo
-                        ? "bg-emerald-100 text-emerald-700"
-                        : "bg-rose-100 text-rose-600"
-                }
-            `}
-                >
-                    {proveedor.activo ? "Activo" : "Inactivo"}
-                </span>
-            </td>
-
             {/* Acciones */}
-            <td className="px-6 py-4 align-top">
-                <div className="flex justify-end gap-2 opacity-80 group-hover:opacity-100 transition">
+            <td className="px-4 py-3 align-top">
+                <div className="flex justify-end gap-1.5">
                     <button
                         onClick={() => onEditar(proveedor)}
-                        className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all"
                         title="Editar"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-cyan-700 hover:border-cyan-300 hover:bg-cyan-50 transition"
                     >
-                        <i className="mgc_edit_2_line text-lg"></i>
+                        <i className="mgc_edit_2_line"></i>
                     </button>
-
                     <button
                         onClick={() => onEliminar(proveedor)}
-                        className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-all"
                         title="Eliminar"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-red-600 hover:border-red-300 hover:bg-red-50 transition"
                     >
-                        <i className="mgc_delete_line text-lg"></i>
+                        <i className="mgc_delete_line"></i>
                     </button>
                 </div>
             </td>
         </tr>
+    );
+}
+
+export function ProveedorCard({ proveedor, onEditar, onEliminar }) {
+    const telefonos = recolectarTelefonos(proveedor);
+    const emails = recolectarEmails(proveedor);
+    const tipo = TIPO_META[proveedor.tipo];
+
+    return (
+        <div className="p-4 space-y-3">
+            <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3 min-w-0">
+                    <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-cyan-50 text-cyan-700 text-xs font-semibold">
+                        {iniciales(proveedor.nombre)}
+                    </span>
+                    <div className="min-w-0">
+                        <p className="font-semibold text-slate-900 truncate">
+                            {proveedor.nombre}
+                        </p>
+                        <p className="text-xs text-slate-500 font-mono">
+                            {proveedor.cif || "—"}
+                        </p>
+                    </div>
+                </div>
+                {proveedor.activo ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 shrink-0">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                        Activo
+                    </span>
+                ) : (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600 shrink-0">
+                        <span className="h-1.5 w-1.5 rounded-full bg-slate-400"></span>
+                        Inactivo
+                    </span>
+                )}
+            </div>
+
+            {tipo && (
+                <div>
+                    <span
+                        className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium ${tipo.classes}`}
+                    >
+                        {tipo.label}
+                    </span>
+                </div>
+            )}
+
+            {(telefonos.length > 0 || emails.length > 0) && (
+                <div className="space-y-1 text-xs">
+                    {telefonos.slice(0, 2).map((tel, idx) => (
+                        <div
+                            key={`tel-${idx}`}
+                            className="flex items-center gap-1.5 text-slate-700"
+                        >
+                            <i className="mgc_phone_line text-slate-400"></i>
+                            <span className="font-medium">{tel.numero}</span>
+                            {tel.etiqueta && (
+                                <span className="text-[10px] text-slate-500">
+                                    · {tel.etiqueta}
+                                </span>
+                            )}
+                        </div>
+                    ))}
+                    {emails.slice(0, 2).map((em, idx) => (
+                        <div
+                            key={`em-${idx}`}
+                            className="flex items-center gap-1.5 text-slate-600 truncate"
+                        >
+                            <i className="mgc_mail_line text-slate-400"></i>
+                            <span className="truncate">{em}</span>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            <div className="flex gap-2 pt-2 border-t border-slate-100">
+                <button
+                    onClick={() => onEditar(proveedor)}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-cyan-700 hover:border-cyan-300 hover:bg-cyan-50"
+                >
+                    <i className="mgc_edit_2_line"></i> Editar
+                </button>
+                <button
+                    onClick={() => onEliminar(proveedor)}
+                    className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700 hover:bg-red-100"
+                >
+                    <i className="mgc_delete_line"></i>
+                </button>
+            </div>
+        </div>
     );
 }

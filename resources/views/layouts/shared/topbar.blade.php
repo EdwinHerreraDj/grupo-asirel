@@ -1,3 +1,26 @@
+@php
+    $userName = session('user_name') ?? auth()->user()?->name ?? 'Usuario';
+
+    // Iniciales: primera letra del primer nombre + primera del segundo nombre.
+    // Si solo hay una palabra, primeras 2 letras.
+    $partes = preg_split('/\s+/', trim($userName));
+    $userInitials = mb_strtoupper(mb_substr($partes[0] ?? 'U', 0, 1));
+    if (count($partes) > 1 && !empty($partes[1])) {
+        $userInitials .= mb_strtoupper(mb_substr($partes[1], 0, 1));
+    } elseif (mb_strlen($partes[0] ?? '') > 1) {
+        $userInitials .= mb_strtoupper(mb_substr($partes[0], 1, 1));
+    }
+
+    // Color determinístico por usuario (mismo nombre → mismo color)
+    $avatarPalette = [
+        'bg-red-500', 'bg-orange-500', 'bg-amber-500',
+        'bg-lime-600', 'bg-emerald-500', 'bg-teal-500',
+        'bg-cyan-600', 'bg-sky-600', 'bg-blue-600',
+        'bg-indigo-500', 'bg-violet-500', 'bg-purple-500',
+        'bg-fuchsia-500', 'bg-pink-500', 'bg-rose-500',
+    ];
+    $userAvatarBg = $avatarPalette[abs(crc32($userName)) % count($avatarPalette)];
+@endphp
 <!-- Topbar Start -->
 <header class="app-header flex items-center justify-between px-4 py-2">
 
@@ -54,8 +77,12 @@
 
         <!-- Profile Dropdown Button -->
         <div class="relative">
-            <button data-fc-type="dropdown" data-fc-placement="bottom-end" type="button" class="nav-link">
-                <img src="/images/users/user-6.jpg" alt="user-image" class="rounded-full h-10 w-10 object-cover">
+            <button data-fc-type="dropdown" data-fc-placement="bottom-end" type="button" class="nav-link"
+                aria-label="Menú de usuario">
+                <span class="inline-flex h-10 w-10 items-center justify-center rounded-full {{ $userAvatarBg }} text-white text-sm font-semibold shadow-sm ring-2 ring-white dark:ring-gray-800 select-none"
+                    title="{{ $userName }}">
+                    {{ $userInitials ?: 'U' }}
+                </span>
             </button>
 
             <div

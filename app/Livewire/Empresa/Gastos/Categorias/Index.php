@@ -85,18 +85,18 @@ class Index extends Component
         $cat = CategoriaGastoEmpresa::find($this->categoriaEliminarId);
 
         if (!$cat) {
-            $this->dispatch('toast', type: 'error', text: 'La categoría no existe.');
+            $this->dispatch('notify', type: 'error', message: 'La categoría no existe.');
             return;
         }
 
         if ($cat->children()->count() > 0) {
-            $this->dispatch('toast', type: 'error', text: 'No puedes eliminar una categoría que tiene subcategorías.');
+            $this->dispatch('notify', type: 'error', message: 'No puedes eliminar una categoría que tiene subcategorías.');
             return;
         }
 
         $cat->delete();
 
-        $this->dispatch('toast', type: 'success', text: 'Categoría eliminada correctamente.');
+        $this->dispatch('notify', type: 'success', message: 'Categoría eliminada correctamente.');
 
         $this->mostrarModalEliminar = false;
         $this->actualizarListado();

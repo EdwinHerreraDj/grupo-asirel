@@ -1,257 +1,282 @@
+@php
+    $colorPrimario = $empresa->color_primario ?? '#111827';
+    $colorSecundario = $empresa->color_secundario ?? '#d1d5db';
+    $mostrarLogo = $empresa?->mostrar_logo_pdf ?? true;
+    $piePdf = $empresa->pie_pdf ?? null;
+    $numeroExpediente = 'PV-' . str_pad($obra->id, 4, '0', STR_PAD_LEFT);
+@endphp
 <!DOCTYPE html>
 <html lang="es">
 
 <head>
     <meta charset="utf-8">
+    <title>Presupuesto {{ $numeroExpediente }}</title>
     <style>
-        body {
-            font-family: DejaVu Sans, sans-serif;
-            font-size: 11px;
-            color: #111;
-            margin: 30px;
-        }
+        @page { margin: 25mm 15mm 20mm 15mm; }
+        body { font-family: DejaVu Sans, sans-serif; font-size: 10.5px; color: #111; margin: 0; }
 
-        /* CABECERA */
+        /* ===== HEADER ===== */
         .header {
             width: 100%;
-            border-bottom: 3px solid #000;
-            margin-bottom: 20px;
+            border-bottom: 2px solid {{ $colorPrimario }};
             padding-bottom: 10px;
+            margin-bottom: 18px;
         }
+        .header td { vertical-align: top; padding: 0; }
+        .logo-cell { width: 140px; }
+        .logo-cell img { max-width: 130px; max-height: 60px; }
 
-        .header-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
+        .empresa-info { font-size: 10px; color: #333; line-height: 1.4; }
+        .empresa-info .nombre { font-size: 13px; font-weight: bold; color: {{ $colorPrimario }}; margin-bottom: 2px; }
 
-        .header-table td {
-            border: none;
-            vertical-align: middle;
-        }
+        .doc-cell { text-align: right; width: 240px; }
+        .doc-label { font-size: 9px; text-transform: uppercase; letter-spacing: 1.5px; color: #777; margin-bottom: 4px; }
+        .doc-numero { font-size: 20px; font-weight: bold; color: {{ $colorPrimario }}; letter-spacing: 0.5px; margin: 0; }
+        .doc-meta { font-size: 10px; color: #555; margin-top: 6px; line-height: 1.5; }
+        .doc-meta strong { color: #222; }
 
-        .logo {
-            max-width: 140px;
-        }
-
-        .title-box {
-            text-align: right;
-        }
-
-        .title-box h2 {
-            margin: 0;
-            font-size: 18px;
+        .badge-tipo {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 9px;
+            font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            background: #f0f9ff;
+            color: #0369a1;
+            border: 1px solid #bae6fd;
+            margin-top: 4px;
         }
 
-        .subtitle {
-            font-size: 10px;
-            color: #444;
-            margin-top: 2px;
+        /* ===== PARTES ===== */
+        .partes { width: 100%; margin-bottom: 16px; border-collapse: separate; border-spacing: 10px 0; }
+        .partes td { padding: 0; vertical-align: top; }
+        .parte-box {
+            border: 1px solid {{ $colorSecundario }};
+            border-left: 3px solid {{ $colorPrimario }};
+            padding: 8px 12px;
+            background: #fafafa;
         }
+        .parte-label { font-size: 8.5px; text-transform: uppercase; letter-spacing: 1px; color: #888; margin-bottom: 4px; }
+        .parte-nombre { font-size: 12px; font-weight: bold; color: #111; }
+        .parte-detalle { font-size: 9.5px; color: #444; margin-top: 2px; line-height: 1.4; }
 
-        /* INFO */
-        .info-grid {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 16px;
-        }
-
-        .info-grid td {
-            border: none;
-            padding: 2px 6px;
-            vertical-align: top;
-            font-size: 11px;
-        }
-
-        .info-box {
-            border: 1px solid #000;
-            background: #f5f5f5;
-            padding: 8px 10px;
-        }
-
-        .info-box p {
-            margin: 3px 0;
-            font-size: 11px;
-        }
-
-        /* CAPÍTULO */
+        /* ===== CAPÍTULOS ===== */
         .capitulo-header {
-            background: #222;
+            background: {{ $colorPrimario }};
             color: #fff;
             font-size: 11px;
             font-weight: bold;
-            padding: 6px 8px;
+            padding: 7px 10px;
             margin-top: 14px;
             text-transform: uppercase;
-            letter-spacing: 0.3px;
+            letter-spacing: 0.4px;
         }
 
-        /* TABLA PARTIDAS */
-        table.partidas {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 0;
+        .capitulo-header .cap-importe {
+            float: right;
+            font-weight: bold;
+            letter-spacing: 0;
         }
 
-        table.partidas thead tr {
-            background: #444;
-            color: #fff;
-        }
-
-        table.partidas th {
-            padding: 5px 6px;
+        /* ===== PARTIDAS ===== */
+        table.partidas { width: 100%; border-collapse: collapse; margin-top: 0; }
+        table.partidas thead tr { background: #f3f4f6; }
+        table.partidas thead th {
+            padding: 6px 6px;
             font-size: 9px;
             text-transform: uppercase;
             text-align: left;
-            border: 1px solid #333;
+            letter-spacing: 0.4px;
+            color: {{ $colorPrimario }};
+            border-bottom: 1px solid {{ $colorSecundario }};
         }
+        table.partidas thead th.right { text-align: right; }
 
-        table.partidas th.right {
-            text-align: right;
-        }
-
-        table.partidas td {
-            padding: 5px 6px;
-            font-size: 10px;
-            border: 1px solid #ccc;
+        table.partidas tbody td {
+            padding: 6px 6px;
+            font-size: 9.5px;
+            border-bottom: 1px solid {{ $colorSecundario }};
             vertical-align: top;
+            color: #222;
         }
+        table.partidas tbody td.right { text-align: right; }
+        table.partidas tbody tr:nth-child(even) td { background: #fafafa; }
 
-        table.partidas td.right {
-            text-align: right;
-        }
-
-        table.partidas tbody tr:nth-child(even) {
-            background: #f9f9f9;
-        }
+        .codigo-cell { font-family: 'Courier New', monospace; font-size: 9px; color: #555; }
 
         /* SUBTOTAL CAPÍTULO */
         .subtotal-row td {
-            background: #eee;
+            background: #f3f4f6;
             font-weight: bold;
-            font-size: 11px;
-            border: 1px solid #999;
-            padding: 5px 6px;
+            font-size: 10.5px;
+            border-top: 1px solid {{ $colorPrimario }};
+            border-bottom: none;
+            padding: 7px 8px;
             text-align: right;
+            color: {{ $colorPrimario }};
         }
-
         .subtotal-row td.label {
             text-align: left;
             text-transform: uppercase;
-            font-size: 10px;
-            letter-spacing: 0.3px;
+            font-size: 9.5px;
+            letter-spacing: 0.4px;
         }
 
-        /* TOTAL GENERAL */
-        .total-box {
-            margin-top: 16px;
-            padding: 10px 12px;
-            border: 2px solid #000;
-            text-align: right;
-            font-size: 14px;
-            font-weight: bold;
-            background: #f0f0f0;
-        }
-
-        /* CAMPOS MANUALES */
-        .manual-box {
-            margin-top: 20px;
-            border-top: 2px dashed #000;
-            padding-top: 12px;
-            font-size: 11px;
-        }
-
-        .manual-box p {
-            margin: 7px 0;
-        }
-
-        /* FIRMAS */
-        table.signatures {
-            margin-top: 40px;
-            width: 100%;
+        /* ===== RESUMEN ===== */
+        .resumen-wrap { margin-top: 18px; }
+        table.resumen {
+            margin-left: auto;
+            width: 50%;
             border-collapse: collapse;
         }
+        table.resumen td { padding: 7px 10px; font-size: 10.5px; }
+        table.resumen tr.capitulo-line td {
+            border-bottom: 1px dashed {{ $colorSecundario }};
+            color: #444;
+        }
+        table.resumen tr.capitulo-line td.value { text-align: right; color: #111; font-weight: bold; }
+        table.resumen tr.total-final td {
+            background: {{ $colorPrimario }};
+            color: #fff;
+            font-size: 13px;
+            padding: 10px;
+            letter-spacing: 0.3px;
+        }
+        table.resumen tr.total-final td.label { text-transform: uppercase; }
+        table.resumen tr.total-final td.value { text-align: right; font-weight: bold; }
 
-        table.signatures td {
-            border: none;
-            padding-top: 50px;
-            text-align: center;
-            font-weight: bold;
-            font-size: 11px;
+        /* ===== CAMPOS MANUALES ===== */
+        .condiciones {
+            margin-top: 22px;
+            padding: 10px 12px;
+            background: #fafafa;
+            border-left: 3px solid {{ $colorSecundario }};
+            font-size: 10px;
+            color: #333;
+        }
+        .condiciones .label-section {
+            font-size: 8.5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #888;
+            margin-bottom: 4px;
+        }
+        .condiciones p { margin: 5px 0; }
+
+        /* ===== FIRMAS ===== */
+        table.firmas { margin-top: 30px; width: 100%; border-collapse: collapse; }
+        table.firmas td {
             width: 50%;
+            padding-top: 40px;
+            text-align: center;
+            font-size: 10px;
+            color: #444;
+            font-weight: bold;
+        }
+        .firma-linea {
+            border-top: 1px solid #888;
+            margin: 0 20px 6px 20px;
         }
 
-        .page-break {
-            page-break-after: always;
+        /* ===== PIE ===== */
+        .pie {
+            margin-top: 22px;
+            padding-top: 8px;
+            border-top: 1px solid {{ $colorSecundario }};
+            font-size: 9px;
+            color: #666;
+            text-align: center;
+            line-height: 1.5;
         }
+        .pie-personalizado {
+            margin-top: 4px;
+            font-style: italic;
+            color: #555;
+        }
+
+        .page-break { page-break-after: always; }
     </style>
 </head>
 
 <body>
 
-    {{-- CABECERA --}}
-    <div class="header">
-        <table class="header-table">
-            <tr>
-                <td>
-                    @if (!empty($empresa->logo))
-                        <img src="{{ public_path('storage/' . $empresa->logo) }}" class="logo" alt="Logo">
-                    @else
-                        <img src="{{ public_path('images/logo-dark.png') }}" class="logo" alt="Logo">
+    {{-- ===== CABECERA ===== --}}
+    <table class="header">
+        <tr>
+            @if ($mostrarLogo)
+                <td class="logo-cell">
+                    @if (!empty($empresa?->logo))
+                        <img src="{{ public_path('storage/' . $empresa->logo) }}" alt="Logo {{ $empresa->nombre }}">
                     @endif
                 </td>
-                <td class="title-box">
-                    <h2>Presupuesto de venta</h2>
-                    <div class="subtitle">Mediciones y precios unitarios</div>
-                    <div class="subtitle">Fecha: {{ $fecha }}</div>
-                </td>
-            </tr>
-        </table>
-    </div>
-
-    {{-- DATOS OBRA + CLIENTE --}}
-    <table class="info-grid">
-        <tr>
-            <td width="50%">
-                <div class="info-box">
-                    <p><strong>Obra:</strong> {{ $obra->nombre }}</p>
-                    <p><strong>Expediente:</strong> {{ $obra->id }}</p>
-                    @if ($obra->fecha_inicio)
-                        <p><strong>Fecha inicio:</strong>
-                            {{ \Carbon\Carbon::parse($obra->fecha_inicio)->format('d/m/Y') }}</p>
+            @endif
+            <td class="empresa-info">
+                <div class="nombre">{{ $empresa->nombre ?? 'Empresa' }}</div>
+                @if (!empty($empresa->direccion)){{ $empresa->direccion }}<br>@endif
+                {{ $empresa->codigo_postal ?? '' }} {{ $empresa->ciudad ?? '' }}
+                {{ !empty($empresa->provincia) ? '(' . $empresa->provincia . ')' : '' }}
+                @if (!empty($empresa->cif))<br>CIF: {{ $empresa->cif }}@endif
+                @if (!empty($empresa->telefono)) · Tel: {{ $empresa->telefono }}@endif
+                @if (!empty($empresa->email)) · {{ $empresa->email }}@endif
+            </td>
+            <td class="doc-cell">
+                <div class="doc-label">Presupuesto</div>
+                <div class="doc-numero">{{ $numeroExpediente }}</div>
+                <div class="doc-meta">
+                    <strong>Fecha:</strong> {{ $fecha }}<br>
+                    @if (!empty($obra->fecha_inicio))
+                        <strong>Inicio obra:</strong> {{ \Carbon\Carbon::parse($obra->fecha_inicio)->format('d/m/Y') }}<br>
+                    @endif
+                    @if (!empty($obra->fecha_fin))
+                        <strong>Fin previsto:</strong> {{ \Carbon\Carbon::parse($obra->fecha_fin)->format('d/m/Y') }}<br>
                     @endif
                 </div>
+                <div class="badge-tipo">Mediciones y precios</div>
             </td>
-            <td width="50%">
-                <div class="info-box">
-                    <p><strong>Cliente:</strong> {{ $cliente->nombre }}</p>
-                    @if (!empty($cliente->nif))
-                        <p><strong>NIF:</strong> {{ $cliente->nif }}</p>
-                    @endif
-                    @if (!empty($cliente->direccion))
-                        <p><strong>Dirección:</strong> {{ $cliente->direccion }}</p>
-                    @endif
-                    @if (!empty($cliente->telefono))
-                        <p><strong>Teléfono:</strong> {{ $cliente->telefono }}</p>
-                    @endif
+        </tr>
+    </table>
+
+    {{-- ===== CLIENTE + OBRA ===== --}}
+    <table class="partes">
+        <tr>
+            <td style="width:50%">
+                <div class="parte-box">
+                    <div class="parte-label">Cliente</div>
+                    <div class="parte-nombre">{{ $cliente->nombre ?? '—' }}</div>
+                    <div class="parte-detalle">
+                        @if (!empty($cliente?->cif))CIF: {{ $cliente->cif }}<br>@endif
+                        @if (!empty($cliente?->direccion)){{ $cliente->direccion }}<br>@endif
+                        @if (!empty($cliente?->telefono))Tel: {{ $cliente->telefono }}@endif
+                        @if (!empty($cliente?->email)) · {{ $cliente->email }}@endif
+                    </div>
+                </div>
+            </td>
+            <td style="width:50%">
+                <div class="parte-box">
+                    <div class="parte-label">Obra</div>
+                    <div class="parte-nombre">{{ $obra->nombre ?? '—' }}</div>
+                    <div class="parte-detalle">
+                        Expediente: {{ $numeroExpediente }}
+                        @if (!empty($obra->descripcion))<br>{{ Str::limit($obra->descripcion, 140) }}@endif
+                    </div>
                 </div>
             </td>
         </tr>
     </table>
 
-    {{-- CAPÍTULOS Y PARTIDAS --}}
-    @foreach ($capitulos as $capitulo)
-        {{-- CABECERA CAPÍTULO --}}
+    {{-- ===== CAPÍTULOS Y PARTIDAS ===== --}}
+    @forelse ($capitulos as $capitulo)
         <div class="capitulo-header">
             {{ $capitulo['nombre'] }}
+            <span class="cap-importe">{{ number_format($capitulo['importe_total'], 2, ',', '.') }} €</span>
         </div>
 
-        {{-- TABLA PARTIDAS --}}
         <table class="partidas">
             <thead>
                 <tr>
-                    <th style="width:8%">Código</th>
+                    <th style="width:10%">Código</th>
                     <th style="width:40%">Descripción</th>
                     <th style="width:7%">Ud.</th>
                     <th class="right" style="width:12%">Medición</th>
@@ -262,50 +287,75 @@
             <tbody>
                 @foreach ($capitulo['partidas'] as $partida)
                     <tr>
-                        <td>{{ $partida['codigo'] ?? '—' }}</td>
+                        <td class="codigo-cell">{{ $partida['codigo'] ?? '—' }}</td>
                         <td>{{ $partida['descripcion'] }}</td>
                         <td>{{ $partida['unidad'] ?? '—' }}</td>
-                        <td class="right">
-                            {{ number_format($partida['medicion'], 4, ',', '.') }}
-                        </td>
-                        <td class="right">
-                            {{ number_format($partida['precio_unitario'], 2, ',', '.') }} €
-                        </td>
-                        <td class="right">
-                            {{ number_format($partida['importe'], 2, ',', '.') }} €
-                        </td>
+                        <td class="right">{{ number_format($partida['medicion'], 4, ',', '.') }}</td>
+                        <td class="right">{{ number_format($partida['precio_unitario'], 2, ',', '.') }} €</td>
+                        <td class="right">{{ number_format($partida['importe'], 2, ',', '.') }} €</td>
                     </tr>
                 @endforeach
 
-                {{-- SUBTOTAL CAPÍTULO --}}
                 <tr class="subtotal-row">
-                    <td colspan="5" class="label">Total {{ $capitulo['nombre'] }}</td>
+                    <td colspan="5" class="label">Total capítulo</td>
                     <td>{{ number_format($capitulo['importe_total'], 2, ',', '.') }} €</td>
                 </tr>
             </tbody>
         </table>
-    @endforeach
+    @empty
+        <div style="padding:30px;text-align:center;color:#888;font-style:italic;border:1px dashed {{ $colorSecundario }};margin-top:10px;">
+            Este presupuesto no contiene partidas.
+        </div>
+    @endforelse
 
-    {{-- TOTAL GENERAL --}}
-    <div class="total-box">
-        TOTAL PRESUPUESTO: {{ number_format($total, 2, ',', '.') }} €
-    </div>
+    {{-- ===== RESUMEN ===== --}}
+    @if (count($capitulos) > 0)
+        <div class="resumen-wrap">
+            <table class="resumen">
+                @foreach ($capitulos as $capitulo)
+                    <tr class="capitulo-line">
+                        <td>{{ $capitulo['nombre'] }}</td>
+                        <td class="value">{{ number_format($capitulo['importe_total'], 2, ',', '.') }} €</td>
+                    </tr>
+                @endforeach
+                <tr class="total-final">
+                    <td class="label">TOTAL PRESUPUESTO</td>
+                    <td class="value">{{ number_format($total, 2, ',', '.') }} €</td>
+                </tr>
+            </table>
+        </div>
+    @endif
 
-    {{-- CAMPOS MANUALES --}}
-    <div class="manual-box">
+    {{-- ===== CONDICIONES ===== --}}
+    <div class="condiciones">
+        <div class="label-section">Condiciones</div>
         <p><strong>Fecha inicio trabajos:</strong> _______________________________</p>
         <p><strong>Fecha fin trabajos:</strong> _______________________________</p>
         <p><strong>Forma de pago:</strong> _______________________________</p>
         <p><strong>Retención:</strong> _______________________________</p>
     </div>
 
-    {{-- FIRMAS --}}
-    <table class="signatures">
+    {{-- ===== FIRMAS ===== --}}
+    <table class="firmas">
         <tr>
-            <td>Firma proveedor</td>
-            <td>Firma cliente</td>
+            <td>
+                <div class="firma-linea"></div>
+                Firma {{ $empresa->nombre ?? 'Proveedor' }}
+            </td>
+            <td>
+                <div class="firma-linea"></div>
+                Firma cliente
+            </td>
         </tr>
     </table>
+
+    {{-- ===== PIE ===== --}}
+    <div class="pie">
+        © {{ date('Y') }} {{ $empresa->nombre ?? 'Empresa' }} · Presupuesto generado automáticamente
+        @if ($piePdf)
+            <div class="pie-personalizado">{{ $piePdf }}</div>
+        @endif
+    </div>
 
 </body>
 

@@ -59,13 +59,6 @@ class Obra extends Model
         return $this->hasMany(ObraGastoCategoria::class);
     }
 
-    public function gastosIniciales()
-    {
-        return $this->belongsToMany(ObraGastoCategoria::class, 'obra_gastos_iniciales')
-            ->withPivot('importe')
-            ->withTimestamps();
-    }
-
     public function facturasRecibidas()
     {
         return $this->hasMany(FacturaRecibida::class);

@@ -1,5 +1,5 @@
 import React from "react";
-import { formatEuro } from "../utils/calculos";
+import { formatEuro, formatNumero } from "../utils/calculos";
 
 export default function PartidaFila({ partida, onEditar, onEliminar }) {
     return (
@@ -19,9 +19,7 @@ export default function PartidaFila({ partida, onEditar, onEliminar }) {
             </td>
 
             <td className="px-4 py-3 text-right text-sm text-slate-700 sm:px-5">
-                {new Intl.NumberFormat("es-ES", {
-                    minimumFractionDigits: 4,
-                }).format(partida.medicion ?? 0)}
+                {formatNumero(partida.medicion)}
             </td>
 
             <td className="px-4 py-3 text-right text-sm text-slate-700 sm:px-5">

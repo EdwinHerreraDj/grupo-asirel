@@ -7,11 +7,16 @@ use App\Models\Certificacion;
 use App\Models\Obra;
 use App\Models\ObraGastoCategoria;
 use App\Models\Cliente;
+use App\Services\CertificacionDetalleService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class CertificacionController extends Controller
 {
+    public function __construct(
+        private readonly CertificacionDetalleService $service,
+    ) {}
+
     // -------------------------
     // GET /api/obras/{obra}/certificaciones
     // -------------------------
@@ -95,6 +100,8 @@ class CertificacionController extends Controller
             'estado_factura'          => 'pendiente',
         ]);
 
+        $this->service->registrarCreacion($cert);
+
         return response()->json([
             'certificacion' => $this->formatCertificacion($cert->load(['oficio', 'cliente'])),
         ], 201);
@@ -113,7 +120,7 @@ class CertificacionController extends Controller
 
         $certBase = Certificacion::findOrFail($request->certificacion_id);
 
-        if ($certBase->estado_factura === 'facturada') {
+        if ($certBase->estaFacturada()) {
             return response()->json([
                 'message' => 'Esta certificación ya está facturada.',
             ], 422);
@@ -147,6 +154,8 @@ class CertificacionController extends Controller
             'estado_factura'          => 'pendiente',
         ]);
 
+        $this->service->registrarCreacion($cert);
+
         return response()->json([
             'certificacion' => $this->formatCertificacion($cert->load(['oficio', 'cliente'])),
         ], 201);
@@ -157,6 +166,12 @@ class CertificacionController extends Controller
     // -------------------------
     public function destroy(Certificacion $certificacion)
     {
+        if (! $certificacion->puedeEliminar()) {
+            return response()->json([
+                'message' => 'No se puede eliminar una certificación facturada.',
+            ], 422);
+        }
+
         if (
             $certificacion->adjunto_url &&
             Storage::disk('public')->exists($certificacion->adjunto_url)

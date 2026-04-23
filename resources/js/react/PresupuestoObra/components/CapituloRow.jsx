@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import {
     formatEuro,
+    formatPorcentaje,
     calcularMargen,
     calcularMargenPct,
 } from "../utils/calculos";
@@ -92,7 +93,9 @@ export default function CapituloRow({
                             className={`px-4 py-4 text-right text-xs font-semibold sm:px-5 ${colorMargen}`}
                         >
                             <span className="block text-sm font-semibold">
-                                {margenPct !== null ? `${margenPct}%` : "—"}
+                                {margenPct !== null
+                                    ? formatPorcentaje(margenPct)
+                                    : "—"}
                             </span>
                             <span
                                 className={`mt-0.5 block text-xs font-medium ${colorMargen}`}
@@ -195,7 +198,7 @@ export default function CapituloRow({
                                                     }`}
                                                 >
                                                     {margenPct > 0 ? "+" : ""}
-                                                    {margenPct}%
+                                                    {formatPorcentaje(margenPct)}
                                                 </span>
                                             )}
                                         </div>

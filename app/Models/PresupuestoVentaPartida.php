@@ -2,9 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PresupuestoVentaPartida extends Model
 {
@@ -15,9 +16,9 @@ class PresupuestoVentaPartida extends Model
     protected $fillable = [
         'obra_presupuesto_venta_id',
         'obra_id',
+        'coste_partida_id',
         'codigo',
         'descripcion',
-        'gasto_inicial_partida_id',
         'unidad',
         'medicion',
         'precio_unitario',
@@ -33,10 +34,6 @@ class PresupuestoVentaPartida extends Model
         'activo'          => 'boolean',
     ];
 
-    // -------------------------
-    // RELACIONES
-    // -------------------------
-
     public function capitulo(): BelongsTo
     {
         return $this->belongsTo(ObraPresupuestoVenta::class, 'obra_presupuesto_venta_id');
@@ -47,18 +44,27 @@ class PresupuestoVentaPartida extends Model
         return $this->belongsTo(Obra::class);
     }
 
-    // -------------------------
-    // CÁLCULO AUTOMÁTICO
-    // -------------------------
-
-    public function gastoInicialPartida(): BelongsTo
+    public function costePartida(): BelongsTo
     {
-        return $this->belongsTo(GastoInicialPartida::class, 'gasto_inicial_partida_id');
+        return $this->belongsTo(GastoInicialPartida::class, 'coste_partida_id');
+    }
+
+    public function certificacionDetalles(): HasMany
+    {
+        return $this->hasMany(CertificacionDetalle::class);
+    }
+
+    /**
+     * Indica si la partida est\u00e1 bloqueada para edici\u00f3n de campos descriptivos
+     * porque ya ha sido referenciada por alg\u00fan detalle de certificaci\u00f3n.
+     */
+    public function estaCertificada(): bool
+    {
+        return $this->certificacionDetalles()->exists();
     }
 
     protected static function booted(): void
     {
-        // Calcular importe antes de guardar
         static::saving(function ($partida) {
             $partida->importe = round(
                 ($partida->medicion ?? 0) * ($partida->precio_unitario ?? 0),
@@ -66,12 +72,10 @@ class PresupuestoVentaPartida extends Model
             );
         });
 
-        // Después de guardar → recalcular total del capítulo
         static::saved(function ($partida) {
             $partida->capitulo->recalcularDesdePartidas();
         });
 
-        // Después de eliminar → recalcular total del capítulo
         static::deleted(function ($partida) {
             $partida->capitulo->recalcularDesdePartidas();
         });

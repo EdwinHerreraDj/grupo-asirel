@@ -1,760 +1,375 @@
+@php
+    $meta = $factura->estadoMeta();
+@endphp
+
 <div>
-    {{-- CABECERA --}}
-    <div class="flex flex-wrap items-center gap-3 mb-7">
-
-        <x-btns.regresar href="{{ route('empresa.facturas-ventas') }}">
-            Regresar
-        </x-btns.regresar>
-
-        @if ($editable)
-            <x-btns.agregar wire:click="abrirModalCrear">
-                Agregar línea
-            </x-btns.agregar>
-        @endif
-
-        {{-- Acciones a la derecha --}}
-        <div class="ml-auto flex items-center gap-3">
-
-            @if ($factura->puedeAnular())
-                <button wire:click="confirmarAnular"
-                    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl
-                       bg-red-600 text-white text-sm font-semibold
-                       hover:bg-red-700 transition shadow-sm">
-                    <i class="mgc_close_circle_line text-lg"></i>
-                    Anular factura
-                </button>
-            @endif
-
-            <span
-                class="px-3 py-1 rounded-xl text-xs font-semibold
-            {{ $factura->estado === 'borrador'
-                ? 'bg-yellow-100 text-yellow-700 border border-yellow-200'
-                : 'bg-gray-100 text-gray-700 border border-gray-200' }}">
-                {{ strtoupper($factura->estado) }}
-            </span>
-
+    {{-- PRELOADER EMITIR --}}
+    <div wire:loading.flex wire:target="emitirFactura"
+        class="fixed inset-0 z-[10000] items-center justify-center bg-slate-900/60 backdrop-blur-sm"
+        style="display: none;">
+        <div class="flex flex-col items-center gap-4 rounded-2xl bg-white px-8 py-6 shadow-2xl">
+            <div class="relative h-12 w-12">
+                <div class="absolute inset-0 rounded-full border-4 border-slate-200"></div>
+                <div class="absolute inset-0 animate-spin rounded-full border-4 border-transparent border-t-cyan-600"></div>
+            </div>
+            <div class="text-center">
+                <p class="text-sm font-semibold text-slate-800">Emitiendo factura…</p>
+                <p class="text-xs text-slate-500 mt-0.5">Consumiendo numeración y generando PDF.</p>
+            </div>
         </div>
-
     </div>
 
-
-    @if ($factura->estado === 'anulada')
-        <div class="mb-6 rounded-xl border border-red-300 bg-red-50 p-4">
-            <div class="flex items-start gap-3">
-                <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100 text-red-600 text-xl">
-                    <i class="mgc_close_circle_line"></i>
-                </div>
-
-                <div>
-                    <p class="font-semibold text-red-800">
-                        Factura anulada
-                    </p>
-
-                    <p class="text-sm text-red-700 mt-2">
-                        Esta factura está anulada y no admite ninguna acción.
-                    </p>
-
-
-                    <p class="text-sm text-red-700 mt-1">
-                        Motivo: {{ $factura->motivo_anulacion }}
-                    </p>
-                </div>
-            </div>
-        </div>
-    @endif
-
-
-    @if (!$editable)
-        <div class="mb-6 rounded-xl border border-blue-200 bg-blue-50 p-4">
-            <div class="flex items-start gap-3">
-                <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-600 text-xl">
-                    <i class="mgc_lock_line"></i>
-                </div>
-
-                <div>
-                    <p class="font-semibold text-blue-800">
-                        Factura emitida
-                    </p>
-                    <p class="text-sm text-blue-700">
-                        Esta factura ya ha sido emitida y no se puede modificar.
-                        Las líneas, importes y datos fiscales están bloqueados.
-                    </p>
-                </div>
-            </div>
-        </div>
-    @endif
-
-
-    @if ($factura->origen === 'certificacion')
-        <div class="mt-6 mb-6 rounded-2xl border border-gray-200 bg-gray-50 p-5">
-
-            {{-- Header --}}
-            <div class="flex items-start gap-3 mb-4">
-                <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                    <i class="mgc_link_2_line text-xl"></i>
-                </div>
-
-                <div class="flex-1 min-w-0">
-                    <h4 class="text-sm font-semibold text-gray-800">
-                        Origen de la factura
-                    </h4>
-                    <p class="text-xs text-gray-500">
-                        Esta factura fue generada desde certificaciones.
-                    </p>
-                </div>
-
-                <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700">
-                    Certificación
-                </span>
-            </div>
-
-            {{-- Info --}}
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-
-                <div class="bg-white border border-gray-200 rounded-xl p-4">
-                    <p class="text-xs text-gray-500">Certificación</p>
-                    <p class="font-semibold text-gray-900">
-                        {{ $factura->codigo_certificacion ?? '—' }}
-                    </p>
-                </div>
-
-                <div class="bg-white border border-gray-200 rounded-xl p-4">
-                    <p class="text-xs text-gray-500">Obra</p>
-                    <p class="font-semibold text-gray-900 truncate">
-                        {{ $factura->obra->nombre ?? '—' }}
-                    </p>
-                </div>
-
-            </div>
-
-            {{-- Acción --}}
-            <div class="mt-4">
-                <a href="{{ route('obras.certificaciones', $factura->obra_id) }}"
-                    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl
-                       bg-white border border-gray-200 text-gray-700
-                       hover:bg-gray-100 hover:border-gray-300 transition
-                       text-sm font-semibold shadow-sm">
-                    <i class="mgc_arrow_left_line text-lg"></i>
-                    Ver certificaciones de la obra
+    {{-- CABECERA --}}
+    <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_10px_35px_rgba(15,23,42,0.06)] mb-4">
+        <div class="border-b border-slate-200 bg-gradient-to-r from-slate-50 via-white to-cyan-50/40 px-5 py-5 sm:px-6">
+            <div class="flex items-center gap-3 mb-4">
+                <a href="{{ route('empresa.facturas-ventas') }}"
+                    class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 hover:text-slate-900">
+                    <i class="mgc_arrow_left_line text-lg"></i> Facturas
                 </a>
             </div>
 
-        </div>
-    @endif
+            <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                <div class="min-w-0">
+                    <div class="inline-flex items-center gap-2 rounded-full border border-cyan-100 bg-cyan-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-cyan-700">
+                        <span class="h-2 w-2 rounded-full bg-cyan-500"></span>
+                        Factura
+                    </div>
+                    <h2 class="mt-3 text-2xl font-semibold tracking-tight text-slate-900 font-mono">
+                        {{ $factura->serie }}-{{ $factura->numero_factura ?? 'BORRADOR' }}
+                    </h2>
+                    <div class="mt-3 flex flex-wrap items-center gap-2">
+                        <span class="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold {{ $meta['color'] }}">
+                            {{ $meta['label'] }}
+                        </span>
+                        @if ($factura->origen === 'certificacion')
+                            <span class="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                                <i class="mgc_link_2_line"></i> Desde cert. {{ $factura->codigo_certificacion }}
+                            </span>
+                        @endif
+                        @if ($factura->adjunto)
+                            <a href="{{ asset('storage/' . $factura->adjunto) }}" target="_blank"
+                                class="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 hover:bg-amber-100">
+                                <i class="mgc_attachment_2_line"></i> Ver proforma adjunta
+                            </a>
+                        @endif
+                    </div>
+                </div>
 
-
-
-    {{-- BLOQUE FACTURA --}}
-    <div class="bg-white rounded-xl shadow p-6 mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
-
-            <div>
-                <p class="text-gray-500">Factura</p>
-                <p class="font-semibold">
-                    {{ $factura->serie }}-{{ $factura->numero_factura ?? 'BORRADOR' }}
-                </p>
-            </div>
-
-            <div>
-                <p class="text-gray-500">Cliente</p>
-                <p class="font-semibold">
-                    {{ $factura->cliente->nombre ?? '—' }}
-                </p>
-            </div>
-
-            <div>
-                <p class="text-gray-500">Fecha emisión</p>
-                <p class="font-semibold">
-                    {{ $factura->fecha_emision ? \Carbon\Carbon::parse($factura->fecha_emision)->format('d/m/Y') : '—' }}
-                </p>
-            </div>
-
-            <div>
-                <p class="text-gray-500">Vencimiento</p>
-                <p class="font-semibold">
-                    {{ $factura->vencimiento ? \Carbon\Carbon::parse($factura->vencimiento)->format('d/m/Y') : '—' }}
-                </p>
-            </div>
-
-        </div>
-    </div>
-
-    @if ($editable && $factura->detalles->count() > 0)
-        <button wire:click="confirmarEmitir"
-            class="inline-flex items-center gap-2 px-4 py-2.5
-               rounded-xl text-xs font-semibold
-               bg-primary text-white
-               hover:bg-primary/90
-               focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1
-               transition shadow-sm">
-
-            <i class="mgc_file_check_line text-base"></i>
-            Emitir factura
-        </button>
-    @endif
-
-
-    {{-- TABLA DE LÍNEAS --}}
-    <x-tablas.table>
-
-        <x-slot name="columns">
-            <th class="px-4 py-2 text-left">Concepto</th>
-            <th class="px-4 py-2 w-24 text-left">Unidad</th>
-            <th class="px-4 py-2 w-28 text-right">Cantidad</th>
-            <th class="px-4 py-2 w-32 text-right">Precio</th>
-            <th class="px-4 py-2 w-32 text-right">Importe</th>
-
-            @if ($editable)
-                <th class="px-4 py-2 w-24 text-center">Acciones</th>
-            @endif
-        </x-slot>
-
-        <x-slot name="rows">
-            @forelse ($factura->detalles as $detalle)
-                <tr class="border-b hover:bg-gray-50 transition">
-
-                    <td class="px-4 py-2">
-                        {{ $detalle->concepto }}
-                    </td>
-
-                    <td class="px-4 py-2">
-                        {{ $detalle->unidad ?? '—' }}
-                    </td>
-
-                    <td class="px-4 py-2 text-right">
-                        {{ number_format($detalle->cantidad, 2, ',', '.') }}
-                    </td>
-
-                    <td class="px-4 py-2 text-right">
-                        {{ number_format($detalle->precio_unitario, 2, ',', '.') }} €
-                    </td>
-
-                    <td class="px-4 py-2 text-right font-semibold">
-                        {{ number_format($detalle->importe_linea, 2, ',', '.') }} €
-                    </td>
-
-                    @if ($editable)
-                        <td class="px-4 py-2">
-                            <div class="flex justify-center gap-2">
-                                <button wire:click="abrirModalEditar({{ $detalle->id }})"
-                                    class="text-yellow-600 hover:text-yellow-800">
-                                    <i class="mgc_edit_2_line text-lg"></i>
-                                </button>
-
-                                <button wire:click="confirmarEliminar({{ $detalle->id }})"
-                                    class="text-red-600 hover:text-red-800">
-                                    <i class="mgc_delete_line text-lg"></i>
-                                </button>
-                            </div>
-                        </td>
+                <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                    @if ($factura->pdf_url)
+                        <a href="{{ asset('storage/' . $factura->pdf_url) }}" target="_blank"
+                            class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
+                            <i class="mgc_pdf_line text-red-600"></i> Abrir PDF
+                        </a>
                     @endif
 
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="6" class="px-4 py-4 text-center text-gray-500">
-                        No hay líneas en esta factura.
-                    </td>
-                </tr>
-            @endforelse
-        </x-slot>
+                    @if ($editable)
+                        <button wire:click="abrirLineaNueva"
+                            class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
+                            <i class="mgc_add_line"></i> Añadir línea
+                        </button>
+                    @endif
 
-    </x-tablas.table>
+                    @if ($factura->puedeEmitirse())
+                        <button wire:click="confirmarEmitir"
+                            class="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(5,150,105,0.22)] transition hover:from-emerald-500 hover:to-green-500">
+                            <i class="mgc_check_line"></i> Emitir factura
+                        </button>
+                    @endif
 
-    {{-- TOTALES --}}
-    <div class="bg-gray-50 border rounded-xl p-5 grid grid-cols-1 md:grid-cols-4 gap-4 mt-6 shadow">
-
-        <div>
-            <p class="text-xs text-gray-500">Base imponible</p>
-            <p class="text-lg font-semibold">
-                {{ number_format($factura->base_imponible, 2, ',', '.') }} €
-            </p>
+                    @if ($factura->puedeAnular())
+                        <button wire:click="confirmarAnular"
+                            class="inline-flex items-center justify-center gap-2 rounded-xl border border-red-300 bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700 transition hover:bg-red-100">
+                            <i class="mgc_close_circle_line"></i> Anular
+                        </button>
+                    @endif
+                </div>
+            </div>
         </div>
 
-        <div>
-            <p class="text-xs text-gray-500">IVA ({{ $factura->iva_porcentaje }}%)</p>
-            <p class="text-lg font-semibold text-blue-700">
-                {{ number_format($factura->iva_importe, 2, ',', '.') }} €
-            </p>
-        </div>
-
-        @if ($factura->retencion_porcentaje > 0)
-            <div>
-                <p class="text-xs text-gray-500">Retención ({{ $factura->retencion_porcentaje }}%)</p>
-                <p class="text-lg font-semibold text-red-600">
-                    -{{ number_format($factura->retencion_importe, 2, ',', '.') }} €
+        {{-- INFO GRID --}}
+        <div class="grid grid-cols-1 gap-3 px-5 py-5 sm:grid-cols-2 lg:grid-cols-4 sm:px-6">
+            <div class="rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3">
+                <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Cliente</p>
+                <p class="mt-1 text-sm font-semibold text-slate-900 truncate">{{ $factura->cliente->nombre ?? '—' }}</p>
+            </div>
+            <div class="rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3">
+                <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Obra</p>
+                <p class="mt-1 text-sm font-semibold text-slate-900 truncate">{{ $factura->obra->nombre ?? '—' }}</p>
+            </div>
+            <div class="rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3">
+                <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Fecha emisión</p>
+                <p class="mt-1 text-sm font-semibold text-slate-900">
+                    {{ $factura->fecha_emision?->format('d/m/Y') ?? '—' }}
                 </p>
             </div>
-        @endif
-
-        <div class="border-l pl-4">
-            <p class="text-xs text-gray-500">TOTAL</p>
-            <p class="text-2xl font-bold text-primary">
-                {{ number_format($factura->total, 2, ',', '.') }} €
-            </p>
+            <div class="rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3">
+                <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Vencimiento</p>
+                <p class="mt-1 text-sm font-semibold text-slate-900">
+                    {{ $factura->vencimiento?->format('d/m/Y') ?? '—' }}
+                </p>
+            </div>
         </div>
-
     </div>
 
-    @if ($showModal)
-        <div wire:ignore.self
-            class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-
-            <div class="bg-white w-full max-w-2xl rounded-2xl shadow-xl border overflow-hidden">
-
-                {{-- CABECERA --}}
-                <div class="flex items-center gap-3 p-5 border-b">
-                    <div class="bg-primary/10 text-primary w-10 h-10 flex items-center justify-center rounded-xl">
-                        <i class="mgc_calendar_month_line text-xl"></i>
-                    </div>
-
-                    <h3 class="text-lg font-semibold">
-                        {{ $modoEdicion ? 'Editar línea de factura' : 'Añadir línea a factura' }}
-                    </h3>
-
-                    <button wire:click="cerrarModal"
-                        class="ml-auto text-gray-500 hover:text-red-600 text-2xl leading-none">
-                        &times;
-                    </button>
+    {{-- ANULADA ALERT --}}
+    @if ($factura->estado === 'anulada')
+        <div class="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 mb-4">
+            <div class="flex items-start gap-3">
+                <i class="mgc_warning_line text-red-600 text-xl"></i>
+                <div>
+                    <p class="font-semibold text-red-800">Factura anulada</p>
+                    @if ($factura->motivo_anulacion)
+                        <p class="text-sm text-red-700 mt-1">Motivo: {{ $factura->motivo_anulacion }}</p>
+                    @endif
                 </div>
-
-                {{-- CONTENIDO --}}
-                <div class="p-6 space-y-5">
-
-                    {{-- CONCEPTO --}}
-                    <div>
-                        <label class="block font-medium mb-1">Concepto *</label>
-                        <input type="text" wire:model.defer="concepto"
-                            class="w-full rounded-xl border-gray-300 focus:ring-primary focus:border-primary"
-                            placeholder="Descripción del producto o servicio">
-                        @error('concepto')
-                            <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    {{-- UNIDAD --}}
-                    <div>
-                        <label class="block font-medium mb-1">Unidad de medida</label>
-                        <input type="text" wire:model.defer="unidad"
-                            class="w-full rounded-xl border-gray-300 focus:ring-primary focus:border-primary"
-                            placeholder="Ejemplo: unidad, hora, metro, kg...">
-                    </div>
-
-                    {{-- CANTIDAD / PRECIO --}}
-                    <div class="grid grid-cols-2 gap-4">
-
-                        {{-- CANTIDAD --}}
-                        <div>
-                            <label class="block font-medium mb-1">Cantidad *</label>
-                            <input type="text" inputmode="decimal" wire:model.lazy="cantidad"
-                                class="w-full rounded-xl border-gray-300 focus:ring-primary focus:border-primary">
-                            @error('cantidad')
-                                <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        {{-- PRECIO --}}
-                        <div>
-                            <label class="block font-medium mb-1">Precio unitario (€) *</label>
-                            <input type="text" inputmode="decimal" wire:model.lazy="precio_unitario"
-                                class="w-full rounded-xl border-gray-300 focus:ring-primary focus:border-primary">
-                            @error('precio_unitario')
-                                <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                    </div>
-
-                    {{-- IMPORTE --}}
-                    <div class="text-right text-lg font-semibold border-t pt-3">
-                        Importe:
-                        <span class="text-primary">
-                            {{ number_format(
-                                ((float) str_replace(',', '.', $cantidad ?? 0)) * ((float) str_replace(',', '.', $precio_unitario ?? 0)),
-                                2,
-                                ',',
-                                '.',
-                            ) }}
-                            €
-                        </span>
-                    </div>
-
-                </div>
-
-                {{-- FOOTER --}}
-                <div class="flex justify-end gap-3 p-5 border-t bg-gray-50">
-                    <button wire:click="cerrarModal" class="px-4 py-2 rounded-xl bg-gray-200 hover:bg-gray-300">
-                        Cancelar
-                    </button>
-
-                    <button wire:click="guardarDetalle"
-                        class="px-5 py-2 rounded-xl bg-primary text-white font-semibold hover:bg-primary/90">
-                        {{ $modoEdicion ? 'Actualizar línea' : 'Guardar línea' }}
-                    </button>
-                </div>
-
             </div>
         </div>
     @endif
 
+    {{-- TABLA LÍNEAS --}}
+    <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm mb-4">
+        <div class="border-b border-slate-200 px-5 py-4 sm:px-6">
+            <h3 class="text-sm font-semibold text-slate-800">Líneas de factura</h3>
+            <p class="text-xs text-slate-500">Detalle de conceptos facturados.</p>
+        </div>
 
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+                <thead class="bg-slate-50/80 text-slate-600">
+                    <tr class="border-b border-slate-200">
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide sm:px-5">Concepto</th>
+                        <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide sm:px-5">Ud</th>
+                        <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide sm:px-5">Cantidad</th>
+                        <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide sm:px-5">Precio</th>
+                        <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide sm:px-5">Importe</th>
+                        @if ($editable)
+                            <th class="w-24 px-4 py-3 sm:px-5"></th>
+                        @endif
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 bg-white">
+                    @forelse ($factura->detalles as $linea)
+                        <tr class="hover:bg-slate-50/70">
+                            <td class="px-4 py-3 sm:px-5 text-slate-800">{{ $linea->concepto }}</td>
+                            <td class="px-4 py-3 sm:px-5 text-center text-slate-600">{{ $linea->unidad ?: '—' }}</td>
+                            <td class="px-4 py-3 sm:px-5 text-right text-slate-700">
+                                {{ number_format($linea->cantidad, 2, ',', '.') }}
+                            </td>
+                            <td class="px-4 py-3 sm:px-5 text-right text-slate-700">
+                                {{ number_format($linea->precio_unitario, 2, ',', '.') }} €
+                            </td>
+                            <td class="px-4 py-3 sm:px-5 text-right font-semibold text-slate-900">
+                                {{ number_format($linea->importe_linea, 2, ',', '.') }} €
+                            </td>
+                            @if ($editable)
+                                <td class="px-4 py-3 sm:px-5 text-right">
+                                    <div class="flex justify-end gap-1">
+                                        <button wire:click="abrirLineaEditar({{ $linea->id }})"
+                                            class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-cyan-700 hover:border-cyan-300 hover:bg-cyan-50">
+                                            <i class="mgc_edit_2_line"></i>
+                                        </button>
+                                        <button wire:click="confirmarEliminarLinea({{ $linea->id }})"
+                                            class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-red-600 hover:border-red-300 hover:bg-red-50">
+                                            <i class="mgc_delete_line"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            @endif
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="{{ $editable ? 6 : 5 }}" class="px-4 py-10 text-center text-sm text-slate-500 sm:px-5">
+                                <div class="flex flex-col items-center gap-2">
+                                    <i class="mgc_inbox_line text-2xl text-slate-400"></i>
+                                    <p>Sin líneas. Añade la primera para poder emitir la factura.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
 
+        {{-- TOTALES --}}
+        <div class="border-t border-slate-200 px-5 py-4 sm:px-6 bg-slate-50/50">
+            <div class="ml-auto w-full sm:w-96 space-y-2 text-sm">
+                <div class="flex justify-between">
+                    <span class="text-slate-600">Base imponible</span>
+                    <span class="font-semibold text-slate-900">{{ number_format($factura->base_imponible, 2, ',', '.') }} €</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-600">IVA ({{ number_format($factura->iva_porcentaje, 2, ',', '.') }}%)</span>
+                    <span class="font-semibold text-slate-900">{{ number_format($factura->iva_importe, 2, ',', '.') }} €</span>
+                </div>
+                @if ($factura->retencion_porcentaje > 0)
+                    <div class="flex justify-between">
+                        <span class="text-slate-600">Retención ({{ number_format($factura->retencion_porcentaje, 2, ',', '.') }}%)</span>
+                        <span class="font-semibold text-red-600">-{{ number_format($factura->retencion_importe, 2, ',', '.') }} €</span>
+                    </div>
+                @endif
+                <div class="flex justify-between rounded-xl bg-gradient-to-r from-slate-900 to-slate-800 px-4 py-3 text-white">
+                    <span class="font-semibold">TOTAL</span>
+                    <span class="text-lg font-bold text-cyan-300">{{ number_format($factura->total, 2, ',', '.') }} €</span>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    @if ($showDeleteModal)
-        <x-modals.confirmar titulo="Eliminar línea"
-            mensaje="¿Seguro que deseas eliminar esta línea de la factura?<br>Esta acción no se puede deshacer."
-            wire-close="wire:click=&quot;$set('showDeleteModal', false)&quot;">
-            <x-btns.cancelar wire:click="$set('showDeleteModal', false)">
-                Cancelar
-            </x-btns.cancelar>
+    {{-- ========================================
+         MODAL LÍNEA (nueva / editar)
+         ======================================== --}}
+    @if ($showLineaModal)
+        <div class="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-center justify-center px-4 py-6"
+            x-data x-on:keydown.escape.window="$wire.cerrarLineaModal()">
+            <div class="w-full max-w-xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden">
+                <div class="border-b border-slate-200 bg-gradient-to-r from-slate-50 via-white to-cyan-50/40 px-6 py-5">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <div class="inline-flex items-center gap-2 rounded-full border border-cyan-100 bg-cyan-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-cyan-700">
+                                <span class="h-2 w-2 rounded-full bg-cyan-500"></span>
+                                {{ $modoEdicionLinea ? 'Editar' : 'Nueva' }}
+                            </div>
+                            <h3 class="mt-2 text-lg font-semibold text-slate-900">
+                                {{ $modoEdicionLinea ? 'Editar línea' : 'Nueva línea de factura' }}
+                            </h3>
+                        </div>
+                        <button wire:click="cerrarLineaModal"
+                            class="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+                            <i class="mgc_close_line text-lg"></i>
+                        </button>
+                    </div>
+                </div>
 
-            <x-btns.danger wire:click="eliminarDetalle">
-                Eliminar
-            </x-btns.danger>
-        </x-modals.confirmar>
+                <form wire:submit.prevent="guardarLinea" class="px-6 py-5 space-y-4">
+                    <div>
+                        <label class="text-sm font-medium text-slate-700">Concepto *</label>
+                        <input type="text" wire:model="concepto" class="mt-1 form-input w-full rounded-xl">
+                        @error('concepto') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="text-sm font-medium text-slate-700">Unidad</label>
+                            <input type="text" wire:model="unidad" placeholder="Ej: ud, m²" class="mt-1 form-input w-full rounded-xl">
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-slate-700">Cantidad *</label>
+                            <input type="number" step="0.01" min="0.01" wire:model="cantidad" class="mt-1 form-input w-full rounded-xl">
+                            @error('cantidad') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-slate-700">Precio unit. *</label>
+                            <input type="number" step="0.01" min="0" wire:model="precio_unitario" class="mt-1 form-input w-full rounded-xl">
+                            @error('precio_unitario') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+
+                    <div class="rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 flex items-center justify-between">
+                        <span class="text-xs text-slate-500 uppercase tracking-wide">Importe línea</span>
+                        <span class="font-bold text-slate-900">{{ number_format(($cantidad ?? 0) * ($precio_unitario ?? 0), 2, ',', '.') }} €</span>
+                    </div>
+
+                    <div class="flex justify-end gap-3 pt-3 border-t border-slate-200">
+                        <button type="button" wire:click="cerrarLineaModal"
+                            class="px-4 py-2 rounded-xl text-sm font-medium border border-slate-300 text-slate-700 hover:bg-slate-100">
+                            Cancelar
+                        </button>
+                        <button type="submit"
+                            class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow hover:from-cyan-500 hover:to-blue-500">
+                            {{ $modoEdicionLinea ? 'Guardar cambios' : 'Añadir línea' }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
     @endif
 
+    {{-- MODAL ELIMINAR LÍNEA --}}
+    @if ($detalleAEliminarId)
+        <div class="fixed inset-0 z-[10000] bg-black/60 backdrop-blur-sm flex items-center justify-center px-4">
+            <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden">
+                <div class="px-6 pt-6 text-center">
+                    <div class="mx-auto mb-4 flex items-center justify-center w-14 h-14 rounded-full bg-red-100 text-red-600">
+                        <i class="mgc_warning_line text-3xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-slate-900">Eliminar línea</h3>
+                    <p class="mt-2 text-sm text-slate-600">Se recalcularán los totales de la factura.</p>
+                </div>
+                <div class="mt-6 px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-3">
+                    <button wire:click="cancelarEliminarLinea"
+                        class="px-4 py-2 rounded-xl text-sm font-medium border border-slate-300 text-slate-700 hover:bg-slate-100">
+                        Cancelar
+                    </button>
+                    <button wire:click="eliminarLinea"
+                        class="px-4 py-2 rounded-xl text-sm font-semibold bg-red-600 text-white hover:bg-red-700">
+                        Eliminar línea
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- MODAL EMITIR --}}
     @if ($showEmitirModal)
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-
-            <div
-                class="bg-white w-full max-w-lg rounded-2xl shadow-xl
-                   border border-gray-200 overflow-hidden">
-
-                {{-- CABECERA --}}
-                <div class="flex items-center gap-3 p-5 border-b">
-                    <div
-                        class="bg-primary/10 text-primary w-10 h-10 flex items-center justify-center rounded-xl text-xl">
-                        <i class="mgc_file_check_line"></i>
+        <div class="fixed inset-0 z-[10000] bg-black/60 backdrop-blur-sm flex items-center justify-center px-4">
+            <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden">
+                <div class="px-6 pt-6 text-center">
+                    <div class="mx-auto mb-4 flex items-center justify-center w-14 h-14 rounded-full bg-emerald-100 text-emerald-600">
+                        <i class="mgc_check_line text-3xl"></i>
                     </div>
-
-                    <h3 class="text-lg font-semibold text-gray-800">
-                        Emitir factura
-                    </h3>
-
-                    <button wire:click="$set('showEmitirModal', false)"
-                        class="ml-auto text-gray-500 hover:text-red-600 text-2xl leading-none">
-                        &times;
-                    </button>
-                </div>
-
-                {{-- CONTENIDO --}}
-                <div class="p-6 text-gray-700 space-y-4">
-                    <p>Al emitir la factura:</p>
-
-                    <ul class="list-disc pl-5 text-sm text-gray-600 space-y-1">
-                        <li>Se asignará numeración fiscal</li>
-                        <li>No podrás modificar las líneas</li>
-                        <li>La factura quedará cerrada</li>
-                    </ul>
-
-                    <p class="font-medium pt-2">
-                        ¿Deseas continuar?
+                    <h3 class="text-lg font-semibold text-slate-900">Emitir factura</h3>
+                    <p class="mt-2 text-sm text-slate-600 leading-relaxed">
+                        Se consumirá el siguiente número de la serie <strong class="font-mono">{{ $factura->serie }}</strong>,
+                        se generará el PDF y la factura ya no será editable.
                     </p>
                 </div>
-
-                {{-- FOOTER --}}
-                <div class="flex justify-end gap-3 p-5 border-t bg-gray-50">
-
-                    <button wire:click="$set('showEmitirModal', false)"
-                        class="px-4 py-2 rounded-xl bg-gray-200 hover:bg-gray-300 transition">
+                <div class="mt-6 px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-3">
+                    <button wire:click="cancelarEmitir"
+                        class="px-4 py-2 rounded-xl text-sm font-medium border border-slate-300 text-slate-700 hover:bg-slate-100">
                         Cancelar
                     </button>
-
-                    <button wire:click="emitirFactura"
-                        class="px-5 py-2 rounded-xl bg-primary text-white font-semibold hover:bg-primary/90 transition">
-                        Emitir factura
+                    <button wire:click="emitirFactura" wire:loading.attr="disabled"
+                        class="px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-emerald-600 to-green-600 text-white shadow hover:from-emerald-500 hover:to-green-500 disabled:opacity-60">
+                        <span wire:loading.remove wire:target="emitirFactura">Emitir ahora</span>
+                        <span wire:loading wire:target="emitirFactura">Emitiendo…</span>
                     </button>
-
                 </div>
-
             </div>
         </div>
     @endif
 
-    @if ($showPagoModal)
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div class="bg-white w-full max-w-lg rounded-2xl shadow-xl border overflow-hidden">
-
-                {{-- CABECERA --}}
-                <div class="flex items-center gap-3 p-5 border-b">
-                    <div class="bg-emerald-100 text-emerald-600 w-10 h-10 flex items-center justify-center rounded-xl">
-                        <i class="mgc_currency_euro_2_line text-xl"></i>
-                    </div>
-
-                    <h3 class="text-lg font-semibold">Registrar pago</h3>
-
-                    <button wire:click="cerrarModalPago"
-                        class="ml-auto text-gray-500 hover:text-red-600 text-2xl">&times;</button>
-                </div>
-
-                {{-- CONTENIDO --}}
-                <div class="p-6 space-y-4">
-
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Fecha de pago *</label>
-                        <input type="date" wire:model.defer="pago_fecha"
-                            class="w-full rounded-xl border-gray-300 focus:ring-emerald-500 focus:border-emerald-500">
-                        @error('pago_fecha')
-                            <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium mb-1">
-                            Importe * (máx {{ number_format($factura->pendientePago(), 2, ',', '.') }} €)
-                        </label>
-                        <input type="number" step="0.01" wire:model.defer="pago_importe"
-                            class="w-full rounded-xl border-gray-300 focus:ring-emerald-500 focus:border-emerald-500">
-                        @error('pago_importe')
-                            <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Método *</label>
-                        <input type="text" wire:model.defer="pago_metodo"
-                            class="w-full rounded-xl border-gray-300 focus:ring-emerald-500 focus:border-emerald-500"
-                            placeholder="Transferencia, efectivo, tarjeta…">
-                        @error('pago_metodo')
-                            <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Tipo de pago</label>
-                        <select wire:model.defer="pago_tipo" class="w-full rounded-xl border-gray-300">
-                            <option value="normal">Pago normal</option>
-                            <option value="correccion">Corrección</option>
-                        </select>
-                    </div>
-
-
-
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Observaciones</label>
-                        <textarea wire:model.defer="pago_observaciones"
-                            class="w-full rounded-xl border-gray-300 focus:ring-emerald-500 focus:border-emerald-500" rows="3"></textarea>
-                    </div>
-
-                </div>
-
-                {{-- FOOTER --}}
-                <div class="flex justify-end gap-3 p-5 border-t bg-gray-50">
-                    <button wire:click="cerrarModalPago" class="px-4 py-2 rounded-xl bg-gray-200 hover:bg-gray-300">
-                        Cancelar
-                    </button>
-
-                    <button wire:click="guardarPago"
-                        class="px-5 py-2 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700">
-                        Guardar pago
-                    </button>
-                </div>
-
-            </div>
-        </div>
-    @endif
-
+    {{-- MODAL ANULAR --}}
     @if ($showAnularModal)
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div class="bg-white w-full max-w-lg rounded-2xl shadow-xl border overflow-hidden">
-
-                {{-- CABECERA --}}
-                <div class="flex items-center gap-3 p-5 border-b">
-                    <div class="bg-red-100 text-red-600 w-10 h-10 flex items-center justify-center rounded-xl">
-                        <i class="mgc_close_circle_line text-xl"></i>
+        <div class="fixed inset-0 z-[10000] bg-black/60 backdrop-blur-sm flex items-center justify-center px-4">
+            <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden">
+                <div class="px-6 pt-6 text-center">
+                    <div class="mx-auto mb-4 flex items-center justify-center w-14 h-14 rounded-full bg-red-100 text-red-600">
+                        <i class="mgc_close_circle_line text-3xl"></i>
                     </div>
-
-                    <h3 class="text-lg font-semibold text-gray-800">
-                        Anular factura
-                    </h3>
-
-                    <button wire:click="cerrarAnularModal"
-                        class="ml-auto text-gray-500 hover:text-red-600 text-2xl leading-none">
-                        &times;
-                    </button>
-                </div>
-
-                {{-- CONTENIDO --}}
-                <div class="p-6 space-y-4 text-gray-700">
-                    <p class="text-sm">
-                        Esta acción marcará la factura como <strong>anulada</strong>.
-                        No se eliminará ni se podrá modificar posteriormente.
+                    <h3 class="text-lg font-semibold text-slate-900">Anular factura</h3>
+                    <p class="mt-2 text-sm text-slate-600">
+                        Indica el motivo de anulación (mínimo 5 caracteres).
                     </p>
-
-                    <div>
-                        <label class="block text-sm font-medium mb-1">
-                            Motivo de la anulación <span class="text-red-600">*</span>
-                        </label>
-
-                        <textarea wire:model.defer="motivoAnulacion" rows="4"
-                            class="w-full rounded-xl border-gray-300 focus:ring-red-500 focus:border-red-500"
-                            placeholder="Explica brevemente el motivo de la anulación"></textarea>
-
-                        @error('motivoAnulacion')
-                            <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
                 </div>
-
-                {{-- FOOTER --}}
-                <div class="flex justify-end gap-3 p-5 border-t bg-gray-50">
+                <div class="px-6 pt-4 pb-2">
+                    <textarea wire:model="motivoAnulacion" rows="3"
+                        placeholder="Ej: error en el importe facturado"
+                        class="w-full form-textarea rounded-xl border-slate-300"></textarea>
+                    @error('motivoAnulacion') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+                </div>
+                <div class="mt-4 px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-3">
                     <button wire:click="cerrarAnularModal"
-                        class="px-4 py-2 rounded-xl bg-gray-200 hover:bg-gray-300 transition">
+                        class="px-4 py-2 rounded-xl text-sm font-medium border border-slate-300 text-slate-700 hover:bg-slate-100">
                         Cancelar
                     </button>
-
                     <button wire:click="anularFactura"
-                        class="px-5 py-2 rounded-xl bg-red-600 text-white font-semibold hover:bg-red-700 transition">
+                        class="px-4 py-2 rounded-xl text-sm font-semibold bg-red-600 text-white hover:bg-red-700">
                         Anular factura
                     </button>
                 </div>
-
             </div>
         </div>
     @endif
-
-
-
-    {{-- ======================
-     COBROS / PAGOS
-====================== --}}
-    @if ($factura->estado !== 'borrador')
-        <div class="mt-10 border-t pt-6">
-
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                    Cobros
-                </h3>
-
-                {{-- Botón registrar pago --}}
-                @if (in_array($factura->estado, ['emitida', 'enviada']) && $factura->pendientePago() > 0)
-                    <button wire:click="abrirModalPago"
-                        class="inline-flex items-center gap-2 px-4 py-2 rounded-xl
-                           bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition">
-                        <i class="mgc_currency_euro_2_line"></i>
-                        Registrar pago
-                    </button>
-                @endif
-            </div>
-
-            {{-- Resumen estilo TOTALES --}}
-            <div class="bg-gray-50 border rounded-xl p-5 grid grid-cols-1 md:grid-cols-4 gap-4 shadow">
-
-                <div>
-                    <p class="text-xs text-gray-500">Total factura</p>
-                    <p class="text-lg font-semibold text-gray-800">
-                        {{ number_format($factura->total, 2, ',', '.') }} €
-                    </p>
-                </div>
-
-                <div>
-                    <p class="text-xs text-gray-500">Total pagado</p>
-                    <p class="text-lg font-semibold text-emerald-700">
-                        {{ number_format($factura->totalPagado(), 2, ',', '.') }} €
-                    </p>
-                </div>
-
-                <div>
-                    <p class="text-xs text-gray-500">Pendiente</p>
-                    <p class="text-lg font-semibold text-red-600">
-                        {{ number_format($factura->pendientePago(), 2, ',', '.') }} €
-                    </p>
-                </div>
-
-                <div class="border-l pl-4">
-                    <p class="text-xs text-gray-500">ESTADO</p>
-
-                    @php
-                        $pendiente = $factura->pendientePago();
-                    @endphp
-
-                    <p class="text-2xl font-bold {{ $pendiente <= 0 ? 'text-emerald-600' : 'text-primary' }}">
-                        {{ $pendiente <= 0 ? 'PAGADA' : 'PENDIENTE' }}
-                    </p>
-                </div>
-
-            </div>
-
-            {{-- Tabla de pagos (más integrada) --}}
-            <div class="mt-6 bg-white border rounded-xl shadow overflow-hidden">
-                <div class="px-5 py-3 border-b bg-gray-50">
-                    <p class="text-sm font-semibold text-gray-700">
-                        Pagos registrados
-                    </p>
-                </div>
-
-                @if ($factura->pagos->count())
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm">
-                            <thead class="bg-gray-100 text-gray-600">
-                                <tr>
-                                    <th class="px-4 py-3 text-left font-semibold">Fecha</th>
-                                    <th class="px-4 py-3 text-left font-semibold">Método</th>
-
-                                    <th class="px-4 py-3 text-left font-semibold">Tipo</th>
-                                    <th class="px-4 py-3 text-left font-semibold">Observaciones</th>
-                                    <th class="px-4 py-3 text-right font-semibold">Importe</th>
-                                </tr>
-                            </thead>
-
-                            <tbody class="divide-y">
-                                @foreach ($factura->pagos as $pago)
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="px-4 py-3 whitespace-nowrap">
-                                            {{ optional($pago->fecha_pago)->format('d/m/Y') ?? '—' }}
-                                        </td>
-
-                                        <td class="px-4 py-3">
-                                            <span class="inline-flex items-center gap-2">
-                                                <i class="mgc_wallet_3_line text-gray-400"></i>
-                                                {{ $pago->metodo }}
-                                            </span>
-                                        </td>
-
-
-                                        <td class="px-4 py-2">
-                                            @if ($pago->tipo === 'normal')
-                                                <span
-                                                    class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">
-                                                    Normal
-                                                </span>
-                                            @else
-                                                <span
-                                                    class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-700">
-                                                    Corrección
-                                                </span>
-                                            @endif
-                                        </td>
-
-
-                                        <td class="px-4 py-3 text-gray-600">
-                                            {{ $pago->observaciones ?? '—' }}
-                                        </td>
-                                        <td
-                                            class="px-4 py-2 text-right font-semibold
-                                            {{ $pago->importe < 0 ? 'text-red-600' : 'text-green-700' }}">
-                                            {{ number_format($pago->importe, 2, ',', '.') }} €
-                                        </td>
-
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                @else
-                    <div class="px-5 py-4 text-sm text-gray-500">
-                        No hay pagos registrados.
-                    </div>
-                @endif
-            </div>
-
-        </div>
-    @endif
-
-
-
-
-
-
-
 </div>

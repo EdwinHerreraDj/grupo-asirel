@@ -2,135 +2,65 @@
 
 namespace App\Http\Controllers\Informes;
 
+use App\Exports\Informes\AnalisisBrutoObrasExport;
+use App\Exports\Informes\LiquidacionIvaExport;
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Exports\Informes\CosteTotalObrasExport;
-use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
-use App\Exports\Informes\FacturacionTotalExport;
-use App\Exports\Informes\RentabilidadExport;
-use App\Exports\Informes\CosteVentaMensualExport;
-
+use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
 
 class InformeController extends Controller
 {
-    public function Index()
+    public function index()
     {
         return view('empresa.informes.index');
     }
 
-    public function exportarCosteTotalObras(Request $request)
+    public function exportarLiquidacionIva(Request $request)
     {
-        $obraId = $request->get('obra_id');
-        $estado = $request->get('estado');
-        $fechaInicio = $request->get('fecha_inicio');
-        $fechaFin = $request->get('fecha_fin');
-        $formato = $request->get('formato', 'excel');
+        $fechaInicio = $request->get('fecha_inicio') ?: null;
+        $fechaFin    = $request->get('fecha_fin') ?: null;
+        $formato     = $request->get('formato', 'excel');
+
+        $export = new LiquidacionIvaExport($fechaInicio, $fechaFin);
 
         if ($formato === 'excel') {
-            return Excel::download(
-                new CosteTotalObrasExport($obraId, $estado, $fechaInicio, $fechaFin),
-                'coste_total_obras.xlsx'
-            );
+            return Excel::download($export, 'liquidacion_iva.xlsx');
         }
 
         if ($formato === 'pdf') {
-            $export = new CosteTotalObrasExport($obraId, $estado, $fechaInicio, $fechaFin);
             $view = $export->view();
+            $pdf = Pdf::loadView($view->name(), $view->getData())
+                ->setPaper('a4', 'portrait');
 
+            return $pdf->download('liquidacion_iva.pdf');
+        }
+
+        return back()->with('error', 'Formato no válido');
+    }
+
+    public function exportarAnalisisBrutoObras(Request $request)
+    {
+        $obraId      = $request->get('obra_id') ?: null;
+        $estado      = $request->get('estado') ?: null;
+        $fechaInicio = $request->get('fecha_inicio') ?: null;
+        $fechaFin    = $request->get('fecha_fin') ?: null;
+        $formato     = $request->get('formato', 'excel');
+
+        $export = new AnalisisBrutoObrasExport($obraId, $estado, $fechaInicio, $fechaFin);
+
+        if ($formato === 'excel') {
+            return Excel::download($export, 'analisis_bruto_obras.xlsx');
+        }
+
+        if ($formato === 'pdf') {
+            $view = $export->view();
             $pdf = Pdf::loadView($view->name(), $view->getData())
                 ->setPaper('a4', 'landscape');
 
-            return $pdf->download('coste_total_obras.pdf');
+            return $pdf->download('analisis_bruto_obras.pdf');
         }
 
-        return back()->with('error', 'Formato no válido');
-    }
-
-    public function exportarFacturacionTotal(Request $request)
-    {
-        $obraId = $request->get('obra_id');
-        $estado = $request->get('estado');
-        $fechaInicio = $request->get('fecha_inicio');
-        $fechaFin = $request->get('fecha_fin');
-        $formato = $request->get('formato', 'excel');   
-
-        if ($formato === 'excel') {
-            return \Maatwebsite\Excel\Facades\Excel::download(
-                new FacturacionTotalExport($obraId, $estado, $fechaInicio, $fechaFin),
-                'facturacion_total.xlsx'
-            );
-        }   
-
-        if ($formato === 'pdf') {
-            $export = new FacturacionTotalExport($obraId, $estado, $fechaInicio, $fechaFin);
-            $view = $export->view();    
-
-            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView($view->name(), $view->getData())
-                ->setPaper('a4', 'landscape');  
-
-            return $pdf->download('facturacion_total.pdf');
-        }   
-
-        return back()->with('error', 'Formato no válido');
-    }
-
-
-    public function exportarRentabilidad(Request $request)
-    {
-        $obraId = $request->get('obra_id');
-        $estado = $request->get('estado');
-        $fechaInicio = $request->get('fecha_inicio');
-        $fechaFin = $request->get('fecha_fin');
-        $formato = $request->get('formato', 'excel');
-    
-        if ($formato === 'excel') {
-            return \Maatwebsite\Excel\Facades\Excel::download(
-                new RentabilidadExport($obraId, $estado, $fechaInicio, $fechaFin),
-                'rentabilidad_obras.xlsx'
-            );
-        }
-    
-        if ($formato === 'pdf') {
-            $export = new RentabilidadExport($obraId, $estado, $fechaInicio, $fechaFin);
-            $view = $export->view();
-        
-            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView($view->name(), $view->getData())
-                ->setPaper('a4', 'landscape');
-        
-            return $pdf->download('rentabilidad_obras.pdf');
-        }
-    
-        return back()->with('error', 'Formato no válido');
-    }
-
-
-    public function exportarCosteVentaMensual(Request $request)
-    {
-        $obraId = $request->get('obra_id');
-        $estado = $request->get('estado');
-        $fechaInicio = $request->get('fecha_inicio');
-        $fechaFin = $request->get('fecha_fin');
-        $porcentaje = floatval($request->get('porcentaje', 10));
-        $formato = $request->get('formato', 'excel');
-    
-        if ($formato === 'excel') {
-            return \Maatwebsite\Excel\Facades\Excel::download(
-                new CosteVentaMensualExport($obraId, $estado, $fechaInicio, $fechaFin, $porcentaje),
-                'coste-venta-mensual.xlsx'
-            );
-        }
-    
-        if ($formato === 'pdf') {
-            $export = new CosteVentaMensualExport($obraId, $estado, $fechaInicio, $fechaFin, $porcentaje);
-            $view = $export->view();
-        
-            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView($view->name(), $view->getData())
-                ->setPaper('a4', 'landscape');
-        
-            return $pdf->download('coste-venta-mensual.pdf');
-        }
-    
         return back()->with('error', 'Formato no válido');
     }
 }

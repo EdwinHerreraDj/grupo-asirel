@@ -4,17 +4,14 @@ namespace App\Http\Controllers\Api\Certificaciones;
 
 use App\Http\Controllers\Controller;
 use App\Models\Certificacion;
-use App\Models\Obra;
 use App\Models\Empresa;
+use App\Models\Obra;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 
 class CertificacionInformeController extends Controller
 {
-    // -------------------------
     // GET /api/obras/{obra}/certificaciones/{numero}/capitulos
-    // Devuelve los capítulos de un numero_certificacion para el selector del informe
-    // -------------------------
     public function capitulos(Obra $obra, string $numero)
     {
         $capitulos = Certificacion::with('oficio')
@@ -30,9 +27,7 @@ class CertificacionInformeController extends Controller
         return response()->json(['capitulos' => $capitulos]);
     }
 
-    // -------------------------
     // POST /api/certificaciones/informe-pdf
-    // -------------------------
     public function pdf(Request $request)
     {
         $request->validate([
@@ -60,6 +55,7 @@ class CertificacionInformeController extends Controller
             ->map(function ($grupo) {
                 $lineas = $grupo->flatMap->detalles->map(fn($d) => [
                     'descripcion' => $d->concepto,
+                    'unidad'      => $d->unidad,
                     'cantidad'    => (float) $d->cantidad,
                     'precio'      => (float) $d->precio_unitario,
                     'total'       => (float) $d->importe_linea,
@@ -72,8 +68,47 @@ class CertificacionInformeController extends Controller
                 ];
             })->values()->toArray();
 
+        // ===== DESGLOSE FISCAL =====
+        $baseImponible  = (float) $certs->sum('base_imponible');
+        $ivaImporte     = (float) $certs->sum('iva_importe');
+        $retencionImp   = (float) $certs->sum('retencion_importe');
+        $totalFinal     = (float) $certs->sum('total');
+
+        // Agrupar IVA por porcentaje (puede haber certificaciones con tipos distintos)
+        $ivaPorTipo = $certs
+            ->groupBy(fn($c) => (string) (float) $c->iva_porcentaje)
+            ->map(fn($grupo) => [
+                'porcentaje' => (float) $grupo->first()->iva_porcentaje,
+                'base'       => (float) $grupo->sum('base_imponible'),
+                'importe'    => (float) $grupo->sum('iva_importe'),
+            ])
+            ->sortBy('porcentaje')
+            ->values()
+            ->toArray();
+
+        // Agrupar Retención por porcentaje (solo si > 0)
+        $retencionPorTipo = $certs
+            ->filter(fn($c) => (float) $c->retencion_porcentaje > 0)
+            ->groupBy(fn($c) => (string) (float) $c->retencion_porcentaje)
+            ->map(fn($grupo) => [
+                'porcentaje' => (float) $grupo->first()->retencion_porcentaje,
+                'base'       => (float) $grupo->sum('base_imponible'),
+                'importe'    => (float) $grupo->sum('retencion_importe'),
+            ])
+            ->sortBy('porcentaje')
+            ->values()
+            ->toArray();
+
+        $totales = [
+            'base'           => $baseImponible,
+            'iva_total'      => $ivaImporte,
+            'retencion_total' => $retencionImp,
+            'total'          => $totalFinal,
+            'iva_grupos'     => $ivaPorTipo,
+            'retencion_grupos' => $retencionPorTipo,
+        ];
+
         $numero = $certs->first()->numero_certificacion;
-        $total  = $certs->sum('total');
 
         $pdf = Pdf::loadView('pdf.certificacion', [
             'obra'                 => $obra,
@@ -82,7 +117,7 @@ class CertificacionInformeController extends Controller
             'fecha'                => now()->format('d/m/Y'),
             'numero_certificacion' => $numero,
             'capitulos'            => $capitulos,
-            'total'                => $total,
+            'totales'              => $totales,
         ])->setPaper('a4', 'portrait');
 
         $filename = 'informe_certificacion_' . str_replace(['/', '\\'], '-', $numero) . '.pdf';

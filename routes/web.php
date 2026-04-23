@@ -5,7 +5,6 @@ use App\Http\Controllers\DocumentoController;
 use App\Http\Controllers\DriveApp\FoldersController;
 use App\Http\Controllers\EmpresaController;
 use App\Http\Controllers\FichajeController;
-use App\Http\Controllers\GastosController;
 use App\Http\Controllers\GastosVariosController;
 use App\Http\Controllers\LoginLogController;
 use App\Http\Controllers\MaterialesController;
@@ -29,6 +28,7 @@ use App\Http\Controllers\Api\ClienteController as ApiClienteController;
 use App\Http\Controllers\CertificacionDetalleController;
 use App\Http\Controllers\FacturasVentasController;
 use App\Http\Controllers\FacturaSeriesController;
+use App\Http\Controllers\CosteTeoricoController;
 use App\Http\Controllers\PresupuestoVentaController;
 use App\Http\Controllers\Api\Drive\FolderController;
 use App\Http\Controllers\Api\Drive\FileController as ApiFileController;
@@ -100,6 +100,7 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
 
     // Mi Unidad
     Route::get('/empresa', [EmpresaController::class, 'index'])->name('empresa.index');
+    Route::get('/empresa/configuracion', [EmpresaController::class, 'configuracion'])->name('empresa.configuracion');
     Route::get('/empresa/drive-app', [FoldersController::class, 'index'])->name('empresa.driveApp');
 
     // Rutas de Obras
@@ -108,9 +109,6 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
 
     // Rutas de Documentos
     Route::get('/obras/{id}/documentos', [DocumentoController::class, 'index'])->name('obras.documentos');
-
-    // Rutas de Gastos
-    Route::get('/obras/{id}/gastos', [GastosController::class, 'index'])->name('obras.gastos');
 
     // Rutas de Materiales
     Route::get('/obras/{id}/gastos/materiales', [MaterialesController::class, 'index'])->name('obras.gastos.materiales');
@@ -151,12 +149,8 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
     Route::get('/ventas/informe/{id}', [VentaController::class, 'verInforme'])->name('ventas.informe');
     Route::get('/obra/{id}/ventas/informes/excel', [VentaController::class, 'ventasExcel'])->name('obra.ventas.excel');
     Route::get('/obra/{id}/ventas/informes/pdf', [VentaController::class, 'descargarPDF'])->name('obra.ventas.pdf');
-    Route::get('empresa/certificaciones/informe', [CertificacionController::class, 'informe'])->name('empresa.certificaciones.informe');
-
-
     // Certificaciones Asirel
     Route::get('/obras/{id}/certificaciones', [CertificacionController::class, 'index'])->name('obras.certificaciones');
-    Route::get('/empresa/obras/{obra}/certificaciones/facturar', [CertificacionController::class, 'facturar'])->name('empresa.certificaciones.facturar');
     Route::get('/empresa/certificaciones/{certificacion}', [CertificacionDetalleController::class, 'show'])->name('empresa.certificaciones.show');
 
 
@@ -183,17 +177,14 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
 
 
     // Rutas de Informes Generales
-    Route::get('/informes', [InformeController::class, 'Index'])->name('informes.index');
-    Route::get('/informes/exportar/coste-total-obras', [InformeController::class, 'exportarCosteTotalObras'])
-        ->name('informes.exportar.coste-total-obras');
-    Route::get('/informes/exportar/facturacion-total', [InformeController::class, 'exportarFacturacionTotal'])
-        ->name('informes.exportar.facturacion-total');
-    Route::get('/informes/exportar/rentabilidad', [InformeController::class, 'exportarRentabilidad'])
-        ->name('informes.exportar.rentabilidad');
-    Route::get('/informes/exportar/coste-venta-mensual', [InformeController::class, 'exportarCosteVentaMensual'])
-        ->name('informes.exportar.coste-venta-mensual');
+    Route::get('/informes', [InformeController::class, 'index'])->name('informes.index');
+    Route::get('/informes/exportar/liquidacion-iva', [InformeController::class, 'exportarLiquidacionIva'])
+        ->name('informes.exportar.liquidacion-iva');
+    Route::get('/informes/exportar/analisis-bruto-obras', [InformeController::class, 'exportarAnalisisBrutoObras'])
+        ->name('informes.exportar.analisis-bruto-obras');
 
     // Modulos de Asirel
+    Route::get('/facturas-recibidas', [FacturasRecibidasController::class, 'global'])->name('facturas-recibidas.global');
     Route::get('/obras/{obra}/facturas-recibidas', [FacturasRecibidasController::class, 'index'])->name('obras.facturas-recibidas');
     // Rutas de Proveedores
     Route::get('/proveedores', [ProveedorController::class, 'index'])->name('proveedores');
@@ -207,7 +198,13 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
     // routes/web.php
 
     Route::get('/empresa/facturas-ventas/{factura}/pdf', [FacturasVentasController::class, 'pdf'])->name('empresa.facturas-ventas.pdf');
-    // Rutas de Prseupuestos de Venta
+    // Rutas de Presupuesto (Coste te\u00f3rico + Presupuesto de venta)
+    // Tareas (kanban personal)
+    Route::get('/tareas', [\App\Http\Controllers\TareasController::class, 'index'])->name('tareas.index');
+
+    Route::get('/coste-teorico', [CosteTeoricoController::class, 'global'])->name('coste-teorico.global');
+    Route::get('/presupuesto-venta', [PresupuestoVentaController::class, 'global'])->name('presupuesto-venta.global');
+    Route::get('/obras/{obra}/coste-teorico', [CosteTeoricoController::class, 'index'])->name('obras.coste-teorico');
     Route::get('/obras/{obra}/presupuesto-venta', [PresupuestoVentaController::class, 'index'])->name('obras.presupuesto-venta');
 
     //Rutas de consevar la session activa

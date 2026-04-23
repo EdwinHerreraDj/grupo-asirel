@@ -173,6 +173,46 @@
         </section>
 
         {{-- ======================
+        ADJUNTO (proforma)
+        ======================= --}}
+        <section class="bg-white rounded-2xl border p-6 space-y-3">
+            <h4 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                Adjuntar proforma (PDF opcional)
+            </h4>
+            <p class="text-xs text-slate-500">
+                Si el cliente te envía una proforma, puedes adjuntarla aquí para tenerla asociada a la factura.
+            </p>
+
+            @if ($adjuntoActual)
+                <div class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
+                    <div class="flex items-center gap-2">
+                        <i class="mgc_file_pdf_line text-red-600 text-lg"></i>
+                        <span class="text-slate-700">Adjunto actual</span>
+                    </div>
+                    <a href="{{ asset('storage/' . $adjuntoActual) }}" target="_blank"
+                        class="text-xs font-medium text-cyan-700 hover:underline">
+                        Ver
+                    </a>
+                </div>
+            @endif
+
+            <label class="flex flex-col items-center justify-center gap-1.5 p-4 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer bg-slate-50/40 hover:border-cyan-400 hover:bg-cyan-50/40 transition {{ $editable ? '' : 'pointer-events-none opacity-60' }}">
+                <i class="mgc_upload_2_line text-xl text-slate-400"></i>
+                <p class="text-sm text-slate-600">
+                    {{ $adjuntoActual ? 'Reemplazar proforma' : 'Arrastra un PDF o haz clic' }}
+                </p>
+                <p class="text-xs text-slate-400">Formato PDF · máx 5 MB</p>
+                <input type="file" wire:model="adjunto" accept="application/pdf" class="hidden" @disabled(!$editable)>
+            </label>
+
+            <div wire:loading wire:target="adjunto" class="text-xs text-slate-500">Subiendo adjunto…</div>
+
+            @error('adjunto')
+                <p class="text-red-600 text-xs">{{ $message }}</p>
+            @enderror
+        </section>
+
+        {{-- ======================
         ACCIONES
         ======================= --}}
         <div class="flex justify-end gap-3 pt-6 border-t">

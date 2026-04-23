@@ -2,327 +2,61 @@
 
 namespace App\Livewire\Empresa\FacturasVentas;
 
-use Livewire\Component;
 use App\Models\FacturaVenta;
-use Illuminate\Support\Facades\DB;
 use App\Models\FacturaVentaDetalle;
-use App\Models\FacturaSerie;
 use App\Models\FacturaVentaPago;
-use App\Models\Empresa;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Facades\Storage;
-
+use App\Services\FacturaVentaService;
+use Livewire\Component;
+use RuntimeException;
 
 class Detalle extends Component
 {
     public FacturaVenta $factura;
     public bool $editable = false;
-    public bool $showModal = false;
-    public bool $modoEdicion = false;
 
+    // Modal línea
+    public bool $showLineaModal = false;
+    public bool $modoEdicionLinea = false;
     public ?int $detalleId = null;
-
     public string $concepto = '';
     public ?string $unidad = null;
     public float $cantidad = 0;
     public float $precio_unitario = 0;
 
-    public bool $showDeleteModal = false;
+    // Modal eliminar línea
     public ?int $detalleAEliminarId = null;
 
+    // Modal emitir
     public bool $showEmitirModal = false;
 
-    /* Gestion de cobros */
+    // Modal pago (crear o editar)
     public bool $showPagoModal = false;
+    public ?int $pagoId = null;
+    public bool $modoEdicionPago = false;
+    public ?string $pago_fecha = null;
+    public $pago_importe = 0;
+    public ?string $pago_metodo = null;
+    public ?string $pago_observaciones = null;
+    public string $pago_tipo = 'normal';
 
-    public $pago_fecha;
-    public $pago_importe;
-    public $pago_metodo;
-    public $pago_observaciones;
-    public $pago_tipo = 'normal';
+    // Modal eliminar pago
+    public ?int $pagoAEliminarId = null;
 
-    /* Anulacion de la factura */
+    // Modal anular
     public bool $showAnularModal = false;
     public string $motivoAnulacion = '';
 
-
-
-
-    protected function rules()
+    protected function rulesLinea(): array
     {
         return [
-            'concepto'        => ['required', 'string', 'max:255'],
-            'unidad'          => ['nullable', 'string', 'max:50'],
-            'cantidad'        => ['required', 'numeric', 'min:0.01'],
-            'precio_unitario' => ['required', 'numeric', 'min:0'],
+            'concepto'        => 'required|string|max:255',
+            'unidad'          => 'nullable|string|max:50',
+            'cantidad'        => 'required|numeric|min:0.01',
+            'precio_unitario' => 'required|numeric|min:0',
         ];
     }
 
-
-
-    public function mount(FacturaVenta $factura)
-    {
-        $this->factura = $factura->load('detalles');
-        $this->editable = $factura->estado === 'borrador';
-    }
-
-    public function abrirModalCrear()
-    {
-        $this->resetCamposLinea();
-        $this->modoEdicion = false;
-        $this->showModal = true;
-    }
-
-    public function abrirModalEditar(int $detalleId)
-    {
-        $detalle = FacturaVentaDetalle::where('factura_venta_id', $this->factura->id)
-            ->findOrFail($detalleId);
-
-        $this->detalleId = $detalle->id;
-        $this->concepto = $detalle->concepto;
-        $this->unidad = $detalle->unidad;
-        $this->cantidad = $detalle->cantidad;
-        $this->precio_unitario = $detalle->precio_unitario;
-
-        $this->modoEdicion = true;
-        $this->showModal = true;
-    }
-
-    public function cerrarModal()
-    {
-        $this->resetCamposLinea();
-        $this->showModal = false;
-    }
-
-    public function confirmarEliminar(int $detalleId): void
-    {
-        if (!$this->editable) {
-            abort(403);
-        }
-
-        $this->detalleAEliminarId = $detalleId;
-        $this->showDeleteModal = true;
-    }
-
-    public function eliminarDetalle(): void
-    {
-        if (!$this->editable) {
-            abort(403);
-        }
-
-        $detalle = FacturaVentaDetalle::where('factura_venta_id', $this->factura->id)
-            ->findOrFail($this->detalleAEliminarId);
-
-        $detalle->delete();
-
-        $this->recalcularTotales();
-
-        $this->showDeleteModal = false;
-        $this->detalleAEliminarId = null;
-
-        /* Mensaje de éxito o notificación  */
-        $this->dispatch('toast', type: 'success', text: 'Línea eliminada correctamente');
-    }
-
-
-
-
-    private function resetCamposLinea(): void
-    {
-        $this->reset([
-            'detalleId',
-            'concepto',
-            'unidad',
-            'cantidad',
-            'precio_unitario',
-        ]);
-
-        $this->cantidad = 0;
-        $this->precio_unitario = 0;
-    }
-
-    public function guardarDetalle()
-    {
-        if (!$this->editable) {
-            abort(403);
-        }
-
-        $this->validate();
-
-        $importe = round($this->cantidad * $this->precio_unitario, 2);
-
-        if ($this->modoEdicion) {
-
-            $detalle = FacturaVentaDetalle::where('factura_venta_id', $this->factura->id)
-                ->findOrFail($this->detalleId);
-
-            $detalle->update([
-                'concepto'        => $this->concepto,
-                'unidad'          => $this->unidad,
-                'cantidad'        => $this->cantidad,
-                'precio_unitario' => $this->precio_unitario,
-                'importe_linea'   => $importe,
-            ]);
-        } else {
-
-            FacturaVentaDetalle::create([
-                'factura_venta_id' => $this->factura->id,
-                'concepto'         => $this->concepto,
-                'unidad'           => $this->unidad,
-                'cantidad'         => $this->cantidad,
-                'precio_unitario'  => $this->precio_unitario,
-                'importe_linea'    => $importe,
-            ]);
-        }
-
-        // Recalcular totales factura
-        $this->factura->load('detalles');
-        $this->recalcularTotales();
-
-        $this->cerrarModal();
-        /* Mensaje de éxito o notificación  */
-        $this->dispatch('toast', type: 'success', text: 'Línea guardada correctamente');
-    }
-
-    public function recalcularTotales(): void
-    {
-        DB::transaction(function () {
-
-            // Base = suma de importes de línea (tu modelo guarda importe_linea ya calculado)
-            $base = $this->factura->detalles()->sum('importe_linea');
-
-            $ivaPorcentaje = (float) ($this->factura->iva_porcentaje ?? 0);
-            $retencionPorcentaje = (float) ($this->factura->retencion_porcentaje ?? 0);
-
-            $ivaImporte = round($base * ($ivaPorcentaje / 100), 2);
-            $retencionImporte = round($base * ($retencionPorcentaje / 100), 2);
-
-            // Total típico construcción: base + IVA - retención
-            $total = round($base + $ivaImporte - $retencionImporte, 2);
-
-            $this->factura->update([
-                'base_imponible'     => $base,
-                'iva_importe'        => $ivaImporte,
-                'retencion_importe'  => $retencionImporte,
-                'total'              => $total,
-            ]);
-        });
-
-        // refrescar modelo + relación para que la vista se actualice bien
-        $this->factura->refresh();
-        $this->factura->load('detalles');
-    }
-
-    public function confirmarEmitir(): void
-    {
-        if (!$this->editable) {
-            abort(403);
-        }
-
-        if ($this->factura->detalles()->count() === 0) {
-            $this->dispatch('toast', type: 'error', text: 'La factura no tiene líneas');
-            return;
-        }
-
-        $this->showEmitirModal = true;
-    }
-
-    public function emitirFactura(): void
-    {
-        if ($this->factura->estado !== 'borrador') {
-            abort(403);
-        }
-
-        DB::transaction(function () {
-
-            // 1️⃣ Recalcular totales
-            $this->recalcularTotales();
-
-            // 2️⃣ Bloquear serie
-            $serie = FacturaSerie::where('serie', $this->factura->serie)
-                ->lockForUpdate()
-                ->firstOrFail();
-
-            // 3️⃣ Consumir numeración
-            $numero = $serie->ultimo_numero + 1;
-
-            $serie->update([
-                'ultimo_numero' => $numero,
-            ]);
-
-            // 4️⃣ Marcar como emitida (aún sin PDF)
-            $this->factura->update([
-                'numero_factura' => $numero,
-                'estado'         => 'emitida',
-                'fecha_emision'  => now()->toDateString(),
-            ]);
-        });
-
-        // 🔁 Refrescar modelo ya emitido
-        $this->factura->refresh();
-
-        // 5️⃣ Generar PDF (FUERA de la transacción)
-        $this->generarPdfFactura();
-
-        // 6️⃣ Bloquear edición
-        $this->editable = false;
-        $this->showEmitirModal = false;
-
-        $this->dispatch('toast', type: 'success', text: 'Factura emitida correctamente');
-    }
-
-    protected function generarPdfFactura(): void
-    {
-        $this->factura->load(['cliente', 'detalles']);
-
-        $pdf = Pdf::loadView('pdf.factura-venta', [
-            'factura' => $this->factura,
-            'empresa' => Empresa::first(),
-        ])
-            ->setPaper('A4')
-            ->setOptions([
-                'defaultFont' => 'DejaVu Sans',
-                'isHtml5ParserEnabled' => true,
-                'isRemoteEnabled' => true,
-            ]);
-
-        $nombre = sprintf(
-            'facturas/%s-%s.pdf',
-            $this->factura->serie,
-            str_pad($this->factura->numero_factura, 6, '0', STR_PAD_LEFT)
-        );
-
-        Storage::disk('public')->put($nombre, $pdf->output());
-
-        $this->factura->update([
-            'pdf_url' => $nombre,
-        ]);
-    }
-
-
-    /* Gestion de cobros de la factura */
-    public function abrirModalPago()
-    {
-        $this->reset([
-            'pago_fecha',
-            'pago_importe',
-            'pago_metodo',
-            'pago_observaciones',
-            'pago_tipo',
-        ]);
-
-
-        $this->pago_fecha = now()->format('Y-m-d');
-        $this->pago_tipo = 'normal';
-        $this->showPagoModal = true;
-    }
-
-    public function cerrarModalPago()
-    {
-        $this->showPagoModal = false;
-    }
-
-    protected function rulesPago()
+    protected function rulesPago(): array
     {
         return [
             'pago_fecha'         => 'required|date',
@@ -333,55 +67,277 @@ class Detalle extends Component
         ];
     }
 
-
-    public function guardarPago()
+    public function mount(FacturaVenta $factura): void
     {
-        if (!in_array($this->factura->estado, ['emitida', 'enviada'])) {
+        $this->factura = $factura->load(['detalles', 'pagos', 'cliente', 'obra']);
+        $this->editable = $factura->esEditable();
+    }
+
+    // -------------------------
+    // LÍNEAS
+    // -------------------------
+
+    public function abrirLineaNueva(): void
+    {
+        $this->resetLinea();
+        $this->modoEdicionLinea = false;
+        $this->showLineaModal = true;
+    }
+
+    public function abrirLineaEditar(int $detalleId): void
+    {
+        $detalle = FacturaVentaDetalle::where('factura_venta_id', $this->factura->id)
+            ->findOrFail($detalleId);
+
+        $this->detalleId = $detalle->id;
+        $this->concepto = $detalle->concepto;
+        $this->unidad = $detalle->unidad;
+        $this->cantidad = (float) $detalle->cantidad;
+        $this->precio_unitario = (float) $detalle->precio_unitario;
+
+        $this->modoEdicionLinea = true;
+        $this->showLineaModal = true;
+    }
+
+    public function cerrarLineaModal(): void
+    {
+        $this->resetLinea();
+        $this->showLineaModal = false;
+    }
+
+    public function guardarLinea(FacturaVentaService $service): void
+    {
+        $data = $this->validate($this->rulesLinea());
+
+        try {
+            if ($this->modoEdicionLinea && $this->detalleId) {
+                $detalle = FacturaVentaDetalle::where('factura_venta_id', $this->factura->id)
+                    ->findOrFail($this->detalleId);
+                $service->actualizarLinea($this->factura, $detalle, $data);
+                $mensaje = 'Línea actualizada.';
+            } else {
+                $service->agregarLinea($this->factura, $data);
+                $mensaje = 'Línea añadida.';
+            }
+        } catch (RuntimeException $e) {
+            $this->dispatch('notify', type: 'error', message: $e->getMessage());
+
             return;
         }
 
-        $this->validate($this->rulesPago());
-
-        if ($this->pago_tipo === 'normal') {
-
-            if ($this->pago_importe < 0) {
-                $this->addError('pago_importe', 'Un pago normal no puede ser negativo.');
-                return;
-            }
-
-            if ($this->pago_importe > $this->factura->pendientePago()) {
-                $this->addError('pago_importe', 'El importe supera el pendiente de la factura.');
-                return;
-            }
-        } else { // corrección
-
-            if ($this->pago_importe > 0) {
-                $this->addError('pago_importe', 'Una corrección debe tener importe negativo.');
-                return;
-            }
-        }
-
-        FacturaVentaPago::create([
-            'factura_venta_id' => $this->factura->id,
-            'fecha_pago'       => $this->pago_fecha,
-            'importe'          => $this->pago_importe,
-            'metodo'           => $this->pago_metodo,
-            'tipo'             => $this->pago_tipo,
-            'observaciones'    => $this->pago_observaciones,
-        ]);
-
-        $this->factura->refresh();
-        $this->factura->recalcularEstadoPorPagos();
-
-        $this->showPagoModal = false;
-
-        $this->dispatch('toast', type: 'success', text: 'Pago registrado correctamente');
+        $this->factura->refresh()->load(['detalles', 'pagos']);
+        $this->cerrarLineaModal();
+        $this->dispatch('notify', type: 'success', message: $mensaje);
     }
 
-    /* Metodos para anular la factura */
-    public function confirmarAnular()
+    public function confirmarEliminarLinea(int $detalleId): void
+    {
+        $this->detalleAEliminarId = $detalleId;
+    }
+
+    public function cancelarEliminarLinea(): void
+    {
+        $this->detalleAEliminarId = null;
+    }
+
+    public function eliminarLinea(FacturaVentaService $service): void
+    {
+        if (! $this->detalleAEliminarId) {
+            return;
+        }
+
+        $detalle = FacturaVentaDetalle::where('factura_venta_id', $this->factura->id)
+            ->findOrFail($this->detalleAEliminarId);
+
+        try {
+            $service->eliminarLinea($this->factura, $detalle);
+        } catch (RuntimeException $e) {
+            $this->dispatch('notify', type: 'error', message: $e->getMessage());
+
+            return;
+        }
+
+        $this->factura->refresh()->load(['detalles', 'pagos']);
+        $this->detalleAEliminarId = null;
+        $this->dispatch('notify', type: 'success', message: 'Línea eliminada.');
+    }
+
+    private function resetLinea(): void
+    {
+        $this->reset(['detalleId', 'concepto', 'unidad', 'cantidad', 'precio_unitario']);
+        $this->cantidad = 0;
+        $this->precio_unitario = 0;
+    }
+
+    // -------------------------
+    // EMISIÓN
+    // -------------------------
+
+    public function confirmarEmitir(): void
+    {
+        if (! $this->factura->puedeEmitirse()) {
+            $this->dispatch('notify', type: 'error', message: 'La factura no se puede emitir.');
+
+            return;
+        }
+
+        $this->showEmitirModal = true;
+    }
+
+    public function cancelarEmitir(): void
+    {
+        $this->showEmitirModal = false;
+    }
+
+    public function emitirFactura(FacturaVentaService $service): void
+    {
+        try {
+            $service->emitir($this->factura);
+        } catch (RuntimeException $e) {
+            $this->dispatch('notify', type: 'error', message: $e->getMessage());
+
+            return;
+        } catch (\Throwable $e) {
+            report($e);
+            $this->dispatch('notify', type: 'error', message: 'Error al emitir la factura.');
+
+            return;
+        }
+
+        $this->factura->refresh()->load(['detalles', 'pagos']);
+        $this->editable = false;
+        $this->showEmitirModal = false;
+        $this->dispatch('notify', type: 'success', message: 'Factura emitida correctamente.');
+    }
+
+    // -------------------------
+    // PAGOS
+    // -------------------------
+
+    public function abrirPagoNuevo(): void
+    {
+        $this->resetPago();
+        $this->pago_fecha = now()->format('Y-m-d');
+        $this->modoEdicionPago = false;
+        $this->showPagoModal = true;
+    }
+
+    public function abrirPagoEditar(int $pagoId): void
+    {
+        $pago = FacturaVentaPago::where('factura_venta_id', $this->factura->id)
+            ->findOrFail($pagoId);
+
+        $this->pagoId = $pago->id;
+        $this->pago_fecha = $pago->fecha_pago?->format('Y-m-d');
+        $this->pago_importe = (float) $pago->importe;
+        $this->pago_metodo = $pago->metodo;
+        $this->pago_tipo = $pago->tipo;
+        $this->pago_observaciones = $pago->observaciones;
+
+        $this->modoEdicionPago = true;
+        $this->showPagoModal = true;
+    }
+
+    public function cerrarPagoModal(): void
+    {
+        $this->resetPago();
+        $this->showPagoModal = false;
+    }
+
+    public function guardarPago(FacturaVentaService $service): void
+    {
+        $data = $this->validate($this->rulesPago());
+        $importe = (float) $data['pago_importe'];
+
+        if ($data['pago_tipo'] === 'normal' && $importe < 0) {
+            $this->addError('pago_importe', 'Un pago normal no puede ser negativo.');
+
+            return;
+        }
+
+        if ($data['pago_tipo'] === 'correccion' && $importe > 0) {
+            $this->addError('pago_importe', 'Una corrección debe tener importe negativo.');
+
+            return;
+        }
+
+        $payload = [
+            'fecha_pago'    => $data['pago_fecha'],
+            'importe'       => $importe,
+            'metodo'        => $data['pago_metodo'],
+            'tipo'          => $data['pago_tipo'],
+            'observaciones' => $data['pago_observaciones'] ?? null,
+        ];
+
+        try {
+            if ($this->modoEdicionPago && $this->pagoId) {
+                $pago = FacturaVentaPago::where('factura_venta_id', $this->factura->id)
+                    ->findOrFail($this->pagoId);
+                $service->actualizarPago($pago, $payload);
+                $mensaje = 'Pago actualizado.';
+            } else {
+                $service->registrarPago($this->factura, $payload);
+                $mensaje = 'Pago registrado.';
+            }
+        } catch (RuntimeException $e) {
+            $this->dispatch('notify', type: 'error', message: $e->getMessage());
+
+            return;
+        }
+
+        $this->factura->refresh()->load(['detalles', 'pagos']);
+        $this->cerrarPagoModal();
+        $this->dispatch('notify', type: 'success', message: $mensaje);
+    }
+
+    public function confirmarEliminarPago(int $pagoId): void
+    {
+        $this->pagoAEliminarId = $pagoId;
+    }
+
+    public function cancelarEliminarPago(): void
+    {
+        $this->pagoAEliminarId = null;
+    }
+
+    public function eliminarPago(FacturaVentaService $service): void
+    {
+        if (! $this->pagoAEliminarId) {
+            return;
+        }
+
+        $pago = FacturaVentaPago::where('factura_venta_id', $this->factura->id)
+            ->findOrFail($this->pagoAEliminarId);
+
+        try {
+            $service->eliminarPago($pago);
+        } catch (RuntimeException $e) {
+            $this->dispatch('notify', type: 'error', message: $e->getMessage());
+
+            return;
+        }
+
+        $this->factura->refresh()->load(['detalles', 'pagos']);
+        $this->pagoAEliminarId = null;
+        $this->dispatch('notify', type: 'success', message: 'Pago eliminado.');
+    }
+
+    private function resetPago(): void
+    {
+        $this->reset(['pagoId', 'pago_fecha', 'pago_importe', 'pago_metodo', 'pago_observaciones']);
+        $this->pago_tipo = 'normal';
+        $this->pago_importe = 0;
+    }
+
+    // -------------------------
+    // ANULAR
+    // -------------------------
+
+    public function confirmarAnular(): void
     {
         if (! $this->factura->puedeAnular()) {
+            $this->dispatch('notify', type: 'error', message: 'La factura no se puede anular.');
+
             return;
         }
 
@@ -389,30 +345,29 @@ class Detalle extends Component
         $this->showAnularModal = true;
     }
 
-    public function cerrarAnularModal()
+    public function cerrarAnularModal(): void
     {
         $this->showAnularModal = false;
     }
 
-    public function anularFactura()
+    public function anularFactura(FacturaVentaService $service): void
     {
-        if (! $this->factura->puedeAnular()) {
-            return;
-        }
-
         $this->validate([
             'motivoAnulacion' => 'required|string|min:5|max:500',
         ]);
 
-        $this->factura->anular($this->motivoAnulacion);
+        try {
+            $service->anular($this->factura, $this->motivoAnulacion);
+        } catch (RuntimeException $e) {
+            $this->dispatch('notify', type: 'error', message: $e->getMessage());
 
+            return;
+        }
+
+        $this->factura->refresh()->load(['detalles', 'pagos']);
         $this->showAnularModal = false;
-
-        $this->dispatch('toast', type: 'success', text: 'Factura anulada correctamente');
+        $this->dispatch('notify', type: 'success', message: 'Factura anulada.');
     }
-
-
-
 
     public function render()
     {

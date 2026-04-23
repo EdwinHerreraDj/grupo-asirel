@@ -77,9 +77,9 @@ class Index extends Component
         $this->cancelarEdicion();
 
         $this->dispatch(
-            'toast',
+            'notify',
             type: 'success',
-            text: $esEdicion
+            message: $esEdicion
                 ? 'Serie actualizada correctamente.'
                 : 'Serie creada correctamente.'
         );
@@ -94,6 +94,12 @@ class Index extends Component
         $serie = FacturaSerie::findOrFail($id);
         $serie->activa = ! $serie->activa;
         $serie->save();
+
+        $this->dispatch(
+            'notify',
+            type: 'success',
+            message: $serie->activa ? 'Serie activada.' : 'Serie desactivada.'
+        );
     }
 
     public function aplicarFiltros()

@@ -1,3 +1,11 @@
+// Re-export de formateadores compartidos (fuente \u00fanica)
+export {
+    formatEuro,
+    formatNumero,
+    formatPorcentaje,
+    redondear,
+} from "../../shared/formato";
+
 /**
  * Calcula el importe de una partida.
  * Igual que el booted() del modelo Laravel.
@@ -33,17 +41,5 @@ export const totalPartidas = (partidas = []) => {
             partidas.reduce((acc, p) => acc + (parseFloat(p.importe) || 0), 0) *
                 100,
         ) / 100
-    );
-};
-
-/**
- * Formatea un número como moneda española.
- */
-export const formatEuro = (valor) => {
-    return (
-        new Intl.NumberFormat("es-ES", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-        }).format(valor ?? 0) + " €"
     );
 };

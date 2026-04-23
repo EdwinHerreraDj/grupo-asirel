@@ -53,8 +53,7 @@ class Formulario extends Component
             'factura_url'       => $facturaUrl,
         ]);
 
-        // Toast
-        $this->dispatch('toast', type: 'success', text: 'Gasto guardado correctamente.');
+        $this->dispatch('notify', type: 'success', message: 'Gasto guardado correctamente.');
 
         // Cerrar modal desde el padre
         $this->dispatch('gastoGuardado');

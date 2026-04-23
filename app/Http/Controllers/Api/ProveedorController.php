@@ -1,5 +1,4 @@
 <?php
-// app/Http/Controllers/Api/ProveedorController.php
 
 namespace App\Http\Controllers\Api;
 
@@ -9,12 +8,35 @@ use Illuminate\Http\Request;
 
 class ProveedorController extends Controller
 {
+    private const TIPOS_VALIDOS = 'material,mano_obra,servicio,mixto';
+
+    private function baseRules(): array
+    {
+        return [
+            'nombre'               => 'required|string|max:255',
+            'cif'                  => 'nullable|string|max:20',
+            'email'                => 'nullable|email|max:255',
+            'telefono'             => 'nullable|string|max:20',
+            'emails'               => 'nullable|array',
+            'emails.*'             => 'nullable|email|max:255',
+            'telefonos'            => 'nullable|array',
+            'telefonos.*.numero'   => 'required|string|max:20',
+            'telefonos.*.etiqueta' => 'nullable|string|max:50',
+            'direccion'            => 'nullable|string|max:500',
+            'codigo_postal'        => 'nullable|string|max:20',
+            'poblacion'            => 'nullable|string|max:150',
+            'provincia'            => 'nullable|string|max:150',
+            'pais'                 => 'nullable|string|max:100',
+            'tipo'                 => 'nullable|in:' . self::TIPOS_VALIDOS,
+            'activo'               => 'boolean',
+        ];
+    }
+
     public function index(Request $request)
     {
         $query = Proveedor::query();
 
-        // Filtro de búsqueda
-        if ($request->has('search') && $request->search != '') {
+        if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('nombre', 'LIKE', "%{$search}%")
@@ -24,78 +46,62 @@ class ProveedorController extends Controller
             });
         }
 
-        // Filtro de activo
         if ($request->has('filtroActivo') && $request->filtroActivo !== '') {
             $query->where('activo', $request->filtroActivo);
         }
 
-        // Filtro de tipo
-        if ($request->has('filtroTipo') && $request->filtroTipo !== '') {
+        if ($request->filled('filtroTipo')) {
             $query->where('tipo', $request->filtroTipo);
         }
 
-        // Paginación
-        $proveedores = $query->orderBy('nombre', 'asc')
-            ->paginate(10);
+        $proveedores = $query->orderBy('nombre', 'asc')->paginate(10);
 
-        return response()->json($proveedores);
+        // Stats globales (no filtrados por paginación)
+        $statsBase = Proveedor::query();
+        $stats = [
+            'total'    => (clone $statsBase)->count(),
+            'activos'  => (clone $statsBase)->where('activo', true)->count(),
+            'por_tipo' => [
+                'material'  => (clone $statsBase)->where('tipo', 'material')->count(),
+                'mano_obra' => (clone $statsBase)->where('tipo', 'mano_obra')->count(),
+                'servicio'  => (clone $statsBase)->where('tipo', 'servicio')->count(),
+                'mixto'     => (clone $statsBase)->where('tipo', 'mixto')->count(),
+            ],
+        ];
+
+        $payload = $proveedores->toArray();
+        $payload['stats'] = $stats;
+
+        return response()->json($payload);
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'nombre' => 'required|string|max:255',
-            'cif' => 'nullable|string|max:20',
-            'email' => 'required|email|max:255',
-            'telefono' => 'required|string|max:20',
-            'emails' => 'nullable|array',
-            'emails.*' => 'nullable|email|max:255',
-            'telefonos' => 'nullable|array',
-            'telefonos.*.numero' => 'required|string|max:20',
-            'telefonos.*.etiqueta' => 'nullable|string|max:50',
-            'direccion' => 'nullable|string|max:500',
-            'tipo' => 'required|in:material,mano_obra,servicio,mixto',
-            'activo' => 'boolean',
-        ]);
+        $validated = $request->validate($this->baseRules());
 
         $proveedor = Proveedor::create($validated);
 
         return response()->json([
-            'message' => 'Proveedor creado exitosamente',
-            'proveedor' => $proveedor
+            'message'   => 'Proveedor creado exitosamente',
+            'proveedor' => $proveedor,
         ], 201);
     }
 
     public function show($id)
     {
-        $proveedor = Proveedor::findOrFail($id);
-        return response()->json($proveedor);
+        return response()->json(Proveedor::findOrFail($id));
     }
 
     public function update(Request $request, $id)
     {
         $proveedor = Proveedor::findOrFail($id);
-
-        $validated = $request->validate([
-            'nombre' => 'required|string|max:255',
-            'cif' => 'nullable|string|max:20',
-            'email' => 'required|email|max:255',
-            'telefono' => 'required|string|max:20',
-            'emails' => 'nullable|array',
-            'emails.*' => 'nullable|email|max:255',
-            'telefonos' => 'nullable|array',
-            'telefonos.*.numero' => 'required|string|max:20',
-            'telefonos.*.etiqueta' => 'nullable|string|max:50',
-            'direccion' => 'nullable|string|max:500',
-            'tipo' => 'required|in:servicios,productos,mixto',
-            'activo' => 'boolean',
-        ]);
+        $validated = $request->validate($this->baseRules());
 
         $proveedor->update($validated);
 
         return response()->json([
-            'message' => 'Proveedor actualizado exitosamente',
-            'proveedor' => $proveedor
+            'message'   => 'Proveedor actualizado exitosamente',
+            'proveedor' => $proveedor,
         ]);
     }
 
@@ -103,17 +109,16 @@ class ProveedorController extends Controller
     {
         $proveedor = Proveedor::findOrFail($id);
 
-        // Verificar si tiene facturas asociadas
         if ($proveedor->facturas()->count() > 0) {
             return response()->json([
-                'message' => 'No se puede eliminar el proveedor porque tiene facturas asociadas'
+                'message' => 'No se puede eliminar el proveedor porque tiene facturas asociadas.',
             ], 422);
         }
 
         $proveedor->delete();
 
         return response()->json([
-            'message' => 'Proveedor eliminado exitosamente'
+            'message' => 'Proveedor eliminado exitosamente.',
         ]);
     }
 }

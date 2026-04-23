@@ -1,22 +1,25 @@
-// resources/js/react/Clientes/components/FormularioCliente.jsx
 import React, { useState, useEffect } from "react";
 
-export default function FormularioCliente({ cliente, onGuardar, onCancelar }) {
-    const [formData, setFormData] = useState({
-        nombre: "",
-        cif: "",
-        email: "",
-        telefono: "",
-        direccion: "",
-        descripcion: "",
-        activo: true,
-    });
+const DEFAULT_DATA = {
+    nombre: "",
+    cif: "",
+    email: "",
+    telefono: "",
+    direccion: "",
+    codigo_postal: "",
+    poblacion: "",
+    provincia: "",
+    pais: "",
+    descripcion: "",
+    activo: true,
+};
 
+export default function FormularioCliente({ cliente, onGuardar, onCancelar }) {
+    const [formData, setFormData] = useState(DEFAULT_DATA);
     const [emailsAdicionales, setEmailsAdicionales] = useState([""]);
     const [telefonosAdicionales, setTelefonosAdicionales] = useState([
         { numero: "", etiqueta: "" },
     ]);
-
     const [errors, setErrors] = useState({});
     const [saving, setSaving] = useState(false);
 
@@ -28,6 +31,10 @@ export default function FormularioCliente({ cliente, onGuardar, onCancelar }) {
                 email: cliente.email || "",
                 telefono: cliente.telefono || "",
                 direccion: cliente.direccion || "",
+                codigo_postal: cliente.codigo_postal || "",
+                poblacion: cliente.poblacion || "",
+                provincia: cliente.provincia || "",
+                pais: cliente.pais || "",
                 descripcion: cliente.descripcion || "",
                 activo: cliente.activo ?? true,
             });
@@ -56,85 +63,67 @@ export default function FormularioCliente({ cliente, onGuardar, onCancelar }) {
             ...prev,
             [name]: type === "checkbox" ? checked : value,
         }));
-        // Limpiar error del campo
-        if (errors[name]) {
-            setErrors((prev) => ({ ...prev, [name]: null }));
-        }
+        if (errors[name]) setErrors((prev) => ({ ...prev, [name]: null }));
     };
 
     const handleEmailAdicionalChange = (index, value) => {
-        const newEmails = [...emailsAdicionales];
-        newEmails[index] = value;
-        setEmailsAdicionales(newEmails);
+        const next = [...emailsAdicionales];
+        next[index] = value;
+        setEmailsAdicionales(next);
     };
 
     const handleTelefonoAdicionalChange = (index, field, value) => {
-        const newTelefonos = [...telefonosAdicionales];
-        newTelefonos[index][field] = value;
-        setTelefonosAdicionales(newTelefonos);
+        const next = [...telefonosAdicionales];
+        next[index] = { ...next[index], [field]: value };
+        setTelefonosAdicionales(next);
     };
 
-    const agregarEmail = () => {
+    const agregarEmail = () =>
         setEmailsAdicionales([...emailsAdicionales, ""]);
-    };
 
     const eliminarEmail = (index) => {
-        const newEmails = emailsAdicionales.filter((_, i) => i !== index);
-        setEmailsAdicionales(newEmails.length > 0 ? newEmails : [""]);
+        const next = emailsAdicionales.filter((_, i) => i !== index);
+        setEmailsAdicionales(next.length > 0 ? next : [""]);
     };
 
-    const agregarTelefono = () => {
+    const agregarTelefono = () =>
         setTelefonosAdicionales([
             ...telefonosAdicionales,
             { numero: "", etiqueta: "" },
         ]);
-    };
 
     const eliminarTelefono = (index) => {
-        const newTelefonos = telefonosAdicionales.filter((_, i) => i !== index);
-        setTelefonosAdicionales(newTelefonos.length > 0 ? newTelefonos : [""]);
+        const next = telefonosAdicionales.filter((_, i) => i !== index);
+        setTelefonosAdicionales(
+            next.length > 0 ? next : [{ numero: "", etiqueta: "" }],
+        );
     };
 
     const validateForm = () => {
         const newErrors = {};
-
         if (!formData.nombre.trim()) {
-            newErrors.nombre = "El nombre es obligatorio";
+            newErrors.nombre = "El nombre es obligatorio.";
         }
-
-        if (!formData.email.trim()) {
-            newErrors.email = "El email principal es obligatorio";
-        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-            newErrors.email = "El email no es válido";
+        if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
+            newErrors.email = "El email no es válido.";
         }
-
-        if (!formData.telefono.trim()) {
-            newErrors.telefono = "El teléfono principal es obligatorio";
-        }
-
-        // Validar emails adicionales
         emailsAdicionales.forEach((email, index) => {
             if (email && !/\S+@\S+\.\S+/.test(email)) {
                 newErrors[`email_${index}`] = "Email no válido";
             }
         });
-
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
-        if (!validateForm()) {
-            return;
-        }
+        if (!validateForm()) return;
 
         setSaving(true);
-
         try {
             const emailsLimpios = emailsAdicionales.filter(
-                (e) => e.trim() !== "",
+                (em) => em.trim() !== "",
             );
             const telefonosLimpios = telefonosAdicionales.filter(
                 (t) => t.numero.trim() !== "",
@@ -146,7 +135,6 @@ export default function FormularioCliente({ cliente, onGuardar, onCancelar }) {
                 telefonos:
                     telefonosLimpios.length > 0 ? telefonosLimpios : null,
             };
-
             await onGuardar(data);
         } catch (error) {
             console.error("Error saving:", error);
@@ -155,46 +143,47 @@ export default function FormularioCliente({ cliente, onGuardar, onCancelar }) {
         }
     };
 
-    return (
-        <form onSubmit={handleSubmit} className="space-y-8">
-            <div>
-                <h3 className="text-2xl font-bold text-slate-800">
-                    {cliente ? "Editar Cliente" : "Nuevo Cliente"}
-                </h3>
-                <p className="text-sm text-slate-500 mt-1">
-                    Completa la información del cliente
-                </p>
-            </div>
+    const inputBase =
+        "w-full rounded-xl border-slate-300 text-sm focus:border-cyan-500 focus:ring-cyan-500";
+    const inputError =
+        "border-red-400 focus:border-red-500 focus:ring-red-500";
 
-            {/* Información básica */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Nombre */}
-                <div className="md:col-span-2">
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                        Nombre <span className="text-rose-500">*</span>
+    return (
+        <form onSubmit={handleSubmit} className="space-y-6" autoComplete="off">
+            {/* Truco anti-autofill de Chrome: campos honeypot ocultos */}
+            <input type="text" name="fakeusernameremembered" autoComplete="username" className="hidden" tabIndex={-1} aria-hidden="true" />
+            <input type="password" name="fakepasswordremembered" autoComplete="new-password" className="hidden" tabIndex={-1} aria-hidden="true" />
+
+            {/* Datos básicos */}
+            <section className="space-y-4">
+                <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Datos básicos
+                </h4>
+
+                <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                        Nombre <span className="text-red-500">*</span>
                     </label>
                     <input
                         type="text"
                         name="nombre"
                         value={formData.nombre}
                         onChange={handleChange}
-                        className={`w-full px-4 py-3 rounded-xl border bg-slate-50 focus:bg-white transition-all shadow-sm ${
-                            errors.nombre
-                                ? "border-rose-500 focus:ring-2 focus:ring-rose-500"
-                                : "border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        autoComplete="off"
+                        placeholder="Ej: Construcciones Del Valle S.L."
+                        className={`${inputBase} ${
+                            errors.nombre ? inputError : ""
                         }`}
-                        placeholder="Nombre del cliente"
                     />
                     {errors.nombre && (
-                        <span className="text-rose-500 text-xs mt-1 block">
+                        <p className="mt-1 text-xs text-red-600">
                             {errors.nombre}
-                        </span>
+                        </p>
                     )}
                 </div>
 
-                {/* CIF */}
                 <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
                         CIF
                     </label>
                     <input
@@ -202,54 +191,77 @@ export default function FormularioCliente({ cliente, onGuardar, onCancelar }) {
                         name="cif"
                         value={formData.cif}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
+                        autoComplete="off"
                         placeholder="A12345678"
+                        className={`${inputBase} font-mono`}
                     />
                 </div>
+            </section>
 
-                {/* Email Principal */}
-                <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                        Email Principal <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                        type="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        className={`w-full px-4 py-3 rounded-xl border bg-slate-50 focus:bg-white transition-all shadow-sm ${
-                            errors.email
-                                ? "border-rose-500 focus:ring-2 focus:ring-rose-500"
-                                : "border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        }`}
-                        placeholder="email@ejemplo.com"
-                    />
-                    {errors.email && (
-                        <span className="text-rose-500 text-xs mt-1 block">
-                            {errors.email}
-                        </span>
-                    )}
+            {/* Contacto principal */}
+            <section className="space-y-4">
+                <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Contacto principal
+                </h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">
+                            Email
+                        </label>
+                        <input
+                            type="email"
+                            name="email"
+                            value={formData.email}
+                            onChange={handleChange}
+                            autoComplete="off"
+                            placeholder="email@ejemplo.com"
+                            className={`${inputBase} ${
+                                errors.email ? inputError : ""
+                            }`}
+                        />
+                        {errors.email && (
+                            <p className="mt-1 text-xs text-red-600">
+                                {errors.email}
+                            </p>
+                        )}
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">
+                            Teléfono
+                        </label>
+                        <input
+                            type="text"
+                            name="telefono"
+                            value={formData.telefono}
+                            onChange={handleChange}
+                            autoComplete="off"
+                            placeholder="+34 123 456 789"
+                            className={inputBase}
+                        />
+                    </div>
                 </div>
-            </div>
+            </section>
 
-            {/* Emails Adicionales */}
-            <div>
-                <div className="flex justify-between items-center mb-3">
-                    <label className="text-sm font-semibold text-slate-700">
-                        Emails Adicionales
-                    </label>
+            {/* Emails adicionales */}
+            <section className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+                <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-medium text-slate-700">
+                        Emails adicionales
+                    </h4>
                     <button
                         type="button"
                         onClick={agregarEmail}
-                        className="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1 transition"
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-cyan-700 hover:text-cyan-800"
                     >
-                        <i className="mgc_add_line"></i> Agregar
+                        <i className="mgc_add_line"></i> Añadir
                     </button>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-2">
                     {emailsAdicionales.map((email, index) => (
-                        <div key={index} className="flex gap-3">
+                        <div key={index} className="flex gap-2">
                             <input
                                 type="email"
                                 value={email}
@@ -259,71 +271,46 @@ export default function FormularioCliente({ cliente, onGuardar, onCancelar }) {
                                         e.target.value,
                                     )
                                 }
+                                autoComplete="off"
                                 placeholder="email@ejemplo.com"
-                                className={`flex-1 px-4 py-3 rounded-xl border bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm ${
-                                    errors[`email_${index}`]
-                                        ? "border-rose-500"
-                                        : "border-slate-300"
+                                className={`${inputBase} bg-white ${
+                                    errors[`email_${index}`] ? inputError : ""
                                 }`}
                             />
                             {emailsAdicionales.length > 1 && (
                                 <button
                                     type="button"
                                     onClick={() => eliminarEmail(index)}
-                                    className="w-11 h-11 flex items-center justify-center rounded-xl border border-slate-200 text-rose-600 hover:bg-rose-50 transition"
+                                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-red-600 hover:bg-red-50 hover:border-red-200"
                                 >
-                                    <i className="mgc_delete_line text-lg"></i>
+                                    <i className="mgc_delete_line"></i>
                                 </button>
                             )}
                         </div>
                     ))}
                 </div>
-            </div>
+            </section>
 
-            {/* Teléfono Principal */}
-            <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Teléfono Principal <span className="text-rose-500">*</span>
-                </label>
-                <input
-                    type="text"
-                    name="telefono"
-                    value={formData.telefono}
-                    onChange={handleChange}
-                    className={`w-full px-4 py-3 rounded-xl border bg-slate-50 focus:bg-white transition-all shadow-sm ${
-                        errors.telefono
-                            ? "border-rose-500 focus:ring-2 focus:ring-rose-500"
-                            : "border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    }`}
-                    placeholder="+34 123 456 789"
-                />
-                {errors.telefono && (
-                    <span className="text-rose-500 text-xs mt-1 block">
-                        {errors.telefono}
-                    </span>
-                )}
-            </div>
-
-            {/* Teléfonos Adicionales */}
-            <div>
-                <div className="flex justify-between items-center mb-3">
-                    <label className="text-sm font-semibold text-slate-700">
-                        Teléfonos Adicionales
-                    </label>
+            {/* Teléfonos adicionales */}
+            <section className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+                <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-medium text-slate-700">
+                        Teléfonos adicionales
+                    </h4>
                     <button
                         type="button"
                         onClick={agregarTelefono}
-                        className="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1 transition"
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-cyan-700 hover:text-cyan-800"
                     >
-                        <i className="mgc_add_line"></i> Agregar
+                        <i className="mgc_add_line"></i> Añadir
                     </button>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-2">
                     {telefonosAdicionales.map((telefono, index) => (
                         <div
                             key={index}
-                            className="flex flex-col sm:flex-row gap-3"
+                            className="flex flex-col sm:flex-row gap-2"
                         >
                             <input
                                 type="text"
@@ -335,10 +322,10 @@ export default function FormularioCliente({ cliente, onGuardar, onCancelar }) {
                                         e.target.value,
                                     )
                                 }
+                                autoComplete="off"
                                 placeholder="Número"
-                                className="flex-1 px-4 py-3 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
+                                className={`${inputBase} bg-white flex-1`}
                             />
-
                             <input
                                 type="text"
                                 value={telefono.etiqueta}
@@ -349,97 +336,168 @@ export default function FormularioCliente({ cliente, onGuardar, onCancelar }) {
                                         e.target.value,
                                     )
                                 }
+                                autoComplete="off"
                                 placeholder="Etiqueta (Ej: Facturación)"
-                                className="sm:w-52 px-4 py-3 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
+                                className={`${inputBase} bg-white sm:w-56`}
                             />
-
                             {telefonosAdicionales.length > 1 && (
                                 <button
                                     type="button"
                                     onClick={() => eliminarTelefono(index)}
-                                    className="w-11 h-11 flex items-center justify-center rounded-xl border border-slate-200 text-rose-600 hover:bg-rose-50 transition"
+                                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-red-600 hover:bg-red-50 hover:border-red-200"
                                 >
-                                    <i className="mgc_delete_line text-lg"></i>
+                                    <i className="mgc_delete_line"></i>
                                 </button>
                             )}
                         </div>
                     ))}
                 </div>
-            </div>
+            </section>
 
             {/* Dirección */}
-            <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">
+            <section className="space-y-4">
+                <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                     Dirección
-                </label>
-                <textarea
-                    name="direccion"
-                    value={formData.direccion}
-                    onChange={handleChange}
-                    rows="2"
-                    className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
-                    placeholder="Dirección completa"
-                />
-            </div>
+                </h4>
 
-            {/* Descripción */}
-            <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Descripción
-                </label>
-                <textarea
-                    name="descripcion"
-                    value={formData.descripcion}
-                    onChange={handleChange}
-                    rows="3"
-                    className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
-                    placeholder="Información adicional del cliente"
-                />
-            </div>
+                <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                        Dirección
+                    </label>
+                    <input
+                        type="text"
+                        name="direccion"
+                        value={formData.direccion}
+                        onChange={handleChange}
+                        autoComplete="off"
+                        placeholder="Calle, número, piso…"
+                        className={inputBase}
+                    />
+                </div>
 
-            {/* Activo */}
-            <div className="flex items-center gap-3">
-                <input
-                    type="checkbox"
-                    name="activo"
-                    id="activo"
-                    checked={formData.activo}
-                    onChange={handleChange}
-                    className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                />
-                <label
-                    htmlFor="activo"
-                    className="text-sm font-medium text-slate-700"
-                >
-                    Cliente activo
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">
+                            Código postal
+                        </label>
+                        <input
+                            type="text"
+                            name="codigo_postal"
+                            value={formData.codigo_postal}
+                            onChange={handleChange}
+                            autoComplete="off"
+                            placeholder="28001"
+                            className={inputBase}
+                        />
+                    </div>
+                    <div className="sm:col-span-2">
+                        <label className="block text-sm font-medium text-slate-700 mb-1">
+                            Población
+                        </label>
+                        <input
+                            type="text"
+                            name="poblacion"
+                            value={formData.poblacion}
+                            onChange={handleChange}
+                            autoComplete="off"
+                            placeholder="Madrid"
+                            className={inputBase}
+                        />
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">
+                            Provincia
+                        </label>
+                        <input
+                            type="text"
+                            name="provincia"
+                            value={formData.provincia}
+                            onChange={handleChange}
+                            autoComplete="off"
+                            placeholder="Madrid"
+                            className={inputBase}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">
+                            País
+                        </label>
+                        <input
+                            type="text"
+                            name="pais"
+                            value={formData.pais}
+                            onChange={handleChange}
+                            autoComplete="off"
+                            placeholder="España"
+                            className={inputBase}
+                        />
+                    </div>
+                </div>
+            </section>
+
+            {/* Otros datos */}
+            <section className="space-y-4">
+                <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Otros datos
+                </h4>
+
+                <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                        Descripción / notas
+                    </label>
+                    <textarea
+                        name="descripcion"
+                        value={formData.descripcion}
+                        onChange={handleChange}
+                        rows={3}
+                        autoComplete="off"
+                        placeholder="Información adicional del cliente…"
+                        className={`${inputBase} resize-none`}
+                    />
+                </div>
+
+                <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                        type="checkbox"
+                        name="activo"
+                        id="activo"
+                        checked={formData.activo}
+                        onChange={handleChange}
+                        className="h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
+                    />
+                    <span className="text-sm text-slate-700">
+                        Cliente activo
+                    </span>
                 </label>
-            </div>
+            </section>
 
             {/* Botones */}
-            <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t border-slate-200">
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 pt-4 border-t border-slate-200">
                 <button
                     type="button"
                     onClick={onCancelar}
-                    className="w-full sm:w-auto px-5 py-3 rounded-xl bg-white border border-slate-300 text-slate-600 font-medium hover:bg-slate-100 transition-all"
                     disabled={saving}
+                    className="px-4 py-2 rounded-xl text-sm font-medium border border-slate-300 text-slate-700 hover:bg-slate-100 disabled:opacity-60"
                 >
                     Cancelar
                 </button>
-
                 <button
                     type="submit"
                     disabled={saving}
-                    className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow hover:from-cyan-500 hover:to-blue-500 disabled:opacity-60"
                 >
                     {saving ? (
                         <>
                             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                            Guardando...
+                            Guardando…
                         </>
                     ) : (
                         <>
                             <i className="mgc_save_line"></i>
-                            {cliente ? "Actualizar" : "Guardar"}
+                            {cliente ? "Guardar cambios" : "Crear cliente"}
                         </>
                     )}
                 </button>

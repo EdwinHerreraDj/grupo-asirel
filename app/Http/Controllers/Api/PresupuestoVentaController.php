@@ -59,9 +59,18 @@ class PresupuestoVentaController extends Controller
         $totalVentaPartidas = PresupuestoVentaPartida::where('obra_id', $obra->id)->count();
         $pendientesSincronizar = $totalCostePartidas > $totalVentaPartidas;
 
+        // Indicador "N de M partidas de venta con v\u00ednculo a coste"
+        $vinculadasACoste = PresupuestoVentaPartida::where('obra_id', $obra->id)
+            ->whereNotNull('coste_partida_id')
+            ->count();
+
         return response()->json([
-            'capitulos'             => $todos,
+            'capitulos'              => $todos,
             'pendientes_sincronizar' => $pendientesSincronizar,
+            'indicador'              => [
+                'vinculadas_a_coste' => $vinculadasACoste,
+                'total_venta'        => $totalVentaPartidas,
+            ],
         ]);
     }
 
@@ -122,8 +131,8 @@ class PresupuestoVentaController extends Controller
     // -------------------------
     public function updatePartida(Request $request, Obra $obra, PresupuestoVentaPartida $partida)
     {
-        // Si tiene gasto_inicial_partida_id solo permitir medicion y precio
-        if ($partida->gasto_inicial_partida_id) {
+        // Si tiene coste_partida_id solo permitir medicion y precio
+        if ($partida->coste_partida_id) {
             $request->validate([
                 'medicion'        => 'required|numeric|min:0',
                 'precio_unitario' => 'required|numeric|min:0',
@@ -205,13 +214,13 @@ class PresupuestoVentaController extends Controller
             );
 
             // Solo crear si no existe ya una partida de venta vinculada a esta de coste
-            $existe = PresupuestoVentaPartida::where('gasto_inicial_partida_id', $partida->id)->exists();
+            $existe = PresupuestoVentaPartida::where('coste_partida_id', $partida->id)->exists();
 
             if (!$existe) {
                 PresupuestoVentaPartida::create([
                     'obra_presupuesto_venta_id' => $capitulo->id,
                     'obra_id'                   => $obra->id,
-                    'gasto_inicial_partida_id'  => $partida->id,
+                    'coste_partida_id'  => $partida->id,
                     'codigo'                    => $partida->codigo,
                     'descripcion'               => $partida->descripcion,
                     'unidad'                    => $partida->unidad,
@@ -272,8 +281,8 @@ class PresupuestoVentaController extends Controller
         ]);
 
         $query = PresupuestoVentaPartida::where('obra_id', $obra->id)
-            ->whereNotNull('gasto_inicial_partida_id')
-            ->with('gastoInicialPartida');
+            ->whereNotNull('coste_partida_id')
+            ->with('costePartida');
 
         if ($request->oficio_id) {
             $query->whereHas(
@@ -285,8 +294,8 @@ class PresupuestoVentaController extends Controller
 
         foreach ($query->get() as $partida) {
             $partida->update([
-                'medicion'        => $partida->gastoInicialPartida->medicion,
-                'precio_unitario' => $partida->gastoInicialPartida->precio_unitario,
+                'medicion'        => $partida->costePartida->medicion,
+                'precio_unitario' => $partida->costePartida->precio_unitario,
             ]);
         }
 
@@ -297,12 +306,12 @@ class PresupuestoVentaController extends Controller
     // HELPER
     // -------------------------
 
-    // Actualizar formatPartida para incluir gasto_inicial_partida_id
+    // Actualizar formatPartida para incluir coste_partida_id
     private function formatPartida(PresupuestoVentaPartida $p): array
     {
         return [
             'id'                       => $p->id,
-            'gasto_inicial_partida_id' => $p->gasto_inicial_partida_id,
+            'coste_partida_id' => $p->coste_partida_id,
             'codigo'                   => $p->codigo,
             'descripcion'              => $p->descripcion,
             'unidad'                   => $p->unidad,

@@ -2,139 +2,222 @@
 
 namespace App\Livewire\Obras;
 
+use App\Exports\FacturasRecibidasExport;
+use App\Models\Empresa;
+use App\Models\FacturaRecibida;
+use App\Models\Obra;
+use App\Models\Proveedor;
+use App\Services\FacturaRecibidaService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use App\Models\Proveedor;
-use App\Models\FacturaRecibida;
-use App\Services\FacturaRecibidaCalculator;
-use App\Models\Obra;
-use App\Models\Empresa;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Maatwebsite\Excel\Facades\Excel;
-use App\Exports\FacturasRecibidasExport;
-use Illuminate\Support\Facades\Storage;
 use Livewire\WithPagination;
-
+use Maatwebsite\Excel\Facades\Excel;
+use RuntimeException;
 
 class FacturasRecibidas extends Component
 {
     use WithFileUploads;
     use WithPagination;
+
     protected $paginationTheme = 'tailwind';
 
-    public Obra $obra;
+    public ?Obra $obra = null;
+
+    // Modo global: cuando no se monta con una obra específica,
+    // mostramos un selector para que el usuario cambie de obra.
+    public bool $globalMode = false;
+    public ?int $selectedObraId = null;
 
     // Listas cargadas
     public $proveedores = [];
     public $oficios = [];
+    public $obrasList = [];
 
     // Campos del formulario
-    public $proveedor_id;
-    public $oficio_id;
-    public $tipo_coste = 'material';
-    public $numero_factura;
-    public $concepto;
-    public $importe;
-    public $fecha_factura;
-    public $fecha_contable;
-    public $vencimiento;
-    public $tipo_pago;
-    public $estado = 'pendiente_de_vencimiento';
-    public $adjunto;
+    public ?int $proveedor_id = null;
+    public ?int $oficio_id = null;
+    public string $tipo_coste = 'material';
+    public ?string $numero_factura = null;
+    public ?string $concepto = null;
+    public ?string $fecha_factura = null;
+    public ?string $fecha_contable = null;
+    public ?string $vencimiento = null;
+    public ?string $tipo_pago = null;
+    public string $estado = 'pendiente_vencimiento';
+    public $adjunto = null;
 
-
-    // FISCAL
-    public $base_imponible;
+    // Fiscal
+    public $base_imponible = null;
     public $iva_porcentaje = 21;
     public $retencion_porcentaje = 0;
 
+    // Control modal formulario
+    public bool $showForm = false;
+    public ?int $facturaId = null;
+    public bool $modoEdicion = false;
 
-    // Atributos para eliminar factura
-    public $facturaAEliminar = null;
-    public $confirmarEliminacion = false;
+    // Eliminar
+    public ?int $facturaAEliminar = null;
 
-
+    // Cambio de estado cr\u00edtico (pagada/impagada) con confirmaci\u00f3n
+    public ?int $facturaCambioEstadoId = null;
+    public ?string $estadoPendiente = null;
 
     // Filtros
-    public $search = '';
-    public $filtroProveedor = '';
-    public $filtroOficio = '';
-    public $filtroEstado = '';
-    public $filtroTipoCoste = '';
-    public $activarFiltros = false;
+    public string $search = '';
+    public string $filtroProveedor = '';
+    public string $filtroOficio = '';
+    public string $filtroEstado = '';
+    public string $filtroTipoCoste = '';
+    public bool $activarFiltros = false;
 
-    // Control modal
-    public $showForm = false;
-    public $facturaId = null;
-    public $modoEdicion = false;
-    public $showInformeModal = false;
+    // Modal informe
+    public bool $showInformeModal = false;
+    public string $informeProveedor = '';
+    public string $informeOficio = '';
+    public string $informeEstado = '';
+    public string $informeTipoCoste = '';
+    public string $informeFechaDesde = '';
+    public string $informeFechaHasta = '';
 
-
-    // Filtros del informe (independientes de la tabla)
-    public $informeProveedor = '';
-    public $informeOficio = '';
-    public $informeEstado = '';
-    public $informeTipoCoste = '';
-    public $informeFechaDesde = '';
-    public $informeFechaHasta = '';
-
-
-
-
-
-    protected $rules = [
-        'proveedor_id'   => 'required|exists:proveedores,id',
-        'oficio_id'      => 'required|exists:obra_gasto_categorias,id',
-        'tipo_coste'     => 'required|in:material,mano_obra',
-        'numero_factura' => 'nullable|string|max:255',
-        'concepto'       => 'nullable|string|max:255',
-
-        'base_imponible' => 'required|numeric|min:0',
-        'iva_porcentaje' => 'required|numeric|min:0',
-        'retencion_porcentaje' => 'required|numeric|min:0',
-
-        'fecha_factura'  => 'required|date',
-        'fecha_contable' => 'nullable|date',
-        'vencimiento'    => 'nullable|date',
-        'tipo_pago'      => 'nullable|in:transferencia,pronto_pago,confirming,pagare,contado',
-
-        'estado' => 'required|in:pendiente_emision_doc_pago,pendiente_vencimiento,devuelta,pagada,impagada',
-
-        'adjunto' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
-    ];
-
-
-    public function mount($obra)
+    protected function rules(): array
     {
-        $this->obra = $obra;
-
-        // Cargar proveedores
-        $this->proveedores = Proveedor::where('activo', 1)
-            ->orderBy('nombre')
-            ->get();
-
-
-        // Cargar oficios de esta obra
-        $this->oficios = $this->obra->categoriasGasto()->orderBy('nombre')->get();
+        return [
+            'proveedor_id'         => 'required|exists:proveedores,id',
+            'oficio_id'            => 'required|exists:obra_gasto_categorias,id',
+            'tipo_coste'           => 'required|in:material,mano_obra',
+            'numero_factura'       => 'nullable|string|max:255',
+            'concepto'             => 'nullable|string|max:500',
+            'base_imponible'       => 'required|numeric|min:0',
+            'iva_porcentaje'       => 'required|numeric|min:0',
+            'retencion_porcentaje' => 'required|numeric|min:0',
+            'fecha_factura'        => 'required|date',
+            'fecha_contable'       => 'nullable|date',
+            'vencimiento'          => 'nullable|date',
+            'tipo_pago'            => 'nullable|in:transferencia,pronto_pago,confirming,pagare,contado',
+            'estado'               => 'required|in:pendiente_emision_doc_pago,pendiente_vencimiento,devuelta,pagada,impagada',
+            'adjunto'              => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
+        ];
     }
 
-    public function updated($property)
+    public function mount(?Obra $obra = null): void
     {
-        $this->validateOnly($property);
+        $this->proveedores = Proveedor::where('activo', 1)->orderBy('nombre')->get();
+
+        if ($obra && $obra->exists) {
+            // Modo per-obra (route binding)
+            $this->obra = $obra;
+            $this->oficios = $this->obra->categoriasGasto()->orderBy('nombre')->get();
+            $this->globalMode = false;
+        } else {
+            // Modo global: se monta sin obra y aparece el selector
+            $this->globalMode = true;
+            $this->obrasList = Obra::orderBy('nombre')->get(['id', 'nombre', 'estado']);
+            $this->oficios = collect();
+        }
     }
 
-    public function abrirFormulario()
+    public function updatedSelectedObraId($value): void
     {
+        if (! $value) {
+            $this->obra = null;
+            $this->oficios = collect();
+            $this->resetPage();
+            $this->showForm = false;
+
+            return;
+        }
+
+        $this->obra = Obra::find($value);
+        $this->oficios = $this->obra
+            ? $this->obra->categoriasGasto()->orderBy('nombre')->get()
+            : collect();
+
+        // Limpiar filtros que dependen de oficios/proveedores específicos de obra
+        $this->reset(['filtroOficio']);
+        $this->resetPage();
+        $this->showForm = false;
+    }
+
+    // -------------------------
+    // FORMULARIO CREAR / EDITAR
+    // -------------------------
+
+    public function abrirFormulario(): void
+    {
+        if (! $this->obra) {
+            $this->dispatch('notify', type: 'error', message: 'Selecciona una obra primero.');
+
+            return;
+        }
+
         $this->resetForm();
-
         $this->facturaId = null;
         $this->modoEdicion = false;
+        $this->showForm = true;
+    }
+
+    public function cerrarFormulario(): void
+    {
+        $this->showForm = false;
+        $this->resetForm();
+    }
+
+    public function editarFactura(int $id): void
+    {
+        $factura = FacturaRecibida::where('obra_id', $this->obra->id)->findOrFail($id);
+
+        $this->facturaId = $factura->id;
+        $this->modoEdicion = true;
+
+        $this->proveedor_id = $factura->proveedor_id;
+        $this->oficio_id = $factura->oficio_id;
+        $this->tipo_coste = $factura->tipo_coste;
+        $this->numero_factura = $factura->numero_factura;
+        $this->concepto = $factura->concepto;
+        $this->base_imponible = $factura->base_imponible;
+        $this->iva_porcentaje = $factura->iva_porcentaje;
+        $this->retencion_porcentaje = $factura->retencion_porcentaje;
+        $this->fecha_factura = $factura->fecha_factura?->format('Y-m-d');
+        $this->fecha_contable = $factura->fecha_contable?->format('Y-m-d');
+        $this->vencimiento = $factura->vencimiento?->format('Y-m-d');
+        $this->tipo_pago = $factura->tipo_pago;
+        $this->estado = $factura->estado;
+        $this->adjunto = null;
 
         $this->showForm = true;
     }
 
+    public function guardar(FacturaRecibidaService $service): void
+    {
+        $data = $this->validate();
 
-    public function resetForm()
+        $payload = collect($data)->except('adjunto')->all();
+
+        try {
+            if ($this->modoEdicion && $this->facturaId) {
+                $factura = FacturaRecibida::where('obra_id', $this->obra->id)
+                    ->findOrFail($this->facturaId);
+
+                $service->actualizar($factura, $payload, $this->adjunto ?: null);
+                $mensaje = 'Factura actualizada correctamente.';
+            } else {
+                $service->crear($this->obra, $payload, $this->adjunto ?: null);
+                $mensaje = 'Factura registrada correctamente.';
+            }
+        } catch (\Throwable $e) {
+            report($e);
+            $this->dispatch('notify', type: 'error', message: 'Error al guardar la factura.');
+
+            return;
+        }
+
+        $this->cerrarFormulario();
+        $this->dispatch('notify', type: 'success', message: $mensaje);
+    }
+
+    protected function resetForm(): void
     {
         $this->reset([
             'proveedor_id',
@@ -142,185 +225,120 @@ class FacturasRecibidas extends Component
             'tipo_coste',
             'numero_factura',
             'concepto',
-            'importe',
+            'base_imponible',
             'fecha_factura',
             'fecha_contable',
             'vencimiento',
             'tipo_pago',
-            'estado',
             'adjunto',
         ]);
 
         $this->tipo_coste = 'material';
-        $this->estado = 'pendiente_de_vencimiento';
+        $this->estado = 'pendiente_vencimiento';
+        $this->iva_porcentaje = 21;
+        $this->retencion_porcentaje = 0;
     }
 
-    public function guardar()
-    {
-        $this->validate();
+    // -------------------------
+    // ELIMINAR
+    // -------------------------
 
-        // Cálculos fiscales
-        $ivaImporte = ($this->base_imponible * $this->iva_porcentaje) / 100;
-        $retencionImporte = ($this->base_imponible * $this->retencion_porcentaje) / 100;
-        $total = $this->base_imponible + $ivaImporte - $retencionImporte;
-
-        // Subir adjunto si hay uno nuevo
-        $rutaAdjunto = null;
-        if ($this->adjunto) {
-            $rutaAdjunto = $this->adjunto->store('facturas/recibidas', 'public');
-        }
-
-        if ($this->modoEdicion && $this->facturaId) {
-
-            $factura = FacturaRecibida::findOrFail($this->facturaId);
-
-            $factura->update([
-                'proveedor_id'          => $this->proveedor_id,
-                'oficio_id'             => $this->oficio_id,
-                'tipo_coste'            => $this->tipo_coste,
-                'numero_factura'        => $this->numero_factura,
-                'concepto'              => $this->concepto,
-
-                'base_imponible'        => $this->base_imponible,
-                'iva_porcentaje'        => $this->iva_porcentaje,
-                'iva_importe'           => $ivaImporte,
-                'retencion_porcentaje'  => $this->retencion_porcentaje,
-                'retencion_importe'     => $retencionImporte,
-                'total'                 => $total,
-
-                'fecha_factura'         => $this->fecha_factura,
-                'fecha_contable'        => $this->fecha_contable,
-                'vencimiento'           => $this->vencimiento,
-                'tipo_pago'             => $this->tipo_pago,
-                'estado'                => $this->estado,
-                'adjunto'               => $rutaAdjunto ?? $factura->adjunto,
-            ]);
-
-            $mensaje = 'Factura actualizada correctamente.';
-        } else {
-
-            FacturaRecibida::create([
-                'obra_id'               => $this->obra->id,
-                'proveedor_id'          => $this->proveedor_id,
-                'oficio_id'             => $this->oficio_id,
-                'tipo_coste'            => $this->tipo_coste,
-                'numero_factura'        => $this->numero_factura,
-                'concepto'              => $this->concepto,
-
-                'importe'               => $this->base_imponible, // compatibilidad
-                'base_imponible'        => $this->base_imponible,
-                'iva_porcentaje'        => $this->iva_porcentaje,
-                'iva_importe'           => $ivaImporte,
-                'retencion_porcentaje'  => $this->retencion_porcentaje,
-                'retencion_importe'     => $retencionImporte,
-                'total'                 => $total,
-
-                'fecha_factura'         => $this->fecha_factura,
-                'fecha_contable'        => $this->fecha_contable,
-                'vencimiento'           => $this->vencimiento,
-                'tipo_pago'             => $this->tipo_pago,
-                'estado'                => $this->estado,
-                'adjunto'               => $rutaAdjunto,
-            ]);
-
-            $mensaje = 'Factura registrada correctamente.';
-        }
-
-        $this->showForm = false;
-        $this->resetForm();
-
-        $this->dispatch('toast', type: 'success', text: $mensaje);
-    }
-
-
-    public function editarFactura($id)
-    {
-        $factura = FacturaRecibida::where('obra_id', $this->obra->id)
-            ->findOrFail($id);
-
-        $this->facturaId = $factura->id;
-        $this->modoEdicion = true;
-
-        // Cargar datos en el formulario
-        $this->proveedor_id          = $factura->proveedor_id;
-        $this->oficio_id             = $factura->oficio_id;
-        $this->tipo_coste            = $factura->tipo_coste;
-        $this->numero_factura        = $factura->numero_factura;
-        $this->concepto              = $factura->concepto;
-
-        $this->base_imponible        = $factura->base_imponible;
-        $this->iva_porcentaje        = $factura->iva_porcentaje;
-        $this->retencion_porcentaje  = $factura->retencion_porcentaje;
-
-        $this->fecha_factura         = $factura->fecha_factura?->format('Y-m-d');
-        $this->fecha_contable        = $factura->fecha_contable?->format('Y-m-d');
-        $this->vencimiento           = $factura->vencimiento?->format('Y-m-d');
-
-        $this->tipo_pago             = $factura->tipo_pago;
-        $this->estado                = $factura->estado;
-
-        // No cargues adjunto aquí (Livewire no lo permite)
-        $this->adjunto = null;
-
-        $this->showForm = true;
-    }
-
-
-
-    public function confirmarEliminar($id)
+    public function confirmarEliminar(int $id): void
     {
         $this->facturaAEliminar = $id;
-        $this->confirmarEliminacion = true;
     }
 
-
-    public function eliminarFactura($id)
+    public function cancelarEliminar(): void
     {
-        $factura = FacturaRecibida::where('obra_id', $this->obra->id)
-            ->findOrFail($id);
+        $this->facturaAEliminar = null;
+    }
 
-        if ($factura->adjunto && Storage::disk('public')->exists($factura->adjunto)) {
-            Storage::disk('public')->delete($factura->adjunto);
+    public function eliminarFactura(FacturaRecibidaService $service): void
+    {
+        if (! $this->facturaAEliminar) {
+            return;
         }
 
-        $factura->delete();
+        $factura = FacturaRecibida::where('obra_id', $this->obra->id)
+            ->findOrFail($this->facturaAEliminar);
 
-        $this->confirmarEliminacion = false;
+        $service->eliminar($factura);
+
         $this->facturaAEliminar = null;
-
-        $this->dispatch('toast', type: 'success', text: 'Factura eliminada correctamente.');
-
         $this->resetPage();
+        $this->dispatch('notify', type: 'success', message: 'Factura eliminada correctamente.');
     }
 
+    // -------------------------
+    // CAMBIO DE ESTADO
+    // -------------------------
 
-    // Actualizar los campos de tipo de pago y estado 
-    public function actualizarEstado($id, $nuevoEstado)
-    {
+    public function intentarCambiarEstado(
+        int $id,
+        string $nuevoEstado,
+        FacturaRecibidaService $service,
+    ): void {
         $factura = FacturaRecibida::where('obra_id', $this->obra->id)->findOrFail($id);
-        $factura->estado = $nuevoEstado;
-        $factura->save();
 
-        $this->dispatch('toast', type: 'success', text: 'Estado actualizado correctamente.');
+        if ($factura->esEstadoCritico($nuevoEstado)) {
+            $this->facturaCambioEstadoId = $id;
+            $this->estadoPendiente = $nuevoEstado;
+
+            return;
+        }
+
+        $service->cambiarEstado($factura, $nuevoEstado);
+        $this->dispatch('notify', type: 'success', message: 'Estado actualizado.');
     }
 
-    public function actualizarTipoPago($id, $nuevoTipo)
+    public function confirmarCambioEstado(FacturaRecibidaService $service): void
     {
-        $factura = FacturaRecibida::where('obra_id', $this->obra->id)->findOrFail($id);
-        $factura->tipo_pago = $nuevoTipo;
-        $factura->save();
+        if (! $this->facturaCambioEstadoId || ! $this->estadoPendiente) {
+            return;
+        }
 
-        $this->dispatch('toast', type: 'success', text: 'Tipo de pago actualizado.');
+        $factura = FacturaRecibida::where('obra_id', $this->obra->id)
+            ->findOrFail($this->facturaCambioEstadoId);
+
+        try {
+            $service->cambiarEstado($factura, $this->estadoPendiente);
+        } catch (RuntimeException | \InvalidArgumentException $e) {
+            $this->dispatch('notify', type: 'error', message: $e->getMessage());
+
+            return;
+        }
+
+        $this->cancelarCambioEstado();
+        $this->dispatch('notify', type: 'success', message: 'Estado actualizado.');
     }
 
-    // Filtros
-    public function aplicarFiltros()
+    public function cancelarCambioEstado(): void
+    {
+        $this->facturaCambioEstadoId = null;
+        $this->estadoPendiente = null;
+    }
+
+    public function cambiarTipoPago(
+        int $id,
+        ?string $nuevoTipo,
+        FacturaRecibidaService $service,
+    ): void {
+        $factura = FacturaRecibida::where('obra_id', $this->obra->id)->findOrFail($id);
+        $service->cambiarTipoPago($factura, $nuevoTipo ?: null);
+        $this->dispatch('notify', type: 'success', message: 'Tipo de pago actualizado.');
+    }
+
+    // -------------------------
+    // FILTROS
+    // -------------------------
+
+    public function aplicarFiltros(): void
     {
         $this->activarFiltros = true;
         $this->resetPage();
     }
 
-    public function limpiarFiltros()
+    public function limpiarFiltros(): void
     {
         $this->reset([
             'search',
@@ -328,37 +346,29 @@ class FacturasRecibidas extends Component
             'filtroOficio',
             'filtroEstado',
             'filtroTipoCoste',
-            'activarFiltros'
+            'activarFiltros',
         ]);
-
         $this->resetPage();
     }
 
+    public function updatingSearch(): void { $this->resetPage(); }
+    public function updatingFiltroProveedor(): void { $this->resetPage(); }
+    public function updatingFiltroOficio(): void { $this->resetPage(); }
+    public function updatingFiltroEstado(): void { $this->resetPage(); }
+    public function updatingFiltroTipoCoste(): void { $this->resetPage(); }
 
-    public function updatingSearch()
-    {
-        $this->resetPage();
-    }
-    public function updatingFiltroProveedor()
-    {
-        $this->resetPage();
-    }
-    public function updatingFiltroOficio()
-    {
-        $this->resetPage();
-    }
-    public function updatingFiltroEstado()
-    {
-        $this->resetPage();
-    }
-    public function updatingFiltroTipoCoste()
-    {
-        $this->resetPage();
-    }
+    // -------------------------
+    // INFORME
+    // -------------------------
 
-    // Modal para informe
-    public function abrirModalInforme()
+    public function abrirModalInforme(): void
     {
+        if (! $this->obra) {
+            $this->dispatch('notify', type: 'error', message: 'Selecciona una obra primero.');
+
+            return;
+        }
+
         $this->reset([
             'informeProveedor',
             'informeOficio',
@@ -371,21 +381,68 @@ class FacturasRecibidas extends Component
         $this->showInformeModal = true;
     }
 
-    public function cerrarModalInforme()
+    public function cerrarModalInforme(): void
     {
         $this->showInformeModal = false;
     }
 
+    public function generarInformePDF()
+    {
+        $facturas = $this->getFacturasInformeQuery()->get();
+        $totales = $this->calcularTotales($facturas);
 
+        $pdf = Pdf::loadView('pdf.facturas-recibidas', [
+            'facturas' => $facturas,
+            'totales'  => $totales,
+            'obra'     => $this->obra,
+            'empresa'  => Empresa::first(),
+        ])->setPaper('a4', 'landscape');
 
-    // Exportancion en Excel y PDF
+        return response()->streamDownload(
+            fn () => print($pdf->output()),
+            'informe_facturas_' . now()->format('Ymd_His') . '.pdf'
+        );
+    }
+
+    public function exportarExcel()
+    {
+        $facturas = $this->getFacturasInformeQuery()->get();
+
+        return Excel::download(
+            new FacturasRecibidasExport(
+                $facturas,
+                $this->calcularTotales($facturas),
+                $this->obra,
+                Empresa::first(),
+            ),
+            'informe_facturas_' . now()->format('Ymd_His') . '.xlsx'
+        );
+    }
+
+    private function calcularTotales($facturas): array
+    {
+        return [
+            'base'      => $facturas->sum('base_imponible'),
+            'iva'       => $facturas->sum('iva_importe'),
+            'retencion' => $facturas->sum('retencion_importe'),
+            'total'     => $facturas->sum('total'),
+        ];
+    }
+
+    // -------------------------
+    // QUERIES
+    // -------------------------
+
     private function getFacturasQuery()
     {
+        if (! $this->obra) {
+            return FacturaRecibida::query()->whereRaw('0 = 1');
+        }
+
         $query = FacturaRecibida::with(['proveedor', 'oficio'])
             ->where('obra_id', $this->obra->id);
 
         if ($this->activarFiltros) {
-
             if ($this->search !== '') {
                 $query->where(function ($q) {
                     $q->where('concepto', 'like', "%{$this->search}%")
@@ -393,19 +450,19 @@ class FacturasRecibidas extends Component
                 });
             }
 
-            if ($this->filtroProveedor) {
+            if ($this->filtroProveedor !== '') {
                 $query->where('proveedor_id', $this->filtroProveedor);
             }
 
-            if ($this->filtroOficio) {
+            if ($this->filtroOficio !== '') {
                 $query->where('oficio_id', $this->filtroOficio);
             }
 
-            if ($this->filtroEstado) {
+            if ($this->filtroEstado !== '') {
                 $query->where('estado', $this->filtroEstado);
             }
 
-            if ($this->filtroTipoCoste) {
+            if ($this->filtroTipoCoste !== '') {
                 $query->where('tipo_coste', $this->filtroTipoCoste);
             }
         }
@@ -415,127 +472,70 @@ class FacturasRecibidas extends Component
 
     private function getFacturasInformeQuery()
     {
+        if (! $this->obra) {
+            return FacturaRecibida::query()->whereRaw('0 = 1');
+        }
+
         $query = FacturaRecibida::with(['proveedor', 'oficio'])
             ->where('obra_id', $this->obra->id);
 
-        if ($this->informeProveedor) {
+        if ($this->informeProveedor !== '') {
             $query->where('proveedor_id', $this->informeProveedor);
         }
-
-        if ($this->informeOficio) {
+        if ($this->informeOficio !== '') {
             $query->where('oficio_id', $this->informeOficio);
         }
-
-        if ($this->informeEstado) {
+        if ($this->informeEstado !== '') {
             $query->where('estado', $this->informeEstado);
         }
-
-        if ($this->informeTipoCoste) {
+        if ($this->informeTipoCoste !== '') {
             $query->where('tipo_coste', $this->informeTipoCoste);
         }
-
-        if ($this->informeFechaDesde) {
+        if ($this->informeFechaDesde !== '') {
             $query->whereDate('fecha_factura', '>=', $this->informeFechaDesde);
         }
-
-        if ($this->informeFechaHasta) {
+        if ($this->informeFechaHasta !== '') {
             $query->whereDate('fecha_factura', '<=', $this->informeFechaHasta);
         }
 
         return $query;
     }
 
-
-    public function generarInformePDF()
-    {
-        $facturas = $this->getFacturasInformeQuery()->get();
-
-        $totales = [
-            'base'      => $facturas->sum('base_imponible'),
-            'iva'       => $facturas->sum('iva_importe'),
-            'retencion' => $facturas->sum('retencion_importe'),
-            'total'     => $facturas->sum('total'),
-        ];
-
-        $obra = $this->obra;
-        $empresa = Empresa::first();
-
-        $pdf = Pdf::loadView(
-            'pdf.facturas-recibidas',
-            compact('facturas', 'totales', 'obra', 'empresa')
-        )->setPaper('a4', 'landscape');
-
-        return response()->streamDownload(
-            fn() => print($pdf->output()),
-            'informe_facturas_' . now()->format('Ymd_His') . '.pdf'
-        );
-    }
-
-    public function exportarExcel()
-    {
-        $facturas = $this->getFacturasInformeQuery()->get();
-
-        $totales = [
-            'base'      => $facturas->sum('base_imponible'),
-            'iva'       => $facturas->sum('iva_importe'),
-            'retencion' => $facturas->sum('retencion_importe'),
-            'total'     => $facturas->sum('total'),
-        ];
-
-        return Excel::download(
-            new FacturasRecibidasExport(
-                $facturas,
-                $totales,
-                $this->obra,
-                \App\Models\Empresa::first()
-            ),
-            'informe_facturas_' . now()->format('Ymd_His') . '.xlsx'
-        );
-    }
-
-
+    // -------------------------
+    // RENDER
+    // -------------------------
 
     public function render()
     {
-        $query = FacturaRecibida::with(['proveedor', 'oficio'])
-            ->where('obra_id', $this->obra->id);
+        $facturas = $this->getFacturasQuery()
+            ->orderBy('fecha_factura', 'desc')
+            ->paginate(10);
 
-        if ($this->activarFiltros) {
-
-            // Buscador
-            if ($this->search !== '') {
-                $query->where(function ($q) {
-                    $q->where('concepto', 'like', '%' . $this->search . '%')
-                        ->orWhere('numero_factura', 'like', '%' . $this->search . '%')
-                        ->orWhere('importe', 'like', '%' . $this->search . '%');
-                });
-            }
-
-            // Proveedor
-            if ($this->filtroProveedor !== '') {
-                $query->where('proveedor_id', $this->filtroProveedor);
-            }
-
-            // Oficio
-            if ($this->filtroOficio !== '') {
-                $query->where('oficio_id', $this->filtroOficio);
-            }
-
-            // Estado
-            if ($this->filtroEstado !== '') {
-                $query->where('estado', $this->filtroEstado);
-            }
-
-            // Tipo de coste
-            if ($this->filtroTipoCoste !== '') {
-                $query->where('tipo_coste', $this->filtroTipoCoste);
-            }
+        if ($this->obra) {
+            $obraId = $this->obra->id;
+            $resumen = [
+                'total'      => FacturaRecibida::where('obra_id', $obraId)->sum('total'),
+                'pagadas'    => FacturaRecibida::where('obra_id', $obraId)
+                    ->where('estado', 'pagada')->sum('total'),
+                'pendientes' => FacturaRecibida::where('obra_id', $obraId)
+                    ->whereIn('estado', ['pendiente_emision_doc_pago', 'pendiente_vencimiento'])
+                    ->sum('total'),
+                'impagadas'  => FacturaRecibida::where('obra_id', $obraId)
+                    ->where('estado', 'impagada')->sum('total'),
+            ];
+        } else {
+            $resumen = ['total' => 0, 'pagadas' => 0, 'pendientes' => 0, 'impagadas' => 0];
         }
 
-        $facturas = $query->orderBy('fecha_factura', 'desc')->paginate(10);
+        $facturaCambioEstado = $this->facturaCambioEstadoId
+            ? FacturaRecibida::find($this->facturaCambioEstadoId)
+            : null;
 
         return view('livewire.obras.facturas-recibidas', [
-            'facturas' => $facturas,
+            'facturas'            => $facturas,
+            'resumen'             => $resumen,
+            'estados'             => FacturaRecibida::ESTADOS,
+            'facturaCambioEstado' => $facturaCambioEstado,
         ]);
     }
 }

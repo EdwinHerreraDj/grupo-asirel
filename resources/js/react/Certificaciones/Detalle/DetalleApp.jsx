@@ -3,9 +3,12 @@ import useDetalle from "./hooks/useDetalle";
 import CabeceraDetalle from "./components/CabeceraDetalle";
 import ResumenFiscal from "./components/ResumenFiscal";
 import TablaLineas from "./components/TablaLineas";
+import TimelineEventos from "./components/TimelineEventos";
 import ModalSeleccionarPartida from "./components/ModalSeleccionarPartida";
+import ModalEditarLinea from "./components/ModalEditarLinea";
 import ModalImpuestos from "./components/ModalImpuestos";
 import ModalAceptar from "./components/ModalAceptar";
+import ModalAnular from "./components/ModalAnular";
 import {
     NotificationProvider,
     useNotification,
@@ -23,19 +26,27 @@ function DetalleInner() {
         lineas,
         presupuesto,
         partidasVenta,
+        eventos,
         loading,
         error,
         crearLinea,
+        editarLinea,
         eliminarLinea,
         actualizarImpuestos,
         aceptar,
+        anular,
+        descargarPdf,
     } = useDetalle(certificacionId);
 
     const [modalPartida, setModalPartida] = useState(false);
     const [modalImpuestos, setModalImpuestos] = useState(false);
     const [modalAceptar, setModalAceptar] = useState(false);
+    const [modalAnular, setModalAnular] = useState(false);
+    const [lineaEnEdicion, setLineaEnEdicion] = useState(null);
     const [guardando, setGuardando] = useState(false);
     const [aceptando, setAceptando] = useState(false);
+    const [anulando, setAnulando] = useState(false);
+    const [descargando, setDescargando] = useState(false);
 
     if (loading) {
         return (
@@ -59,13 +70,54 @@ function DetalleInner() {
     const handleCrearLinea = async (datos) => {
         setGuardando(true);
         try {
-            await crearLinea(datos);
-            showSuccess("Línea añadida correctamente.");
+            const { forzar = false, ...resto } = datos;
+            await crearLinea(resto, { forzar });
+            showSuccess(
+                forzar
+                    ? "Línea añadida (se superó el pendiente)."
+                    : "Línea añadida correctamente.",
+            );
             setModalPartida(false);
         } catch (err) {
-            showError(
-                err.response?.data?.message ?? "Error al añadir la línea.",
+            if (err.exceso) {
+                // Backend devolvi\u00f3 409: la UI debe confirmar expl\u00edcitamente.
+                // Normalmente esto no llega aqu\u00ed porque el modal ya confirma antes,
+                // pero cubrimos el caso de defensa en profundidad.
+                showError(
+                    `${err.message}. Pendiente: ${err.pendiente}. Marca "forzar" para continuar.`,
+                );
+            } else {
+                showError(
+                    err.response?.data?.message ??
+                        "Error al añadir la línea.",
+                );
+            }
+        } finally {
+            setGuardando(false);
+        }
+    };
+
+    const handleEditarLinea = async (lineaId, datos, { forzar = false } = {}) => {
+        setGuardando(true);
+        try {
+            await editarLinea(lineaId, datos, { forzar });
+            showSuccess(
+                forzar
+                    ? "Línea actualizada (se superó el pendiente)."
+                    : "Línea actualizada correctamente.",
             );
+            setLineaEnEdicion(null);
+        } catch (err) {
+            if (err.exceso) {
+                showError(
+                    `${err.message}. Pendiente: ${err.pendiente}. Marca "forzar" para continuar.`,
+                );
+            } else {
+                showError(
+                    err.response?.data?.message ??
+                        "Error al actualizar la línea.",
+                );
+            }
         } finally {
             setGuardando(false);
         }
@@ -109,6 +161,34 @@ function DetalleInner() {
         }
     };
 
+    const handleAnular = async (motivo) => {
+        setAnulando(true);
+        try {
+            await anular(motivo);
+            showSuccess("Aceptación anulada. La certificación vuelve a pendiente.");
+            setModalAnular(false);
+        } catch (err) {
+            showError(
+                err.response?.data?.message ??
+                    "Error al anular la certificación.",
+            );
+        } finally {
+            setAnulando(false);
+        }
+    };
+
+    const handleDescargarPdf = async () => {
+        setDescargando(true);
+        try {
+            await descargarPdf();
+            showSuccess("PDF generado correctamente.");
+        } catch {
+            showError("Error al generar el PDF.");
+        } finally {
+            setDescargando(false);
+        }
+    };
+
     return (
         <div>
             <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
@@ -119,6 +199,13 @@ function DetalleInner() {
                             urlVolver={urlVolver}
                             onAceptar={() => setModalAceptar(true)}
                             onImpuestos={() => setModalImpuestos(true)}
+                            onAnular={() => setModalAnular(true)}
+                            onDescargarPdf={
+                                lineas.length > 0
+                                    ? handleDescargarPdf
+                                    : null
+                            }
+                            descargando={descargando}
                         />
                     </div>
 
@@ -127,6 +214,7 @@ function DetalleInner() {
                             lineas={lineas}
                             editable={editable}
                             onNuevaLinea={() => setModalPartida(true)}
+                            onEditar={(linea) => setLineaEnEdicion(linea)}
                             onEliminar={handleEliminarLinea}
                         />
                     </div>
@@ -137,6 +225,8 @@ function DetalleInner() {
                             presupuesto={presupuesto}
                         />
                     </div>
+
+                    <TimelineEventos eventos={eventos} />
                 </div>
             </div>
 
@@ -146,6 +236,16 @@ function DetalleInner() {
                     guardando={guardando}
                     onGuardar={handleCrearLinea}
                     onCancelar={() => setModalPartida(false)}
+                />
+            )}
+
+            {lineaEnEdicion && (
+                <ModalEditarLinea
+                    linea={lineaEnEdicion}
+                    partidasVenta={partidasVenta}
+                    guardando={guardando}
+                    onGuardar={handleEditarLinea}
+                    onCancelar={() => setLineaEnEdicion(null)}
                 />
             )}
 
@@ -163,6 +263,14 @@ function DetalleInner() {
                     aceptando={aceptando}
                     onConfirmar={handleAceptar}
                     onCancelar={() => setModalAceptar(false)}
+                />
+            )}
+
+            {modalAnular && (
+                <ModalAnular
+                    anulando={anulando}
+                    onConfirmar={handleAnular}
+                    onCancelar={() => setModalAnular(false)}
                 />
             )}
         </div>

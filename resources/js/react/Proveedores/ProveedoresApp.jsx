@@ -25,6 +25,9 @@ function ProveedoresAppContent() {
     const [lastPage, setLastPage] = useState(1);
     const [total, setTotal] = useState(0);
 
+    // Stats
+    const [stats, setStats] = useState(null);
+
     const { showSuccess, showError } = useNotification();
 
     const loadProveedores = async (page = 1) => {
@@ -43,6 +46,7 @@ function ProveedoresAppContent() {
             setCurrentPage(response.data.current_page || 1);
             setLastPage(response.data.last_page || 1);
             setTotal(response.data.total || 0);
+            if (response.data.stats) setStats(response.data.stats);
         } catch (error) {
             console.error("Error loading proveedores:", error);
             showError("Error al cargar los proveedores");
@@ -150,6 +154,7 @@ function ProveedoresAppContent() {
             total={total}
             onPageChange={loadProveedores}
             onBack={handleBack}
+            stats={stats}
         />
     );
 }
