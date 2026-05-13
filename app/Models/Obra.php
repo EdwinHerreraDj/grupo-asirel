@@ -11,10 +11,31 @@ class Obra extends Model
 
     protected $table = 'obras';
 
+    public const ESTADO_PLANIFICACION = 'planificacion';
+    public const ESTADO_EJECUCION     = 'ejecucion';
+    public const ESTADO_EN_PAUSA      = 'en_pausa';
+    public const ESTADO_FINALIZADA    = 'finalizada';
+
+    public const ESTADOS = [
+        self::ESTADO_PLANIFICACION => 'Planificación',
+        self::ESTADO_EJECUCION     => 'En ejecución',
+        self::ESTADO_EN_PAUSA      => 'En pausa',
+        self::ESTADO_FINALIZADA    => 'Finalizada',
+    ];
+
+    public const TIPO_SUBCONTRATISTA = 'subcontratista';
+    public const TIPO_CONTRATISTA    = 'contratista';
+
+    public const TIPOS = [
+        self::TIPO_SUBCONTRATISTA => 'Subcontratista',
+        self::TIPO_CONTRATISTA    => 'Contratista',
+    ];
+
     protected $fillable = [
         'nombre',
         'descripcion',
         'estado',
+        'tipo',
         'fecha_inicio',
         'fecha_fin',
         'importe_presupuestado',
@@ -22,6 +43,16 @@ class Obra extends Model
         'latitud',
         'longitud',
         'radio',
+    ];
+
+    protected $casts = [
+        'fecha_inicio'          => 'date',
+        'fecha_fin'             => 'date',
+        'importe_presupuestado' => 'float',
+        'importe_ejecutado'     => 'float',
+        'latitud'               => 'float',
+        'longitud'              => 'float',
+        'radio'                 => 'float',
     ];
 
     public function documentos()

@@ -41,6 +41,7 @@
                             <select wire:model.defer="estado" class="mt-1 form-select w-full">
                                 <option value="planificacion">Planificación</option>
                                 <option value="ejecucion">Ejecución</option>
+                                <option value="en_pausa">En pausa</option>
                                 <option value="finalizada">Finalizada</option>
                             </select>
                             @error('estado')
@@ -57,6 +58,41 @@
                                 <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
                             @enderror
                         </div>
+                    </div>
+
+                    {{-- Tipo de obra --}}
+                    <div>
+                        <label class="text-sm font-medium text-gray-700 block mb-2">Tipo de obra</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <label class="cursor-pointer">
+                                <input type="radio" wire:model.defer="tipo" value="subcontratista" class="peer sr-only">
+                                <div class="rounded-xl border-2 border-slate-200 bg-white px-4 py-3 transition peer-checked:border-cyan-500 peer-checked:bg-cyan-50 hover:border-slate-300">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <i class="mgc_user_2_line text-cyan-600"></i>
+                                        <span class="font-semibold text-slate-900 text-sm">Subcontratista</span>
+                                    </div>
+                                    <p class="text-xs text-slate-500 leading-relaxed">
+                                        Las proformas se generan a partir del <strong>presupuesto de venta</strong>.
+                                    </p>
+                                </div>
+                            </label>
+
+                            <label class="cursor-pointer">
+                                <input type="radio" wire:model.defer="tipo" value="contratista" class="peer sr-only">
+                                <div class="rounded-xl border-2 border-slate-200 bg-white px-4 py-3 transition peer-checked:border-cyan-500 peer-checked:bg-cyan-50 hover:border-slate-300">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <i class="mgc_building_4_line text-cyan-600"></i>
+                                        <span class="font-semibold text-slate-900 text-sm">Contratista</span>
+                                    </div>
+                                    <p class="text-xs text-slate-500 leading-relaxed">
+                                        Las proformas se generan a partir del <strong>coste teórico</strong>.
+                                    </p>
+                                </div>
+                            </label>
+                        </div>
+                        @error('tipo')
+                            <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">

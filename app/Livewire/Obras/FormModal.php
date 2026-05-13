@@ -14,6 +14,7 @@ class FormModal extends Component
 
     public string $nombre = '';
     public string $estado = 'planificacion';
+    public string $tipo = 'subcontratista';
     public ?string $fecha_inicio = null;
     public ?string $fecha_fin = null;
     public $importe_presupuestado = null;
@@ -23,7 +24,8 @@ class FormModal extends Component
     {
         return [
             'nombre' => 'required|string|max:255',
-            'estado' => 'required|string|in:planificacion,ejecucion,finalizada',
+            'estado' => 'required|string|in:planificacion,ejecucion,en_pausa,finalizada',
+            'tipo' => 'required|string|in:subcontratista,contratista',
             'fecha_inicio' => 'nullable|date',
             'fecha_fin' => 'nullable|date|after_or_equal:fecha_inicio',
             'importe_presupuestado' => 'required|numeric|min:0',
@@ -41,8 +43,9 @@ class FormModal extends Component
             $obra = Obra::findOrFail($id);
             $this->nombre = $obra->nombre;
             $this->estado = $obra->estado;
-            $this->fecha_inicio = $obra->fecha_inicio?->format('Y-m-d') ?? $obra->fecha_inicio;
-            $this->fecha_fin = $obra->fecha_fin?->format('Y-m-d') ?? $obra->fecha_fin;
+            $this->tipo = $obra->tipo ?? 'subcontratista';
+            $this->fecha_inicio = $obra->fecha_inicio?->format('Y-m-d');
+            $this->fecha_fin = $obra->fecha_fin?->format('Y-m-d');
             $this->importe_presupuestado = $obra->importe_presupuestado;
             $this->descripcion = $obra->descripcion;
         } else {
@@ -86,6 +89,7 @@ class FormModal extends Component
         $this->obraId = null;
         $this->nombre = '';
         $this->estado = 'planificacion';
+        $this->tipo = 'subcontratista';
         $this->fecha_inicio = null;
         $this->fecha_fin = null;
         $this->importe_presupuestado = null;

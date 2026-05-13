@@ -182,6 +182,8 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
         ->name('informes.exportar.liquidacion-iva');
     Route::get('/informes/exportar/analisis-bruto-obras', [InformeController::class, 'exportarAnalisisBrutoObras'])
         ->name('informes.exportar.analisis-bruto-obras');
+    Route::get('/informes/exportar/retenciones-obra', [InformeController::class, 'exportarRetencionesObra'])
+        ->name('informes.exportar.retenciones-obra');
 
     // Modulos de Asirel
     Route::get('/facturas-recibidas', [FacturasRecibidasController::class, 'global'])->name('facturas-recibidas.global');

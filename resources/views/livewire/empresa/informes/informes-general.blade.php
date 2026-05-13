@@ -273,5 +273,93 @@
                 </div>
             </div>
         </div>
+
+        {{-- ============================
+             3. RETENCIONES POR OBRA
+             ============================ --}}
+        <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+            <div class="border-b border-slate-200 bg-gradient-to-r from-slate-50 via-white to-violet-50/40 px-5 py-4 sm:px-6">
+                <div class="flex items-start gap-3">
+                    <div class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-[0_8px_18px_rgba(124,58,237,0.25)]">
+                        <i class="mgc_safe_alert_line text-lg"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="text-base font-semibold text-slate-900">
+                            Retenciones por obra
+                        </h3>
+                        <p class="text-xs text-slate-500 leading-relaxed mt-0.5">
+                            Detalle de las retenciones aplicadas en la obra: las que te retiene el cliente
+                            (facturas emitidas) y las que retienes a proveedores (facturas recibidas),
+                            con el resumen neto.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 sm:p-5 space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div class="sm:col-span-2">
+                        <label class="block text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1">
+                            Obra <span class="text-red-500">*</span>
+                        </label>
+                        <select wire:model.live="retObraSeleccionada"
+                            class="w-full rounded-xl border-slate-300 text-sm focus:border-violet-500 focus:ring-violet-500">
+                            <option value="">— Selecciona una obra —</option>
+                            @foreach ($obras as $obra)
+                                <option value="{{ $obra->id }}">{{ $obra->nombre }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1">
+                            Formato
+                        </label>
+                        <select wire:model.live="retFormato"
+                            class="w-full rounded-xl border-slate-300 text-sm focus:border-violet-500 focus:ring-violet-500">
+                            <option value="pdf">PDF (.pdf)</option>
+                            <option value="excel">Excel (.xlsx)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1">
+                            Fecha desde
+                        </label>
+                        <input type="date" wire:model.live="retFechaInicio"
+                            class="w-full rounded-xl border-slate-300 text-sm focus:border-violet-500 focus:ring-violet-500">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1">
+                            Fecha hasta
+                        </label>
+                        <input type="date" wire:model.live="retFechaFin"
+                            class="w-full rounded-xl border-slate-300 text-sm focus:border-violet-500 focus:ring-violet-500">
+                    </div>
+                    <div class="sm:col-span-2 flex items-end">
+                        <button wire:click="exportarRetencionesObra"
+                            wire:loading.attr="disabled"
+                            wire:target="exportarRetencionesObra"
+                            @disabled(!$retObraSeleccionada)
+                            class="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(124,58,237,0.22)] hover:from-violet-500 hover:to-purple-500 disabled:opacity-60 disabled:cursor-not-allowed">
+                            <span wire:loading.remove wire:target="exportarRetencionesObra" class="inline-flex items-center gap-2">
+                                <i class="mgc_download_2_line"></i> Generar informe
+                            </span>
+                            <span wire:loading wire:target="exportarRetencionesObra" class="inline-flex items-center gap-2">
+                                <div class="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                Generando…
+                            </span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 text-xs text-slate-600 flex items-start gap-2">
+                    <i class="mgc_information_line text-slate-500 text-sm mt-0.5"></i>
+                    <span>
+                        Incluye solo facturas con retención mayor a 0. Las emitidas se cuentan en estado
+                        <strong>emitida</strong>, <strong>enviada</strong> o <strong>pagada</strong>;
+                        las recibidas excluyendo las devueltas. El resumen muestra el neto a favor o en contra.
+                    </span>
+                </div>
+            </div>
+        </div>
     </div>
 </div>

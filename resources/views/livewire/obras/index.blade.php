@@ -32,6 +32,7 @@
                     <option value="">Todas</option>
                     <option value="planificacion">Planificación</option>
                     <option value="ejecucion">Ejecución</option>
+                    <option value="en_pausa">En pausa</option>
                     <option value="finalizada">Finalizada</option>
                 </select>
             </div>
@@ -63,15 +64,21 @@
                     $estadoClases = match ($obra->estado) {
                         'planificacion' => 'bg-amber-100 text-amber-700 ring-amber-200',
                         'ejecucion' => 'bg-blue-100 text-blue-700 ring-blue-200',
+                        'en_pausa' => 'bg-orange-100 text-orange-700 ring-orange-200',
                         'finalizada' => 'bg-emerald-100 text-emerald-700 ring-emerald-200',
                         default => 'bg-gray-100 text-gray-700 ring-gray-200',
                     };
                     $estadoLabel = match ($obra->estado) {
                         'planificacion' => 'Planificación',
                         'ejecucion' => 'En ejecución',
+                        'en_pausa' => 'En pausa',
                         'finalizada' => 'Finalizada',
                         default => ucfirst($obra->estado),
                     };
+                    $tipoLabel = $obra->tipo === 'contratista' ? 'Contratista' : 'Subcontratista';
+                    $tipoClases = $obra->tipo === 'contratista'
+                        ? 'bg-violet-100 text-violet-700 ring-violet-200'
+                        : 'bg-cyan-100 text-cyan-700 ring-cyan-200';
                     $resultado = $obra->total_ventas - $obra->total_gastos;
                     $resultadoColor = $resultado >= 0 ? 'text-emerald-600' : 'text-red-600';
                     $colorBarra = fn($pct) => $pct >= 80 ? 'bg-emerald-500' : ($pct >= 50 ? 'bg-amber-500' : 'bg-red-500');
@@ -85,7 +92,11 @@
                             <p class="text-xs text-gray-400 mt-0.5">ID #{{ $obra->id }}</p>
                         </div>
 
-                        <div class="flex items-center gap-2 shrink-0">
+                        <div class="flex items-center gap-2 shrink-0 flex-wrap">
+                            <span
+                                class="text-xs font-medium px-2.5 py-1 rounded-full ring-1 {{ $tipoClases }}">
+                                {{ $tipoLabel }}
+                            </span>
                             <span
                                 class="text-xs font-medium px-2.5 py-1 rounded-full ring-1 {{ $estadoClases }}">
                                 {{ $estadoLabel }}

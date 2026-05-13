@@ -19,6 +19,12 @@ class InformesGeneral extends Component
     public ?string $abFechaFin = null;
     public string $abFormato = 'pdf';
 
+    // === Filtros: Retenciones por obra ===
+    public ?string $retObraSeleccionada = null;
+    public ?string $retFechaInicio = null;
+    public ?string $retFechaFin = null;
+    public string $retFormato = 'pdf';
+
     public $obras = [];
 
     public function mount(): void
@@ -75,6 +81,35 @@ class InformesGeneral extends Component
             'descargar-informe',
             url: $url,
             filename: 'analisis_bruto_obras.' . ($this->abFormato === 'excel' ? 'xlsx' : 'pdf'),
+        );
+    }
+
+    public function exportarRetencionesObra()
+    {
+        if (! $this->retObraSeleccionada) {
+            $this->dispatch('notify', type: 'error', message: 'Selecciona una obra primero.');
+
+            return;
+        }
+
+        if ($this->retFechaInicio && $this->retFechaFin
+            && $this->retFechaInicio > $this->retFechaFin) {
+            $this->dispatch('notify', type: 'error', message: 'La fecha desde no puede ser mayor que la fecha hasta.');
+
+            return;
+        }
+
+        $url = route('informes.exportar.retenciones-obra', [
+            'obra_id'      => $this->retObraSeleccionada,
+            'fecha_inicio' => $this->retFechaInicio,
+            'fecha_fin'    => $this->retFechaFin,
+            'formato'      => $this->retFormato,
+        ]);
+
+        $this->dispatch(
+            'descargar-informe',
+            url: $url,
+            filename: 'retenciones_obra.' . ($this->retFormato === 'excel' ? 'xlsx' : 'pdf'),
         );
     }
 
