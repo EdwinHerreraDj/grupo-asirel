@@ -2,12 +2,16 @@
 
 namespace App\Services;
 
+use App\Models\Certificacion;
+use App\Models\CertificacionEvento;
 use App\Models\FacturaSerie;
+use App\Support\EstadoCobro;
 use App\Models\FacturaVenta;
 use App\Models\FacturaVentaDetalle;
 use App\Models\FacturaVentaPago;
 use App\Services\Facturas\FacturaPdfService;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
@@ -197,8 +201,8 @@ class FacturaVentaService
                 'fecha_emision'  => $factura->fecha_emision ?? now(),
             ]);
 
-            // PDF dentro de la transacci\u00f3n: si falla, rollback.
-            $this->pdfService->generar($factura->fresh());
+            // PDF ORIGINAL dentro de la transacci\u00f3n: si falla, rollback.
+            $this->pdfService->generarOriginal($factura->fresh());
 
             return $factura->fresh();
         });
@@ -272,7 +276,106 @@ class FacturaVentaService
                 'estado'           => FacturaVenta::ESTADO_ANULADA,
                 'motivo_anulacion' => $motivo,
             ]);
+
+            // Si la factura nace de certificaciones, al anularla hay que
+            // liberar esas certificaciones para que vuelvan a estar
+            // disponibles (aceptadas / pendientes de factura). Si no,
+            // quedan bloqueadas en 'facturada' para siempre.
+            if ($factura->origen === 'certificacion') {
+                $this->liberarCertificaciones($factura, $motivo);
+            }
         });
+
+        return $factura->fresh();
+    }
+
+    /**
+     * Revierte a 'pendiente' el estado_factura de las certificaciones ligadas
+     * a esta factura y deja rastro en el historial de eventos.
+     *
+     * El enlace factura↔certificaciones es por `codigo_certificacion` =
+     * `numero_certificacion` dentro de la misma obra (igual que hace
+     * FacturaVentaGenerator al marcarlas como facturadas). La tabla pivote
+     * `factura_venta_certificacion` no se rellena en este flujo.
+     *
+     * Solo libera si NINGUNA otra factura viva (no anulada) del mismo grupo
+     * las mantiene facturadas: así una re-facturación activa no se desbloquea
+     * por error.
+     */
+    private function liberarCertificaciones(FacturaVenta $factura, string $motivo): void
+    {
+        if (! $factura->codigo_certificacion || ! $factura->obra_id) {
+            return;
+        }
+
+        $ligadaAOtraFacturaViva = FacturaVenta::where('id', '!=', $factura->id)
+            ->where('obra_id', $factura->obra_id)
+            ->where('codigo_certificacion', $factura->codigo_certificacion)
+            ->where('origen', 'certificacion')
+            ->where('estado', '!=', FacturaVenta::ESTADO_ANULADA)
+            ->exists();
+
+        if ($ligadaAOtraFacturaViva) {
+            return;
+        }
+
+        $certs = Certificacion::where('obra_id', $factura->obra_id)
+            ->where('numero_certificacion', $factura->codigo_certificacion)
+            ->where('estado_factura', 'facturada')
+            ->lockForUpdate()
+            ->get();
+
+        $ahora = now();
+        $userId = Auth::id();
+        $referencia = $factura->numeroFormateado();
+
+        foreach ($certs as $cert) {
+            $estadoCertPrevio = $cert->estado_certificacion;
+
+            // Liberación completa: vuelve a 'pendiente' de factura Y de
+            // certificación, de modo que quede directamente editable
+            // (equivale a anular factura + anular certificación en un paso).
+            $cert->update([
+                'estado_factura'       => 'pendiente',
+                'estado_certificacion' => 'pendiente',
+            ]);
+
+            CertificacionEvento::create([
+                'certificacion_id' => $cert->id,
+                'user_id'          => $userId,
+                'tipo'             => 'factura_anulada',
+                'estado_previo'    => $estadoCertPrevio,
+                'estado_nuevo'     => 'pendiente',
+                'motivo'           => 'Factura ' . $referencia . ' anulada: ' . $motivo,
+                'created_at'       => $ahora,
+                'updated_at'       => $ahora,
+            ]);
+        }
+    }
+
+    // -------------------------------------------------------------
+    // ESTADO INFORMATIVO DE COBRO (no fiscal)
+    // -------------------------------------------------------------
+
+    /**
+     * Cambia SOLO el estado informativo de cobro/seguimiento. No toca importes,
+     * fechas, numeración, estado operativo, PDF ni trazabilidad fiscal.
+     */
+    public function cambiarEstadoCobro(FacturaVenta $factura, string $estadoCobro): FacturaVenta
+    {
+        if (! EstadoCobro::esValido($estadoCobro)) {
+            throw new RuntimeException('Estado de cobro no válido.');
+        }
+
+        if (! $factura->puedeGestionarEstadoCobro()) {
+            throw new RuntimeException('No se puede clasificar el cobro de esta factura en su estado actual.');
+        }
+
+        $factura->update([
+            'estado_cobro'                 => $estadoCobro,
+            'estado_cobro_actualizado_at'  => now(),
+            'estado_cobro_actualizado_por' => Auth::id(),
+        ]);
 
         return $factura->fresh();
     }

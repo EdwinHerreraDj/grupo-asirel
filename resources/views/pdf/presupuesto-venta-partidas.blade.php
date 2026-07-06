@@ -4,6 +4,16 @@
     $mostrarLogo = $empresa?->mostrar_logo_pdf ?? true;
     $piePdf = $empresa->pie_pdf ?? null;
     $numeroExpediente = 'PV-' . str_pad($obra->id, 4, '0', STR_PAD_LEFT);
+
+    // Logo embebido como base64: evita problemas de symlink/rutas en DomPDF.
+    $logoSrc = null;
+    if ($mostrarLogo && !empty($empresa?->logo)) {
+        $logoPath = storage_path('app/public/' . $empresa->logo);
+        if (is_file($logoPath)) {
+            $logoExt = strtolower(pathinfo($logoPath, PATHINFO_EXTENSION)) ?: 'png';
+            $logoSrc = 'data:image/' . $logoExt . ';base64,' . base64_encode(file_get_contents($logoPath));
+        }
+    }
 @endphp
 <!DOCTYPE html>
 <html lang="es">
@@ -165,6 +175,26 @@
         }
         .condiciones p { margin: 5px 0; }
 
+        /* ===== COMENTARIO ===== */
+        .comentario-box {
+            margin-top: 18px;
+            padding: 10px 12px;
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-left: 3px solid {{ $colorPrimario }};
+            font-size: 10px;
+            color: #1e293b;
+        }
+        .comentario-box .label-section {
+            font-size: 8.5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: {{ $colorPrimario }};
+            margin-bottom: 4px;
+            font-weight: bold;
+        }
+        .comentario-box p { margin: 4px 0 0; line-height: 1.5; }
+
         /* ===== FIRMAS ===== */
         table.firmas { margin-top: 30px; width: 100%; border-collapse: collapse; }
         table.firmas td {
@@ -205,11 +235,9 @@
     {{-- ===== CABECERA ===== --}}
     <table class="header">
         <tr>
-            @if ($mostrarLogo)
+            @if ($logoSrc)
                 <td class="logo-cell">
-                    @if (!empty($empresa?->logo))
-                        <img src="{{ public_path('storage/' . $empresa->logo) }}" alt="Logo {{ $empresa->nombre }}">
-                    @endif
+                    <img src="{{ $logoSrc }}" alt="Logo {{ $empresa->nombre }}">
                 </td>
             @endif
             <td class="empresa-info">
@@ -323,6 +351,14 @@
                     <td class="value">{{ number_format($total, 2, ',', '.') }} €</td>
                 </tr>
             </table>
+        </div>
+    @endif
+
+    {{-- ===== COMENTARIO ===== --}}
+    @if (!empty($comentario ?? null))
+        <div class="comentario-box">
+            <div class="label-section">Comentario</div>
+            <p>{!! nl2br(e($comentario)) !!}</p>
         </div>
     @endif
 

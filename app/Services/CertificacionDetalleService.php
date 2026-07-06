@@ -7,6 +7,7 @@ use App\Models\Certificacion;
 use App\Models\CertificacionDetalle;
 use App\Models\CertificacionEvento;
 use App\Models\PresupuestoVentaPartida;
+use App\Support\EstadoCobro;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -58,6 +59,7 @@ class CertificacionDetalleService
                 'cantidad'                     => $cantidad,
                 'precio_unitario'              => $precio,
                 'importe_linea'                => round($cantidad * $precio, 2),
+                'comentario'                   => $data['comentario'] ?? null,
             ]);
 
             $this->calculator->recalcular($cert->fresh());
@@ -95,6 +97,7 @@ class CertificacionDetalleService
                 'cantidad'        => $cantidad,
                 'precio_unitario' => $precio,
                 'importe_linea'   => round($cantidad * $precio, 2),
+                'comentario'      => $data['comentario'] ?? null,
             ]);
 
             $this->calculator->recalcular($cert->fresh());
@@ -199,6 +202,46 @@ class CertificacionDetalleService
     public function registrarCreacion(Certificacion $certificacion): void
     {
         $this->registrarEvento($certificacion, 'creada', null, 'pendiente');
+    }
+
+    /**
+     * Cambia SOLO el estado informativo de cobro/seguimiento y lo registra en
+     * el historial de eventos. No toca importes, estados operativos, factura ni
+     * trazabilidad fiscal. Restringido a certificaciones aceptadas.
+     */
+    public function cambiarEstadoCobro(Certificacion $certificacion, string $estadoCobro): void
+    {
+        if (! EstadoCobro::esValido($estadoCobro)) {
+            throw new RuntimeException('Estado de cobro no válido.');
+        }
+
+        DB::transaction(function () use ($certificacion, $estadoCobro) {
+            $cert = Certificacion::where('id', $certificacion->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if (! $cert->puedeGestionarEstadoCobro()) {
+                throw new RuntimeException(
+                    'Solo se puede clasificar el cobro de certificaciones aceptadas.'
+                );
+            }
+
+            $previo = $cert->estado_cobro;
+
+            if ($previo === $estadoCobro) {
+                return;
+            }
+
+            $cert->update(['estado_cobro' => $estadoCobro]);
+
+            $this->registrarEvento(
+                $cert,
+                'estado_cobro_actualizado',
+                $previo,
+                $estadoCobro,
+                'Seguimiento de cobro: ' . EstadoCobro::label($previo) . ' → ' . EstadoCobro::label($estadoCobro),
+            );
+        });
     }
 
     // -------------------------------------------------------------

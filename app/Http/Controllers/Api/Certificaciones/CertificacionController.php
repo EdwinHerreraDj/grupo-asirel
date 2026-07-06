@@ -8,6 +8,7 @@ use App\Models\Obra;
 use App\Models\ObraGastoCategoria;
 use App\Models\Cliente;
 use App\Services\CertificacionDetalleService;
+use App\Support\EstadoCobro;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -207,6 +208,10 @@ class CertificacionController extends Controller
             'total'                   => (float) $c->total,
             'estado_certificacion'    => $c->estado_certificacion,
             'estado_factura'          => $c->estado_factura,
+            'estado_cobro'            => $c->estado_cobro,
+            'estado_cobro_label'      => EstadoCobro::label($c->estado_cobro),
+            'estado_cobro_color'      => EstadoCobro::meta($c->estado_cobro)['color'],
+            'puede_estado_cobro'      => $c->estado_certificacion === 'aceptada',
             'factura_venta_id'        => $c->factura_venta_id ?? null,
         ];
     }

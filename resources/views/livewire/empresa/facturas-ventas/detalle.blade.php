@@ -57,10 +57,18 @@
                 </div>
 
                 <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-                    @if ($factura->pdf_url)
-                        <a href="{{ asset('storage/' . $factura->pdf_url) }}" target="_blank"
+                    @if ($factura->tienePdfOriginal())
+                        <a href="{{ route('empresa.facturas-ventas.pdf', $factura->id) }}" target="_blank"
                             class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
-                            <i class="mgc_pdf_line text-red-600"></i> Abrir PDF
+                            <svg class="w-4 h-4 text-red-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/><path d="M12 11v6"/><path d="m9.5 14.5 2.5 2.5 2.5-2.5"/></svg> Descargar original
+                        </a>
+                    @endif
+
+                    @if ($factura->puedeGenerarCopia())
+                        <a href="{{ route('empresa.facturas-ventas.pdf.copia', $factura->id) }}"
+                            class="inline-flex items-center justify-center gap-2 rounded-xl border border-cyan-300 bg-cyan-50 px-4 py-2.5 text-sm font-medium text-cyan-700 transition hover:bg-cyan-100"
+                            title="Genera una copia visual con el logo/plantilla actuales. No modifica el original emitido.">
+                            <i class="mgc_print_line"></i> Generar copia PDF
                         </a>
                     @endif
 
@@ -111,6 +119,58 @@
                 </p>
             </div>
         </div>
+
+        {{-- SEGUIMIENTO DE COBRO (informativo, no fiscal) --}}
+        @php $cobroMeta = $factura->estadoCobroMeta(); @endphp
+        <div class="border-t border-slate-200 px-5 py-3 sm:px-6 flex flex-wrap items-center gap-2">
+            <span class="text-xs font-medium text-slate-500">Seguimiento de cobro</span>
+            <span class="text-[11px] text-slate-400">(clasificación interna, no afecta al estado fiscal)</span>
+            <div class="flex-1"></div>
+
+            <span class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold {{ $cobroMeta['color'] }}">
+                {{ $cobroMeta['label'] }}
+            </span>
+
+            @if ($factura->puedeGestionarEstadoCobro())
+                <select x-data x-on:change="$wire.cambiarEstadoCobro($event.target.value)"
+                    class="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-500/30">
+                    @foreach (\App\Support\EstadoCobro::opciones() as $op)
+                        <option value="{{ $op['value'] }}" @selected($factura->estado_cobro === $op['value'])>{{ $op['label'] }}</option>
+                    @endforeach
+                </select>
+            @else
+                <span class="text-[11px] text-slate-400">no editable en «{{ $meta['label'] }}»</span>
+            @endif
+
+            @if ($factura->estado_cobro_actualizado_at)
+                <span class="w-full text-[11px] text-slate-400 sm:w-auto">
+                    · actualizado {{ $factura->estado_cobro_actualizado_at->format('d/m/Y H:i') }}
+                    @if ($factura->estadoCobroActualizadoPor) por {{ $factura->estadoCobroActualizadoPor->name }} @endif
+                </span>
+            @endif
+        </div>
+
+        {{-- TRAZABILIDAD DOCUMENTAL (VeriFactu) --}}
+        @if ($factura->estado !== 'borrador' && ($factura->pdf_original_generado_at || $factura->reimpresiones->isNotEmpty()))
+            <div class="border-t border-slate-200 px-5 py-3 sm:px-6 text-xs text-slate-500 flex flex-wrap items-center gap-x-4 gap-y-1">
+                @if ($factura->pdf_original_generado_at)
+                    <span class="inline-flex items-center gap-1.5">
+                        <i class="mgc_certificate_line text-slate-400"></i>
+                        Original emitido el {{ $factura->pdf_original_generado_at->format('d/m/Y H:i') }}
+                    </span>
+                @endif
+                @if ($factura->reimpresiones->isNotEmpty())
+                    @php $ultima = $factura->reimpresiones->first(); @endphp
+                    <span class="inline-flex items-center gap-1.5">
+                        <i class="mgc_print_line text-slate-400"></i>
+                        {{ $factura->reimpresiones->count() }}
+                        {{ $factura->reimpresiones->count() === 1 ? 'copia generada' : 'copias generadas' }}
+                        · última {{ $ultima->created_at->format('d/m/Y H:i') }}
+                        @if ($ultima->user) por {{ $ultima->user->name }} @endif
+                    </span>
+                @endif
+            </div>
+        @endif
     </div>
 
     {{-- ANULADA ALERT --}}
@@ -216,6 +276,128 @@
             </div>
         </div>
     </div>
+
+    {{-- ========================================
+         DOCUMENTACIÓN ADJUNTA
+         (soporte documental del expediente; no es el documento fiscal)
+         ======================================== --}}
+    <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm mb-4">
+        <div class="flex items-start justify-between gap-3 border-b border-slate-200 px-5 py-4 sm:px-6">
+            <div>
+                <h3 class="text-sm font-semibold text-slate-800">Documentación adjunta</h3>
+                <p class="text-xs text-slate-500">
+                    Albaranes, partes, justificantes, fotos… documentación del expediente.
+                    No forma parte del documento fiscal ni del PDF original.
+                </p>
+            </div>
+            <span class="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600">
+                <i class="mgc_folder_open_line"></i> {{ $factura->documentos->count() }}
+            </span>
+        </div>
+
+        {{-- Subida --}}
+        <div class="border-b border-slate-100 px-5 py-4 sm:px-6">
+            <label class="block">
+                <span class="text-xs font-medium text-slate-600">Añadir archivos</span>
+                <input type="file" multiple wire:model="nuevosDocumentos"
+                    class="mt-1 block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-cyan-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-cyan-700 hover:file:bg-cyan-100">
+            </label>
+            <p class="mt-1 text-[11px] text-slate-400">PDF, imágenes, Office, TXT, CSV o ZIP. Máx. 20 MB por archivo.</p>
+
+            @error('nuevosDocumentos.*') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+            @error('nuevosDocumentos') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+
+            <div wire:loading wire:target="nuevosDocumentos" class="mt-2 text-xs text-slate-500">Cargando archivos…</div>
+
+            @if (!empty($nuevosDocumentos))
+                <div class="mt-3 flex flex-wrap items-center gap-2">
+                    @foreach ($nuevosDocumentos as $tmp)
+                        <span class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-600">
+                            {{ \Illuminate\Support\Str::limit(method_exists($tmp, 'getClientOriginalName') ? $tmp->getClientOriginalName() : 'archivo', 32) }}
+                        </span>
+                    @endforeach
+                </div>
+                <div class="mt-3 flex gap-2">
+                    <button type="button" wire:click="subirDocumentos"
+                        wire:loading.attr="disabled" wire:target="subirDocumentos"
+                        class="inline-flex items-center gap-2 rounded-xl bg-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-700 disabled:opacity-60">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg>
+                        <span wire:loading.remove wire:target="subirDocumentos">Subir</span>
+                        <span wire:loading wire:target="subirDocumentos">Subiendo…</span>
+                    </button>
+                    <button type="button" wire:click="$set('nuevosDocumentos', [])"
+                        class="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm text-slate-600 transition hover:bg-slate-50">
+                        Cancelar
+                    </button>
+                </div>
+            @endif
+        </div>
+
+        {{-- Lista --}}
+        <ul class="divide-y divide-slate-100">
+            @forelse ($factura->documentos as $doc)
+                <li class="flex items-center gap-3 px-5 py-3 sm:px-6">
+                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-[10px] font-bold text-slate-500">
+                        {{ \Illuminate\Support\Str::limit($doc->extension(), 4, '') }}
+                    </span>
+                    <div class="min-w-0 flex-1">
+                        <p class="truncate text-sm font-medium text-slate-800">{{ $doc->nombre_original }}</p>
+                        <p class="text-xs text-slate-500">
+                            {{ $doc->tamanoLegible() }} · {{ $doc->created_at->format('d/m/Y H:i') }}
+                            @if ($doc->user) · {{ $doc->user->name }} @endif
+                        </p>
+                    </div>
+                    <div class="flex shrink-0 items-center gap-1">
+                        <a href="{{ route('empresa.facturas-ventas.documentos.descargar', [$factura->id, $doc->id]) }}"
+                            title="Descargar"
+                            class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-700">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+                        </a>
+                        @if ($puedeEliminarDocumentos)
+                            <button wire:click="confirmarEliminarDocumento({{ $doc->id }})" title="Eliminar"
+                                class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-red-600 transition hover:border-red-300 hover:bg-red-50">
+                                <i class="mgc_delete_line"></i>
+                            </button>
+                        @endif
+                    </div>
+                </li>
+            @empty
+                <li class="px-5 py-8 text-center text-sm text-slate-500 sm:px-6">
+                    <div class="flex flex-col items-center gap-2">
+                        <i class="mgc_folder_open_line text-2xl text-slate-400"></i>
+                        <p>Sin documentación adjunta.</p>
+                    </div>
+                </li>
+            @endforelse
+        </ul>
+    </div>
+
+    {{-- MODAL ELIMINAR DOCUMENTO --}}
+    @if ($documentoAEliminarId)
+        <div class="fixed inset-0 z-[10000] bg-black/60 backdrop-blur-sm flex items-center justify-center px-4">
+            <div class="w-full max-w-sm bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden">
+                <div class="px-6 pt-6 text-center">
+                    <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-100 text-red-600">
+                        <i class="mgc_delete_line text-3xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-slate-900">Eliminar documento</h3>
+                    <p class="mt-2 text-sm text-slate-600">
+                        Se eliminará el archivo adjunto. La factura y su PDF original no se ven afectados.
+                    </p>
+                </div>
+                <div class="mt-4 flex items-center justify-end gap-3 border-t border-slate-200 bg-slate-50 px-6 py-4">
+                    <button wire:click="cancelarEliminarDocumento"
+                        class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100">
+                        Cancelar
+                    </button>
+                    <button wire:click="eliminarDocumento"
+                        class="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700">
+                        Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
 
     {{-- ========================================
          MODAL LÍNEA (nueva / editar)
@@ -352,6 +534,16 @@
                     <p class="mt-2 text-sm text-slate-600">
                         Indica el motivo de anulación (mínimo 5 caracteres).
                     </p>
+                    @if ($factura->origen === 'certificacion')
+                        <div class="mt-3 flex items-start gap-2 text-left rounded-xl bg-amber-50 border border-amber-200 px-3 py-2">
+                            <i class="mgc_information_line text-amber-600 mt-0.5"></i>
+                            <p class="text-xs text-amber-800">
+                                Al anular esta factura, sus certificaciones vinculadas
+                                volverán a quedar <strong>disponibles</strong> (aceptadas y
+                                pendientes de factura), listas para editar o volver a facturar.
+                            </p>
+                        </div>
+                    @endif
                 </div>
                 <div class="px-6 pt-4 pb-2">
                     <textarea wire:model="motivoAnulacion" rows="3"

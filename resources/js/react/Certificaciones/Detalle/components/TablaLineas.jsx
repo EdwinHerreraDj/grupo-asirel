@@ -105,6 +105,14 @@ export default function TablaLineas({
                                                 <div className="max-w-[360px] text-sm font-medium text-slate-800">
                                                     {linea.concepto}
                                                 </div>
+                                                {linea.comentario && (
+                                                    <div className="mt-1 flex max-w-[360px] items-start gap-1.5 text-xs text-slate-500">
+                                                        <i className="mgc_comment_line mt-0.5 shrink-0 text-slate-400"></i>
+                                                        <span className="whitespace-pre-line break-words">
+                                                            {linea.comentario}
+                                                        </span>
+                                                    </div>
+                                                )}
                                             </td>
 
                                             <td className="px-4 py-3.5 text-center text-slate-600 sm:px-5">

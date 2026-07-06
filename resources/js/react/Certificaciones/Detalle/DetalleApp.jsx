@@ -35,6 +35,7 @@ function DetalleInner() {
         actualizarImpuestos,
         aceptar,
         anular,
+        cambiarEstadoCobro,
         descargarPdf,
     } = useDetalle(certificacionId);
 
@@ -177,6 +178,18 @@ function DetalleInner() {
         }
     };
 
+    const handleCambiarEstadoCobro = async (estadoCobro) => {
+        try {
+            await cambiarEstadoCobro(estadoCobro);
+            showSuccess("Estado de cobro actualizado.");
+        } catch (err) {
+            showError(
+                err.response?.data?.message ??
+                    "Error al actualizar el estado de cobro.",
+            );
+        }
+    };
+
     const handleDescargarPdf = async () => {
         setDescargando(true);
         try {
@@ -200,6 +213,7 @@ function DetalleInner() {
                             onAceptar={() => setModalAceptar(true)}
                             onImpuestos={() => setModalImpuestos(true)}
                             onAnular={() => setModalAnular(true)}
+                            onCambiarEstadoCobro={handleCambiarEstadoCobro}
                             onDescargarPdf={
                                 lineas.length > 0
                                     ? handleDescargarPdf

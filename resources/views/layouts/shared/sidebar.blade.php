@@ -1,14 +1,18 @@
 <div class="app-menu">
 
     {{-- LOGO --}}
+    @php $logoEmpresa = !empty($empresa?->logo) ? \Illuminate\Support\Facades\Storage::url($empresa->logo) : null; @endphp
     <a href="{{ route('any', 'index') }}" class="logo-box">
+        {{-- El tema muestra .logo-dark en menú claro (por defecto) y .logo-light
+             en menú oscuro; apuntamos ambos al logo de empresa para que se vea
+             en cualquier caso. Tamaño explícito porque el logo suele ser cuadrado. --}}
         <div class="logo-light">
-            <img src="/images/logo-light.png" class="logo-lg" alt="Light logo">
-            <img src="/images/logo-sm.png" class="logo-sm" alt="Small logo">
+            <img src="{{ $logoEmpresa ?? '/images/logo-light.png' }}" class="logo-lg" style="height:54px;width:auto;object-fit:contain;" alt="Logo">
+            <img src="{{ $logoEmpresa ?? '/images/logo-sm.png' }}" class="logo-sm" style="height:40px;width:auto;object-fit:contain;" alt="Logo">
         </div>
         <div class="logo-dark">
-            <img src="/images/logo-dark.png" class="logo-lg" alt="Dark logo">
-            <img src="/images/logo-sm.png" class="logo-sm" alt="Small logo">
+            <img src="{{ $logoEmpresa ?? '/images/logo-dark.png' }}" class="logo-lg" style="height:54px;width:auto;object-fit:contain;" alt="Logo">
+            <img src="{{ $logoEmpresa ?? '/images/logo-sm.png' }}" class="logo-sm" style="height:40px;width:auto;object-fit:contain;" alt="Logo">
         </div>
     </a>
 

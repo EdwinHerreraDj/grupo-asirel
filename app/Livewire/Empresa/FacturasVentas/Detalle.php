@@ -4,15 +4,25 @@ namespace App\Livewire\Empresa\FacturasVentas;
 
 use App\Models\FacturaVenta;
 use App\Models\FacturaVentaDetalle;
+use App\Models\FacturaVentaDocumento;
 use App\Models\FacturaVentaPago;
+use App\Services\facturas\FacturaVentaDocumentoService;
 use App\Services\FacturaVentaService;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use RuntimeException;
 
 class Detalle extends Component
 {
+    use WithFileUploads;
+
     public FacturaVenta $factura;
     public bool $editable = false;
+
+    // Documentación adjunta
+    public array $nuevosDocumentos = [];
+    public ?int $documentoAEliminarId = null;
+    public bool $puedeEliminarDocumentos = false;
 
     // Modal línea
     public bool $showLineaModal = false;
@@ -69,8 +79,11 @@ class Detalle extends Component
 
     public function mount(FacturaVenta $factura): void
     {
-        $this->factura = $factura->load(['detalles', 'pagos', 'cliente', 'obra']);
+        $this->factura = $factura->load(['detalles', 'pagos', 'cliente', 'obra', 'reimpresiones.user', 'documentos.user']);
         $this->editable = $factura->esEditable();
+
+        $role = auth()->user()?->role;
+        $this->puedeEliminarDocumentos = in_array($role, ['admin', 'super_admin'], true);
     }
 
     // -------------------------
@@ -367,6 +380,91 @@ class Detalle extends Component
         $this->factura->refresh()->load(['detalles', 'pagos']);
         $this->showAnularModal = false;
         $this->dispatch('notify', type: 'success', message: 'Factura anulada.');
+    }
+
+    // -------------------------
+    // ESTADO INFORMATIVO DE COBRO (seguimiento, no fiscal)
+    // -------------------------
+
+    public function cambiarEstadoCobro(string $estado, FacturaVentaService $service): void
+    {
+        try {
+            $service->cambiarEstadoCobro($this->factura, $estado);
+        } catch (RuntimeException $e) {
+            $this->dispatch('notify', type: 'error', message: $e->getMessage());
+
+            return;
+        }
+
+        $this->factura->refresh();
+        $this->dispatch('notify', type: 'success', message: 'Estado de cobro actualizado.');
+    }
+
+    // -------------------------
+    // DOCUMENTACIÓN ADJUNTA
+    // (soporte documental; no toca el documento fiscal ni el PDF original)
+    // -------------------------
+
+    public function subirDocumentos(FacturaVentaDocumentoService $service): void
+    {
+        $this->validate([
+            'nuevosDocumentos'   => 'required|array|min:1',
+            'nuevosDocumentos.*' => 'file|max:20480|mimes:pdf,jpg,jpeg,png,gif,webp,doc,docx,xls,xlsx,ppt,pptx,txt,csv,zip',
+        ], [
+            'nuevosDocumentos.required' => 'Selecciona al menos un archivo.',
+            'nuevosDocumentos.*.max'    => 'Cada archivo no puede superar 20 MB.',
+            'nuevosDocumentos.*.mimes'  => 'Tipo de archivo no permitido.',
+            'nuevosDocumentos.*.file'   => 'Archivo no válido.',
+        ]);
+
+        try {
+            foreach ($this->nuevosDocumentos as $archivo) {
+                $service->subir($this->factura, $archivo);
+            }
+        } catch (\Throwable $e) {
+            report($e);
+            $this->dispatch('notify', type: 'error', message: 'Error al subir la documentación.');
+
+            return;
+        }
+
+        $this->reset('nuevosDocumentos');
+        $this->factura->load('documentos.user');
+        $this->dispatch('notify', type: 'success', message: 'Documentación adjuntada.');
+    }
+
+    public function confirmarEliminarDocumento(int $id): void
+    {
+        $this->documentoAEliminarId = $id;
+    }
+
+    public function cancelarEliminarDocumento(): void
+    {
+        $this->documentoAEliminarId = null;
+    }
+
+    public function eliminarDocumento(FacturaVentaDocumentoService $service): void
+    {
+        if (! $this->puedeEliminarDocumentos) {
+            $this->dispatch('notify', type: 'error', message: 'No tienes permiso para eliminar documentos.');
+
+            return;
+        }
+
+        if (! $this->documentoAEliminarId) {
+            return;
+        }
+
+        $documento = FacturaVentaDocumento::where('factura_venta_id', $this->factura->id)
+            ->find($this->documentoAEliminarId);
+
+        if ($documento) {
+            $service->eliminar($documento);
+        }
+
+        $this->documentoAEliminarId = null;
+        $this->factura->load('documentos.user');
+        $this->dispatch('notify', type: 'success', message: 'Documento eliminado.');
     }
 
     public function render()

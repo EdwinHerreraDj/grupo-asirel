@@ -62,7 +62,7 @@ class FacturaVentaGenerator
 
             $this->registrarEventoFacturada($certs, $factura);
 
-            $this->pdfService->generar($factura);
+            $this->pdfService->generarOriginal($factura);
 
             return $factura;
         });

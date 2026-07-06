@@ -81,6 +81,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('{certificacion}/impuestos', [CertificacionDetalleController::class, 'impuestos']);
         Route::post('{certificacion}/aceptar', [CertificacionDetalleController::class, 'aceptar']);
         Route::post('{certificacion}/anular', [CertificacionDetalleController::class, 'anular']);
+        Route::post('{certificacion}/estado-cobro', [CertificacionDetalleController::class, 'estadoCobro']);
         Route::post('informe-pdf', [CertificacionInformeController::class, 'pdf']);
     });
 });

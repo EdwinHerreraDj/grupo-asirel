@@ -9,6 +9,7 @@ use App\Models\CertificacionDetalle;
 use App\Models\ObraPresupuestoVenta;
 use App\Models\PresupuestoVentaPartida;
 use App\Services\CertificacionDetalleService;
+use App\Support\EstadoCobro;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use RuntimeException;
@@ -37,6 +38,7 @@ class CertificacionDetalleController extends Controller
         $data = $request->validate([
             'presupuesto_venta_partida_id' => 'required|exists:presupuesto_venta_partidas,id',
             'cantidad'                     => 'required|numeric|gt:0',
+            'comentario'                   => 'nullable|string|max:1000',
             'forzar'                       => 'sometimes|boolean',
         ]);
 
@@ -66,6 +68,7 @@ class CertificacionDetalleController extends Controller
             'unidad'          => 'required|string|max:100',
             'cantidad'        => 'required|numeric|gt:0',
             'precio_unitario' => 'required|numeric|min:0',
+            'comentario'      => 'nullable|string|max:1000',
             'forzar'          => 'sometimes|boolean',
         ]);
 
@@ -149,6 +152,21 @@ class CertificacionDetalleController extends Controller
         return $this->respuestaCompleta($certificacion->fresh());
     }
 
+    public function estadoCobro(Request $request, Certificacion $certificacion): JsonResponse
+    {
+        $data = $request->validate([
+            'estado_cobro' => 'required|string',
+        ]);
+
+        try {
+            $this->service->cambiarEstadoCobro($certificacion, $data['estado_cobro']);
+        } catch (RuntimeException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+
+        return $this->respuestaCompleta($certificacion->fresh());
+    }
+
     // -------------------------
     // HELPERS DE PRESENTACI\u00d3N
     // -------------------------
@@ -186,6 +204,18 @@ class CertificacionDetalleController extends Controller
             'total'                => (float) $c->total,
             'estado_certificacion' => $c->estado_certificacion,
             'estado_factura'       => $c->estado_factura,
+            'estado_cobro'         => $c->estado_cobro,
+            'estado_cobro_label'   => EstadoCobro::label($c->estado_cobro),
+            'estado_cobro_color'   => EstadoCobro::meta($c->estado_cobro)['color'],
+            'puede_estado_cobro'   => $c->puedeGestionarEstadoCobro(),
+            'estados_cobro_opciones' => array_map(
+                fn ($v) => [
+                    'value' => $v,
+                    'label' => EstadoCobro::label($v),
+                    'color' => EstadoCobro::meta($v)['color'],
+                ],
+                EstadoCobro::VALORES,
+            ),
             'obra_id'              => $c->obra_id,
             'obra_nombre'          => $c->obra->nombre ?? '—',
             'puede_anular'         => $c->puedeAnular(),
@@ -251,6 +281,7 @@ class CertificacionDetalleController extends Controller
             'cantidad'                     => (float) $d->cantidad,
             'precio_unitario'              => (float) $d->precio_unitario,
             'importe_linea'                => (float) $d->importe_linea,
+            'comentario'                   => $d->comentario,
         ];
     }
 

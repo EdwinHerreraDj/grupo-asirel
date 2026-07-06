@@ -9,12 +9,14 @@ export default function ModalSeleccionarPartida({
 }) {
     const [partidaSeleccionada, setPartidaSeleccionada] = useState(null);
     const [cantidad, setCantidad] = useState("");
+    const [comentario, setComentario] = useState("");
     const [error, setError] = useState(null);
     const [confirmandoExceso, setConfirmandoExceso] = useState(false);
 
     const handleSeleccionar = (partida) => {
         setPartidaSeleccionada(partida);
         setCantidad("");
+        setComentario("");
         setError(null);
         setConfirmandoExceso(false);
     };
@@ -35,6 +37,7 @@ export default function ModalSeleccionarPartida({
         await onGuardar({
             presupuesto_venta_partida_id: partidaSeleccionada.id,
             cantidad: parseFloat(cantidad),
+            comentario: comentario.trim() || null,
             forzar,
         });
     };
@@ -206,6 +209,25 @@ export default function ModalSeleccionarPartida({
                                         {formatEuro(importePreview)}
                                     </div>
                                 </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">
+                                    Comentario{" "}
+                                    <span className="text-gray-400">
+                                        (opcional)
+                                    </span>
+                                </label>
+                                <textarea
+                                    rows={2}
+                                    value={comentario}
+                                    onChange={(e) =>
+                                        setComentario(e.target.value)
+                                    }
+                                    maxLength={1000}
+                                    placeholder="Nota u observación para esta línea…"
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
+                                />
                             </div>
                         </div>
                     )}

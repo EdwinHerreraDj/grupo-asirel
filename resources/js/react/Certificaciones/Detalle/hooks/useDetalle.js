@@ -124,6 +124,15 @@ export default function useDetalle(certificacionId) {
         return data;
     };
 
+    const cambiarEstadoCobro = async (estadoCobro) => {
+        const { data } = await api.post(
+            `/certificaciones/${certificacionId}/estado-cobro`,
+            { estado_cobro: estadoCobro },
+        );
+        actualizarEstado(data);
+        return data;
+    };
+
     /**
      * Descarga el PDF del informe de esta certificaci\u00f3n. Reusa el endpoint
      * gen\u00e9rico `informe-pdf` pasando solo el ID actual.
@@ -163,6 +172,7 @@ export default function useDetalle(certificacionId) {
         actualizarImpuestos,
         aceptar,
         anular,
+        cambiarEstadoCobro,
         descargarPdf,
         recargar: cargar,
     };

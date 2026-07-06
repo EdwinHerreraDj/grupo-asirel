@@ -73,6 +73,17 @@ export default function FilaCertificacion({
                 >
                     {estadoFactura.label}
                 </span>
+                {cert.estado_certificacion === "aceptada" &&
+                    cert.estado_cobro_label && (
+                        <div className="mt-1">
+                            <span
+                                className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium ${cert.estado_cobro_color}`}
+                                title="Seguimiento de cobro (clasificación interna)"
+                            >
+                                {cert.estado_cobro_label}
+                            </span>
+                        </div>
+                    )}
             </td>
             <td className="px-3 py-3 text-right">
                 <button

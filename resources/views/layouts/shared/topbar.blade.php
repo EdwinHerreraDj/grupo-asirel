@@ -35,17 +35,15 @@
         </button>
 
         <!-- Topbar Brand Logo -->
+        @php $logoEmpresa = !empty($empresa?->logo) ? \Illuminate\Support\Facades\Storage::url($empresa->logo) : null; @endphp
         <a href="{{ route('any', 'index') }}" class="logo-box shrink-0">
-            <!-- Light Brand Logo -->
             <div class="logo-light">
-                <img src="/images/logo-light.png" class="logo-lg h-6" alt="Light logo">
-                <img src="/images/logo-sm.png" class="logo-sm" alt="Small logo">
+                <img src="{{ $logoEmpresa ?? '/images/logo-light.png' }}" class="logo-lg" style="height:38px;width:auto;object-fit:contain;" alt="Logo">
+                <img src="{{ $logoEmpresa ?? '/images/logo-sm.png' }}" class="logo-sm" style="height:34px;width:auto;object-fit:contain;" alt="Logo">
             </div>
-
-            <!-- Dark Brand Logo -->
             <div class="logo-dark">
-                <img src="/images/logo-dark.png" class="logo-lg h-6" alt="Dark logo">
-                <img src="/images/logo-sm.png" class="logo-sm" alt="Small logo">
+                <img src="{{ $logoEmpresa ?? '/images/logo-dark.png' }}" class="logo-lg" style="height:38px;width:auto;object-fit:contain;" alt="Logo">
+                <img src="{{ $logoEmpresa ?? '/images/logo-sm.png' }}" class="logo-sm" style="height:34px;width:auto;object-fit:contain;" alt="Logo">
             </div>
         </a>
     </div>
@@ -61,14 +59,6 @@
                 </span>
             </button>
         </div>
-
-        <!-- Light/Dark Toggle Button -->
-        <button id="light-dark-mode" type="button" class="nav-link p-2">
-            <span class="sr-only">Light/Dark Mode</span>
-            <span class="flex items-center justify-center h-6 w-6">
-                <i class="mgc_moon_line text-2xl"></i>
-            </span>
-        </button>
 
         <!-- Nombre usuario -->
         <div class="hidden sm:block text-sm font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">

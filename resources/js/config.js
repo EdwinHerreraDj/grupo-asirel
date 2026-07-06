@@ -46,6 +46,10 @@
         config.sidenav.view = html.getAttribute("data-sidenav-view") || defaultConfig.sidenav.view;
     }
 
+    // Modo oscuro deshabilitado: forzamos tema claro siempre, aunque hubiera
+    // quedado "dark" guardado en sesión de una visita anterior.
+    config.theme = "light";
+
     window.config = config;
 
 

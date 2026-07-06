@@ -167,7 +167,7 @@
     "src": "resources/js/app.js"
   },
   "resources/js/config.js": {
-    "file": "assets/config-ad3aa8f7.js",
+    "file": "assets/config-24f5686f.js",
     "isEntry": true,
     "src": "resources/js/config.js"
   },
@@ -399,7 +399,7 @@
     "src": "resources/js/pages/tables-datatable.js"
   },
   "resources/js/react/app.jsx": {
-    "file": "assets/app-313a65e0.js",
+    "file": "assets/app-88e9d799.js",
     "imports": [
       "__commonjsHelpers-725317a4.js"
     ],
@@ -420,7 +420,7 @@
     "src": "resources/js/visor-pdf.js"
   },
   "resources/scss/app.scss": {
-    "file": "assets/app-fb6071e4.css",
+    "file": "assets/app-6e150768.css",
     "isEntry": true,
     "src": "resources/scss/app.scss"
   },

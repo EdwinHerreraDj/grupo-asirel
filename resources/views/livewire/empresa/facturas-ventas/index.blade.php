@@ -137,6 +137,15 @@
                                 <span class="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold {{ $meta['color'] }}">
                                     {{ $meta['label'] }}
                                 </span>
+                                @if ($factura->estado !== 'borrador')
+                                    @php $cobroMetaFila = \App\Support\EstadoCobro::meta($factura->estado_cobro); @endphp
+                                    <div class="mt-1">
+                                        <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium {{ $cobroMetaFila['color'] }}"
+                                            title="Seguimiento de cobro (clasificación interna)">
+                                            {{ $cobroMetaFila['label'] }}
+                                        </span>
+                                    </div>
+                                @endif
                             </td>
                             <td class="px-4 py-3 sm:px-5 text-right">
                                 <div class="flex justify-end gap-1">
@@ -145,11 +154,11 @@
                                         class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-700">
                                         <i class="mgc_eye_2_line"></i>
                                     </a>
-                                    @if ($factura->pdf_url)
-                                        <a href="{{ asset('storage/' . $factura->pdf_url) }}" target="_blank"
-                                            title="PDF factura"
+                                    @if ($factura->tienePdfOriginal())
+                                        <a href="{{ route('empresa.facturas-ventas.pdf', $factura->id) }}" target="_blank"
+                                            title="Descargar PDF original"
                                             class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-red-600 transition hover:border-red-300 hover:bg-red-50">
-                                            <i class="mgc_pdf_line"></i>
+                                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/><path d="M12 11v6"/><path d="m9.5 14.5 2.5 2.5 2.5-2.5"/></svg>
                                         </a>
                                     @endif
                                     <button wire:click="abrirAcciones({{ $factura->id }})" title="Más acciones"
@@ -256,11 +265,19 @@
                         Ver detalle
                     </a>
 
-                    @if ($facturaAcciones->pdf_url)
-                        <a href="{{ asset('storage/' . $facturaAcciones->pdf_url) }}" target="_blank"
+                    @if ($facturaAcciones->tienePdfOriginal())
+                        <a href="{{ route('empresa.facturas-ventas.pdf', $facturaAcciones->id) }}" target="_blank"
                             class="flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-700 hover:border-red-300 hover:bg-red-50">
-                            <i class="mgc_file_pdf_line text-red-600"></i>
-                            Abrir PDF factura
+                            <svg class="w-5 h-5 text-red-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/><path d="M12 11v6"/><path d="m9.5 14.5 2.5 2.5 2.5-2.5"/></svg>
+                            Descargar original
+                        </a>
+                    @endif
+
+                    @if ($facturaAcciones->puedeGenerarCopia())
+                        <a href="{{ route('empresa.facturas-ventas.pdf.copia', $facturaAcciones->id) }}"
+                            class="flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-700 hover:border-cyan-300 hover:bg-cyan-50">
+                            <i class="mgc_print_line text-cyan-600"></i>
+                            Generar copia PDF
                         </a>
                     @endif
 

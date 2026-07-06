@@ -216,6 +216,7 @@ export default function ModalPdf({ obraId, onCancelar }) {
 
     const [clientes, setClientes] = useState([]);
     const [clienteId, setClienteId] = useState("");
+    const [comentario, setComentario] = useState("");
     const [loading, setLoading] = useState(true);
     const [descargando, setDescargando] = useState(false);
     const [error, setError] = useState(null);
@@ -254,7 +255,10 @@ export default function ModalPdf({ obraId, onCancelar }) {
             const response = await api.get(
                 `/obras/${obraId}/presupuesto-venta/pdf`,
                 {
-                    params: { cliente_id: clienteId },
+                    params: {
+                        cliente_id: clienteId,
+                        comentario: comentario.trim() || undefined,
+                    },
                     responseType: "blob",
                 },
             );
@@ -396,6 +400,25 @@ export default function ModalPdf({ obraId, onCancelar }) {
                                 </div>
                             </div>
                         )}
+
+                        {/* Comentario opcional para el PDF */}
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">
+                                Comentario{" "}
+                                <span className="text-slate-400 font-normal">
+                                    (opcional)
+                                </span>
+                            </label>
+                            <textarea
+                                rows={3}
+                                value={comentario}
+                                onChange={(e) => setComentario(e.target.value)}
+                                maxLength={2000}
+                                disabled={descargando}
+                                placeholder="Este texto aparecerá en el PDF (condiciones, notas, validez de la oferta…)."
+                                className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/30 resize-none disabled:opacity-60"
+                            />
+                        </div>
 
                         {/* Aviso de generación */}
                         <div className="rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 text-xs text-slate-600 flex items-start gap-2">

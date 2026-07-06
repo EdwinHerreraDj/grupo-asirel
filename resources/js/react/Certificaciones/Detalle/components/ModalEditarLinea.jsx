@@ -31,6 +31,7 @@ export default function ModalEditarLinea({
     const [form, setForm] = useState({
         cantidad: redondear(linea.cantidad, 4),
         precio_unitario: redondear(linea.precio_unitario, 4),
+        comentario: linea.comentario ?? "",
     });
     const [error, setError] = useState(null);
     const [confirmandoExceso, setConfirmandoExceso] = useState(false);
@@ -51,6 +52,7 @@ export default function ModalEditarLinea({
                 unidad: linea.unidad,
                 cantidad: cantidadNum,
                 precio_unitario: precioNum,
+                comentario: form.comentario.trim() || null,
             },
             { forzar },
         );
@@ -168,6 +170,26 @@ export default function ModalEditarLinea({
                         <span className="text-base font-semibold text-slate-900">
                             {formatEuro(importePreview)}
                         </span>
+                    </div>
+
+                    <div className="mt-4">
+                        <label className="mb-1 block text-xs font-medium text-slate-600">
+                            Comentario{" "}
+                            <span className="text-slate-400">(opcional)</span>
+                        </label>
+                        <textarea
+                            rows={2}
+                            value={form.comentario}
+                            onChange={(e) =>
+                                setForm((p) => ({
+                                    ...p,
+                                    comentario: e.target.value,
+                                }))
+                            }
+                            maxLength={1000}
+                            placeholder="Nota u observación para esta línea…"
+                            className="w-full resize-none rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                        />
                     </div>
 
                     {error && (

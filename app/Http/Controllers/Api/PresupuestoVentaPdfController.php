@@ -17,6 +17,7 @@ class PresupuestoVentaPdfController extends Controller
     {
         $request->validate([
             'cliente_id' => 'required|integer|exists:clientes,id',
+            'comentario' => 'nullable|string|max:2000',
         ]);
 
         $cliente = Cliente::findOrFail($request->cliente_id);
@@ -36,9 +37,10 @@ class PresupuestoVentaPdfController extends Controller
             'obra'      => $obra,
             'cliente'   => $cliente,
             'empresa'   => $empresa,
-            'capitulos' => $capitulos,
-            'total'     => $total,
-            'fecha'     => now()->format('d/m/Y'),
+            'capitulos'  => $capitulos,
+            'total'      => $total,
+            'fecha'      => now()->format('d/m/Y'),
+            'comentario' => trim((string) $request->input('comentario')) ?: null,
         ])->setPaper('a4', 'portrait');
 
         $sufijo = $esContratista ? 'contratista' : 'subcontratista';

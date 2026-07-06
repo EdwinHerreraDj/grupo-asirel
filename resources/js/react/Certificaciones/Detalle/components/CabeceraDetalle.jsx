@@ -10,6 +10,7 @@ export default function CabeceraDetalle({
     onAceptar,
     onImpuestos,
     onAnular,
+    onCambiarEstadoCobro,
     onDescargarPdf,
     descargando = false,
     urlVolver,
@@ -89,6 +90,49 @@ export default function CabeceraDetalle({
                                         <i className="mgc_pie_chart_line"></i>
                                         {avance.certificadas} de {avance.total}{" "}
                                         partidas del oficio certificadas
+                                    </span>
+                                )}
+                            </div>
+
+                            {/* SEGUIMIENTO DE COBRO (informativo, no fiscal) */}
+                            <div className="mt-4 flex flex-wrap items-center gap-2">
+                                <span className="text-xs font-medium text-slate-500">
+                                    Seguimiento de cobro
+                                </span>
+                                <span className="text-[11px] text-slate-400">
+                                    (clasificación interna, no afecta al estado
+                                    fiscal)
+                                </span>
+                                <span
+                                    className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold ${certificacion.estado_cobro_color}`}
+                                >
+                                    {certificacion.estado_cobro_label}
+                                </span>
+                                {certificacion.puede_estado_cobro ? (
+                                    <select
+                                        value={certificacion.estado_cobro}
+                                        onChange={(e) =>
+                                            onCambiarEstadoCobro?.(
+                                                e.target.value,
+                                            )
+                                        }
+                                        className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-500/30"
+                                    >
+                                        {(
+                                            certificacion.estados_cobro_opciones ??
+                                            []
+                                        ).map((op) => (
+                                            <option
+                                                key={op.value}
+                                                value={op.value}
+                                            >
+                                                {op.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                ) : (
+                                    <span className="text-[11px] text-slate-400">
+                                        disponible al aceptar la certificación
                                     </span>
                                 )}
                             </div>

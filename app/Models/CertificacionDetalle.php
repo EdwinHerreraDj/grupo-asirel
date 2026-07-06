@@ -18,6 +18,7 @@ class CertificacionDetalle extends Model
         'cantidad',
         'precio_unitario',
         'importe_linea',
+        'comentario',
     ];
 
     protected $casts = [

@@ -200,6 +200,8 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
     // routes/web.php
 
     Route::get('/empresa/facturas-ventas/{factura}/pdf', [FacturasVentasController::class, 'pdf'])->name('empresa.facturas-ventas.pdf');
+    Route::get('/empresa/facturas-ventas/{factura}/pdf/copia', [FacturasVentasController::class, 'pdfCopia'])->name('empresa.facturas-ventas.pdf.copia');
+    Route::get('/empresa/facturas-ventas/{factura}/documentos/{documento}/descargar', [FacturasVentasController::class, 'documentoDescargar'])->name('empresa.facturas-ventas.documentos.descargar');
     // Rutas de Presupuesto (Coste te\u00f3rico + Presupuesto de venta)
     // Tareas (kanban personal)
     Route::get('/tareas', [\App\Http\Controllers\TareasController::class, 'index'])->name('tareas.index');

@@ -3,6 +3,16 @@
     $colorSecundario = $empresa->color_secundario ?? '#d1d5db';
     $mostrarLogo = $empresa?->mostrar_logo_pdf ?? true;
     $piePdf = $empresa->pie_pdf ?? null;
+
+    // Logo embebido como base64: evita problemas de symlink/rutas en DomPDF.
+    $logoSrc = null;
+    if ($mostrarLogo && !empty($empresa?->logo)) {
+        $logoPath = storage_path('app/public/' . $empresa->logo);
+        if (is_file($logoPath)) {
+            $logoExt = strtolower(pathinfo($logoPath, PATHINFO_EXTENSION)) ?: 'png';
+            $logoSrc = 'data:image/' . $logoExt . ';base64,' . base64_encode(file_get_contents($logoPath));
+        }
+    }
     $numeroFormateado = $factura->serie . '-' . ($factura->numero_factura ?? 'BORRADOR');
     $estados = [
         'borrador' => 'BORRADOR',
@@ -26,6 +36,19 @@
             position: fixed; top: 40%; left: 20%; width: 60%; text-align: center;
             font-size: 72px; font-weight: bold; color: rgba(220, 38, 38, 0.15);
             transform: rotate(-20deg); z-index: -1;
+        }
+        .watermark-copia {
+            position: fixed; top: 42%; left: 15%; width: 70%; text-align: center;
+            font-size: 68px; font-weight: bold; color: rgba(100, 116, 139, 0.12);
+            transform: rotate(-20deg); z-index: -1;
+        }
+        .copia-badge {
+            display: inline-block; margin-top: 4px; padding: 3px 10px; border-radius: 12px;
+            font-size: 9px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;
+            background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;
+        }
+        .copia-aviso {
+            margin-top: 4px; font-size: 8.5px; color: #64748b; font-style: italic;
         }
 
         .header { width: 100%; border-bottom: 2px solid {{ $colorPrimario }}; padding-bottom: 10px; margin-bottom: 18px; }
@@ -111,16 +134,16 @@
 
     @if ($factura->estado === 'anulada')
         <div class="watermark">ANULADA</div>
+    @elseif ($esCopia ?? false)
+        <div class="watermark-copia">COPIA</div>
     @endif
 
     {{-- HEADER --}}
     <table class="header">
         <tr>
-            @if ($mostrarLogo)
+            @if ($logoSrc)
                 <td class="logo-cell">
-                    @if (!empty($empresa?->logo))
-                        <img src="{{ public_path('storage/' . $empresa->logo) }}" alt="Logo {{ $empresa->nombre }}">
-                    @endif
+                    <img src="{{ $logoSrc }}" alt="Logo {{ $empresa->nombre }}">
                 </td>
             @endif
             <td class="empresa-info">
@@ -143,6 +166,13 @@
                 <div class="estado-badge estado-{{ $factura->estado }}">
                     {{ $estados[$factura->estado] ?? $factura->estado }}
                 </div>
+                @if ($esCopia ?? false)
+                    <div><span class="copia-badge">Copia · Reimpresión</span></div>
+                    <div class="copia-aviso">
+                        Copia generada el {{ ($fechaCopia ?? now())->format('d/m/Y H:i') }}.<br>
+                        No sustituye al documento original emitido.
+                    </div>
+                @endif
             </td>
         </tr>
     </table>
@@ -240,7 +270,8 @@
     @endif
 
     <div class="pie">
-        © {{ date('Y') }} {{ $empresa->nombre ?? 'Empresa' }} · Factura generada automáticamente
+        © {{ date('Y') }} {{ $empresa->nombre ?? 'Empresa' }} ·
+        {{ ($esCopia ?? false) ? 'Copia / reimpresión — representación posterior del documento original' : 'Factura generada automáticamente' }}
         @if ($piePdf)
             <div class="pie-personalizado">{{ $piePdf }}</div>
         @endif

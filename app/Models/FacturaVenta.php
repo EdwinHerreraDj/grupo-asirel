@@ -57,7 +57,11 @@ class FacturaVenta extends Model
         'total',
 
         'estado',
+        'estado_cobro',
+        'estado_cobro_actualizado_at',
+        'estado_cobro_actualizado_por',
         'pdf_url',
+        'pdf_original_generado_at',
         'adjunto',
         'observaciones',
         'motivo_anulacion',
@@ -67,6 +71,8 @@ class FacturaVenta extends Model
         'fecha_emision'  => 'date',
         'fecha_contable' => 'date',
         'vencimiento'    => 'date',
+        'pdf_original_generado_at'    => 'datetime',
+        'estado_cobro_actualizado_at' => 'datetime',
 
         'base_imponible'       => 'float',
         'iva_porcentaje'       => 'float',
@@ -135,6 +141,18 @@ class FacturaVenta extends Model
         )->withPivot(['base_imponible', 'iva_importe', 'retencion_importe', 'total']);
     }
 
+    public function reimpresiones(): HasMany
+    {
+        return $this->hasMany(FacturaVentaReimpresion::class)
+            ->latest();
+    }
+
+    public function documentos(): HasMany
+    {
+        return $this->hasMany(FacturaVentaDocumento::class, 'factura_venta_id')
+            ->latest();
+    }
+
     /* =========================
      * HELPERS DE IMPORTE
      * ========================= */
@@ -180,6 +198,66 @@ class FacturaVenta extends Model
     {
         return in_array($this->estado, self::ESTADOS_COBRABLES, true)
             && $this->totalPagado() == 0;
+    }
+
+    /* =========================
+     * PDF: ORIGINAL vs COPIA
+     * ========================= */
+
+    /** ¿Existe un PDF original emitido y su archivo en disco? */
+    public function tienePdfOriginal(): bool
+    {
+        return ! empty($this->pdf_url)
+            && \Illuminate\Support\Facades\Storage::disk('public')->exists($this->pdf_url);
+    }
+
+    /**
+     * El PDF original es INMUTABLE una vez congelado (se registró
+     * `pdf_original_generado_at`) y la factura no es borrador. En borrador
+     * todavía puede regenerarse libremente (no es documento fiscal).
+     */
+    public function pdfOriginalEsInmutable(): bool
+    {
+        return $this->estado !== self::ESTADO_BORRADOR
+            && ! is_null($this->pdf_original_generado_at);
+    }
+
+    /**
+     * Se puede generar una COPIA / reimpresión de cualquier factura ya emitida
+     * (emitida, enviada, pagada o anulada). El borrador aún no es documento
+     * fiscal cerrado, así que no aplica el concepto de "copia".
+     */
+    public function puedeGenerarCopia(): bool
+    {
+        return $this->estado !== self::ESTADO_BORRADOR;
+    }
+
+    /* =========================
+     * ESTADO INFORMATIVO DE COBRO (capa de seguimiento, no fiscal)
+     * ========================= */
+
+    /**
+     * El seguimiento de cobro solo tiene sentido en facturas ya emitidas y
+     * vigentes. En borrador (aún no emitida) y en anulada (documento sin valor)
+     * queda fijado, sin clasificación editable.
+     */
+    public function puedeGestionarEstadoCobro(): bool
+    {
+        return in_array($this->estado, [
+            self::ESTADO_EMITIDA,
+            self::ESTADO_ENVIADA,
+            self::ESTADO_PAGADA,
+        ], true);
+    }
+
+    public function estadoCobroMeta(): array
+    {
+        return \App\Support\EstadoCobro::meta($this->estado_cobro);
+    }
+
+    public function estadoCobroActualizadoPor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'estado_cobro_actualizado_por');
     }
 
     public function recalcularEstadoPorPagos(): void

@@ -19,6 +19,7 @@ class Certificacion extends Model
         'tipo_documento',
         'estado_certificacion',
         'estado_factura',
+        'estado_cobro',
         'iva_porcentaje',
         'retencion_porcentaje',
         'base_imponible',
@@ -118,5 +119,24 @@ class Certificacion extends Model
     public function puedeAnular(): bool
     {
         return $this->estaAceptada() && ! $this->estaFacturada();
+    }
+
+    /* =========================
+     * ESTADO INFORMATIVO DE COBRO (capa de seguimiento, no fiscal)
+     * ========================= */
+
+    /**
+     * El seguimiento de cobro solo aplica a certificaciones aceptadas: una
+     * certificación pendiente aún no es un derecho de cobro, así que no debe
+     * clasificarse (evita combinaciones absurdas como "pendiente + pagada").
+     */
+    public function puedeGestionarEstadoCobro(): bool
+    {
+        return $this->estaAceptada();
+    }
+
+    public function estadoCobroMeta(): array
+    {
+        return \App\Support\EstadoCobro::meta($this->estado_cobro);
     }
 }
