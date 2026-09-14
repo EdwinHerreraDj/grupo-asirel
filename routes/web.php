@@ -43,17 +43,17 @@ Route::middleware('auth')->prefix('api')->group(function () {
 
     /* Clientes API */
     Route::get('clientes', [ApiClienteController::class, 'index']);
-    Route::post('clientes', [ApiClienteController::class, 'store']);
+    Route::post('clientes', [ApiClienteController::class, 'store'])->middleware('role:admin,super_admin');
     Route::get('clientes/{id}', [ApiClienteController::class, 'show']);
-    Route::put('clientes/{id}', [ApiClienteController::class, 'update']);
-    Route::delete('clientes/{cliente}', [ApiClienteController::class, 'destroy']);
+    Route::put('clientes/{id}', [ApiClienteController::class, 'update'])->middleware('role:admin,super_admin');
+    Route::delete('clientes/{cliente}', [ApiClienteController::class, 'destroy'])->middleware('role:admin,super_admin');
 
     /* Rutas para proveedores */
     Route::get('proveedores', [ApiProveedorController::class, 'index']);
-    Route::post('proveedores', [ApiProveedorController::class, 'store']);
+    Route::post('proveedores', [ApiProveedorController::class, 'store'])->middleware('role:admin,super_admin');
     Route::get('proveedores/{id}', [ApiProveedorController::class, 'show']);
-    Route::put('proveedores/{id}', [ApiProveedorController::class, 'update']);
-    Route::delete('proveedores/{id}', [ApiProveedorController::class, 'destroy']);
+    Route::put('proveedores/{id}', [ApiProveedorController::class, 'update'])->middleware('role:admin,super_admin');
+    Route::delete('proveedores/{id}', [ApiProveedorController::class, 'destroy'])->middleware('role:admin,super_admin');
 
     /* Buscador de folder files */
     Route::get('drive/search', [SearchController::class, 'search'])->name('api.drive.search');
@@ -104,7 +104,7 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
 
     // Mi Unidad
     Route::get('/empresa', [EmpresaController::class, 'index'])->name('empresa.index');
-    Route::get('/empresa/configuracion', [EmpresaController::class, 'configuracion'])->name('empresa.configuracion');
+    Route::get('/empresa/configuracion', [EmpresaController::class, 'configuracion'])->middleware('role:admin,super_admin')->name('empresa.configuracion');
     Route::get('/empresa/drive-app', [FoldersController::class, 'index'])->name('empresa.driveApp');
 
     // Rutas de Obras
@@ -169,9 +169,9 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
     Route::get('/drive/ver/{file}', [FileController::class, 'ver'])->name('drive.ver');
 
     // Rutas de Gastos de la Empresa
-    Route::get('/empresa/gastos-empresa', [GastosEmpresaController::class, 'index'])->name('empresa.gastosEmpresa');
-    Route::get('/empresa/categorias-gastos', [CategoriaGastoEmpresaController::class, 'index'])->name('categorias.empresa.index');
-    Route::prefix('empresa/gastos')->group(function () {
+    Route::get('/empresa/gastos-empresa', [GastosEmpresaController::class, 'index'])->middleware('role:admin,super_admin')->name('empresa.gastosEmpresa');
+    Route::get('/empresa/categorias-gastos', [CategoriaGastoEmpresaController::class, 'index'])->middleware('role:admin,super_admin')->name('categorias.empresa.index');
+    Route::prefix('empresa/gastos')->middleware('role:admin,super_admin')->group(function () {
         Route::get('/export/pdf', [GastoGeneralEmpresaController::class, 'exportarPDF'])
             ->name('empresa.gastos.exportar.pdf');
 
@@ -181,31 +181,31 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
 
 
     // Rutas de Informes Generales
-    Route::get('/informes', [InformeController::class, 'index'])->name('informes.index');
+    Route::get('/informes', [InformeController::class, 'index'])->middleware('role:admin,super_admin')->name('informes.index');
     Route::get('/informes/exportar/liquidacion-iva', [InformeController::class, 'exportarLiquidacionIva'])
-        ->name('informes.exportar.liquidacion-iva');
+        ->middleware('role:admin,super_admin')->name('informes.exportar.liquidacion-iva');
     Route::get('/informes/exportar/analisis-bruto-obras', [InformeController::class, 'exportarAnalisisBrutoObras'])
-        ->name('informes.exportar.analisis-bruto-obras');
+        ->middleware('role:admin,super_admin')->name('informes.exportar.analisis-bruto-obras');
     Route::get('/informes/exportar/retenciones-obra', [InformeController::class, 'exportarRetencionesObra'])
-        ->name('informes.exportar.retenciones-obra');
+        ->middleware('role:admin,super_admin')->name('informes.exportar.retenciones-obra');
 
     // Modulos de Asirel
     Route::get('/facturas-recibidas', [FacturasRecibidasController::class, 'global'])->name('facturas-recibidas.global');
     Route::get('/obras/{obra}/facturas-recibidas', [FacturasRecibidasController::class, 'index'])->name('obras.facturas-recibidas');
     // Rutas de Proveedores
-    Route::get('/proveedores', [ProveedorController::class, 'index'])->name('proveedores');
+    Route::get('/proveedores', [ProveedorController::class, 'index'])->middleware('role:admin,super_admin')->name('proveedores');
     //Rutas de Clientes
-    Route::get('/clientes', [ClienteController::class, 'index'])->name('clientes');
+    Route::get('/clientes', [ClienteController::class, 'index'])->middleware('role:admin,super_admin')->name('clientes');
 
     // Rutas de Facturas de Ventas
-    Route::get('/empresa/facturas-series', [FacturaSeriesController::class, 'index'])->name('empresa.facturas-series');
-    Route::get('/empresa/facturas-ventas', [FacturasVentasController::class, 'index'])->name('empresa.facturas-ventas');
-    Route::get('/empresa/facturas-ventas/{factura}', [FacturasVentasController::class, 'detalle'])->name('empresa.facturas-ventas.detalle');
+    Route::get('/empresa/facturas-series', [FacturaSeriesController::class, 'index'])->middleware('role:admin,super_admin')->name('empresa.facturas-series');
+    Route::get('/empresa/facturas-ventas', [FacturasVentasController::class, 'index'])->middleware('role:admin,super_admin')->name('empresa.facturas-ventas');
+    Route::get('/empresa/facturas-ventas/{factura}', [FacturasVentasController::class, 'detalle'])->middleware('role:admin,super_admin')->name('empresa.facturas-ventas.detalle');
     // routes/web.php
 
-    Route::get('/empresa/facturas-ventas/{factura}/pdf', [FacturasVentasController::class, 'pdf'])->name('empresa.facturas-ventas.pdf');
-    Route::get('/empresa/facturas-ventas/{factura}/pdf/copia', [FacturasVentasController::class, 'pdfCopia'])->name('empresa.facturas-ventas.pdf.copia');
-    Route::get('/empresa/facturas-ventas/{factura}/documentos/{documento}/descargar', [FacturasVentasController::class, 'documentoDescargar'])->name('empresa.facturas-ventas.documentos.descargar');
+    Route::get('/empresa/facturas-ventas/{factura}/pdf', [FacturasVentasController::class, 'pdf'])->middleware('role:admin,super_admin')->name('empresa.facturas-ventas.pdf');
+    Route::get('/empresa/facturas-ventas/{factura}/pdf/copia', [FacturasVentasController::class, 'pdfCopia'])->middleware('role:admin,super_admin')->name('empresa.facturas-ventas.pdf.copia');
+    Route::get('/empresa/facturas-ventas/{factura}/documentos/{documento}/descargar', [FacturasVentasController::class, 'documentoDescargar'])->middleware('role:admin,super_admin')->name('empresa.facturas-ventas.documentos.descargar');
     // Rutas de Presupuesto (Coste te\u00f3rico + Presupuesto de venta)
     // Tareas (kanban personal)
     Route::get('/tareas', [\App\Http\Controllers\TareasController::class, 'index'])->name('tareas.index');

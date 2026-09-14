@@ -59,7 +59,10 @@ class CertificacionFacturarController extends Controller
 
         return response()->json([
             'factura_id'   => $factura->id,
-            'redirect_url' => route('empresa.facturas-ventas.detalle', $factura->id),
+            // El detalle de factura es solo para admin: el resto vuelve a la obra.
+            'redirect_url' => $request->user()?->isAdmin()
+                ? route('empresa.facturas-ventas.detalle', $factura->id)
+                : route('obras.certificaciones', $obra->id),
         ]);
     }
 }

@@ -34,6 +34,8 @@
                         </p>
                     </a>
 
+                    {{-- Gastos y facturas: solo admin (mismo criterio que el menú lateral) --}}
+                    @if (auth()->user()?->isAdmin())
                     {{-- Gastos --}}
                     <a href="{{ route('empresa.gastosEmpresa') }}"
                         class="group flex flex-col items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-md">
@@ -57,6 +59,7 @@
                             Gestión global de facturas emitidas y certificaciones.
                         </p>
                     </a>
+                    @endif
                 </div>
             </div>
         </div>

@@ -231,7 +231,8 @@ class CertificacionDetalleController extends Controller
      */
     private function getFacturaEmitida(Certificacion $c): ?array
     {
-        if (! $c->estaFacturada()) {
+        // El detalle de factura es solo para admin: al resto no se le enlaza.
+        if (! $c->estaFacturada() || ! auth()->user()?->isAdmin()) {
             return null;
         }
 
