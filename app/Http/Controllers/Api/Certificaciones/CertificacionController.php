@@ -11,6 +11,7 @@ use App\Services\CertificacionDetalleService;
 use App\Support\EstadoCobro;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class CertificacionController extends Controller
 {
@@ -74,7 +75,10 @@ class CertificacionController extends Controller
     {
         $request->validate([
             'cliente_id'              => 'required|exists:clientes,id',
-            'obra_gasto_categoria_id' => 'required|exists:obra_gasto_categorias,id',
+            'obra_gasto_categoria_id' => [
+                'required',
+                Rule::exists('obra_gasto_categorias', 'id')->where('obra_id', $obra->id),
+            ],
             'fecha_ingreso'           => 'required|date',
             'fecha_contable'          => 'nullable|date',
             'fecha_vencimiento'       => 'nullable|date',
@@ -115,8 +119,14 @@ class CertificacionController extends Controller
     public function storeCapitulo(Request $request, Obra $obra)
     {
         $request->validate([
-            'certificacion_id'        => 'required|exists:certificaciones,id',
-            'obra_gasto_categoria_id' => 'required|exists:obra_gasto_categorias,id',
+            'certificacion_id'        => [
+                'required',
+                Rule::exists('certificaciones', 'id')->where('obra_id', $obra->id),
+            ],
+            'obra_gasto_categoria_id' => [
+                'required',
+                Rule::exists('obra_gasto_categorias', 'id')->where('obra_id', $obra->id),
+            ],
         ]);
 
         $certBase = Certificacion::findOrFail($request->certificacion_id);
@@ -127,7 +137,8 @@ class CertificacionController extends Controller
             ], 422);
         }
 
-        $existe = Certificacion::where('numero_certificacion', $certBase->numero_certificacion)
+        $existe = Certificacion::where('obra_id', $certBase->obra_id)
+            ->where('numero_certificacion', $certBase->numero_certificacion)
             ->where('obra_gasto_categoria_id', $request->obra_gasto_categoria_id)
             ->exists();
 

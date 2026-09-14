@@ -43,6 +43,8 @@ class CertificacionDetalleService
                 $data['presupuesto_venta_partida_id']
             );
 
+            $this->asegurarPartidaDeLaCertificacion($cert, $partida);
+
             $cantidad = (float) $data['cantidad'];
 
             if (! $forzar) {
@@ -79,6 +81,7 @@ class CertificacionDetalleService
                 ->lockForUpdate()
                 ->firstOrFail();
 
+            $this->asegurarLineaDeLaCertificacion($cert, $detalle);
             $this->asegurarEditable($cert);
 
             $cantidad = (float) $data['cantidad'];
@@ -115,6 +118,7 @@ class CertificacionDetalleService
                 ->lockForUpdate()
                 ->firstOrFail();
 
+            $this->asegurarLineaDeLaCertificacion($cert, $detalle);
             $this->asegurarEditable($cert);
 
             $detalle->delete();
@@ -253,6 +257,37 @@ class CertificacionDetalleService
         if (! $cert->puedeEditar()) {
             throw new RuntimeException(
                 'La certificación no admite modificaciones en su estado actual.'
+            );
+        }
+    }
+
+    /**
+     * La línea debe ser de la certificación bloqueada: si no, se editaría una
+     * línea de otra certificación (quizá aceptada o facturada) saltándose su
+     * estado y dejando su base imponible descuadrada.
+     */
+    private function asegurarLineaDeLaCertificacion(Certificacion $cert, CertificacionDetalle $detalle): void
+    {
+        if ((int) $detalle->certificacion_id !== (int) $cert->id) {
+            throw new RuntimeException('La línea no pertenece a esta certificación.');
+        }
+    }
+
+    /**
+     * Solo se certifican partidas del presupuesto de venta de la misma obra
+     * y oficio que la certificación.
+     */
+    private function asegurarPartidaDeLaCertificacion(Certificacion $cert, PresupuestoVentaPartida $partida): void
+    {
+        $capitulo = $partida->capitulo;
+
+        if (
+            ! $capitulo
+            || (int) $capitulo->obra_id !== (int) $cert->obra_id
+            || (int) $capitulo->obra_gasto_categoria_id !== (int) $cert->obra_gasto_categoria_id
+        ) {
+            throw new RuntimeException(
+                'La partida no pertenece al presupuesto de la obra y oficio de esta certificación.'
             );
         }
     }

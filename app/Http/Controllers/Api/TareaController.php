@@ -23,6 +23,26 @@ class TareaController extends Controller
         ];
     }
 
+    /**
+     * Mismo criterio de visibilidad que el listado: un admin accede a todas;
+     * un usuario normal solo a las que tiene asignadas o ha creado.
+     */
+    private function puedeAcceder(Request $request, Tarea $tarea): bool
+    {
+        $user = $request->user();
+
+        return in_array($user->role ?? '', ['admin', 'super_admin'], true)
+            || (int) $tarea->asignado_a === (int) $user->id
+            || (int) $tarea->creado_por === (int) $user->id;
+    }
+
+    private function sinPermiso()
+    {
+        return response()->json([
+            'message' => 'No tienes permiso para acceder a esta tarea.',
+        ], 403);
+    }
+
     private function aplicarFiltros($query, Request $request, int $userId, bool $isAdmin)
     {
         $vista = $request->input('vista', 'mis_tareas');
@@ -126,8 +146,12 @@ class TareaController extends Controller
         ], 201);
     }
 
-    public function show(Tarea $tarea)
+    public function show(Request $request, Tarea $tarea)
     {
+        if (! $this->puedeAcceder($request, $tarea)) {
+            return $this->sinPermiso();
+        }
+
         $tarea->load(['obra:id,nombre', 'asignadoA:id,name', 'creadoPor:id,name']);
 
         return response()->json($tarea);
@@ -135,6 +159,10 @@ class TareaController extends Controller
 
     public function update(Request $request, Tarea $tarea)
     {
+        if (! $this->puedeAcceder($request, $tarea)) {
+            return $this->sinPermiso();
+        }
+
         $validated = $request->validate($this->baseRules());
 
         $tarea->update($validated);
@@ -148,6 +176,10 @@ class TareaController extends Controller
 
     public function cambiarEstado(Request $request, Tarea $tarea)
     {
+        if (! $this->puedeAcceder($request, $tarea)) {
+            return $this->sinPermiso();
+        }
+
         $validated = $request->validate([
             'estado' => 'required|in:pendiente,en_curso,completada',
         ]);

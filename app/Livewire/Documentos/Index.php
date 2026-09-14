@@ -42,7 +42,8 @@ class Index extends Component
             return;
         }
 
-        $documento = Documento::findOrFail($this->documentoAEliminarId);
+        $documento = Documento::where('obra_id', $this->obra->id)
+            ->findOrFail($this->documentoAEliminarId);
         $service->eliminar($documento);
 
         $this->documentoAEliminarId = null;

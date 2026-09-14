@@ -131,6 +131,8 @@ class PresupuestoVentaController extends Controller
     // -------------------------
     public function updatePartida(Request $request, Obra $obra, PresupuestoVentaPartida $partida)
     {
+        abort_unless((int) $partida->obra_id === (int) $obra->id, 404);
+
         // Si tiene coste_partida_id solo permitir medicion y precio
         if ($partida->coste_partida_id) {
             $request->validate([
@@ -175,6 +177,8 @@ class PresupuestoVentaController extends Controller
     // -------------------------
     public function destroyPartida(Obra $obra, PresupuestoVentaPartida $partida)
     {
+        abort_unless((int) $partida->obra_id === (int) $obra->id, 404);
+
         $capitulo = $partida->capitulo;
 
         $partida->delete();

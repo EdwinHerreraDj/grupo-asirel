@@ -112,6 +112,8 @@ class GastoInicialController extends Controller
     // -------------------------
     public function updatePartida(Request $request, Obra $obra, GastoInicialPartida $partida)
     {
+        abort_unless((int) $partida->obra_id === (int) $obra->id, 404);
+
         $request->validate([
             'codigo'          => 'nullable|string|max:50',
             'descripcion'     => 'required|string|max:500',
@@ -142,6 +144,8 @@ class GastoInicialController extends Controller
     // -------------------------
     public function destroyPartida(Obra $obra, GastoInicialPartida $partida)
     {
+        abort_unless((int) $partida->obra_id === (int) $obra->id, 404);
+
         $oficioId = $partida->obra_gasto_categoria_id;
 
         $partida->delete();
@@ -201,6 +205,8 @@ class GastoInicialController extends Controller
     // -------------------------
     public function updateCapitulo(Request $request, Obra $obra, \App\Models\ObraGastoCategoria $capitulo)
     {
+        abort_unless((int) $capitulo->obra_id === (int) $obra->id, 404);
+
         $request->validate([
             'nombre'      => 'required|string|max:255',
             'descripcion' => 'nullable|string',
@@ -226,6 +232,8 @@ class GastoInicialController extends Controller
     // -------------------------
     public function destroyCapitulo(Obra $obra, ObraGastoCategoria $capitulo)
     {
+        abort_unless((int) $capitulo->obra_id === (int) $obra->id, 404);
+
         // Bloquear si tiene partidas de coste
         $tieneCoste = GastoInicialPartida::where('obra_gasto_categoria_id', $capitulo->id)->exists();
 
