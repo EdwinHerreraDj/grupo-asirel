@@ -63,6 +63,7 @@ class AccesoModulosPorRolTest extends TestCase
             foreach (self::SOLO_ADMIN as $url) {
                 $status = $this->actingAs($user)->get($url)->getStatusCode();
                 $this->assertNotSame(403, $status, "{$role} recibe 403 en {$url}");
+                $this->assertLessThan(500, $status, "{$role} recibe error {$status} en {$url}");
             }
         }
     }
@@ -74,6 +75,7 @@ class AccesoModulosPorRolTest extends TestCase
         foreach (self::PARA_TODOS as $url) {
             $status = $this->actingAs($user)->get($url)->getStatusCode();
             $this->assertNotSame(403, $status, "user recibe 403 en {$url}");
+            $this->assertLessThan(500, $status, "user recibe error {$status} en {$url}");
         }
     }
 

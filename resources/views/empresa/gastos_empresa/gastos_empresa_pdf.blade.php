@@ -119,7 +119,7 @@
                     <td>{{ $gasto->concepto }}</td>
                     <td>{{ $gasto->categoria->nombre ?? '—' }}</td>
                     <td>
-                        {{ $gasto->fecha_gasto ? \Carbon\Carbon::parse($gasto->fecha_gasto)->format('d/m/Y') : 'Sin fecha' }}
+                        {{ $gasto->fecha_factura ? \Carbon\Carbon::parse($gasto->fecha_factura)->format('d/m/Y') : 'Sin fecha' }}
                     </td>
                     <td>{{ number_format($gasto->importe, 2, ',', '.') }} €</td>
                     <td>{{ $gasto->descripcion ?: '—' }}</td>

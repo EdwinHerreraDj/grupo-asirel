@@ -33,14 +33,14 @@ class GastoGeneralEmpresaController extends Controller
         $query = GastoGeneralEmpresa::with('categoria');
 
         if ($request->filled('inicio') && $request->filled('fin')) {
-            $query->whereBetween('fecha_gasto', [$request->inicio, $request->fin]);
+            $query->whereBetween('fecha_factura', [$request->inicio, $request->fin]);
         } elseif ($request->filled('inicio')) {
-            $query->whereDate('fecha_gasto', '>=', $request->inicio);
+            $query->whereDate('fecha_factura', '>=', $request->inicio);
         } elseif ($request->filled('fin')) {
-            $query->whereDate('fecha_gasto', '<=', $request->fin);
+            $query->whereDate('fecha_factura', '<=', $request->fin);
         }
 
-        $gastos = $query->orderByDesc('fecha_gasto')->get();
+        $gastos = $query->orderByDesc('fecha_factura')->get();
 
         if ($gastos->isEmpty()) {
             return back()->with('error', 'No se encontraron gastos en el rango seleccionado.');
