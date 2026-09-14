@@ -2,18 +2,16 @@
 
 namespace Tests\Feature;
 
-// use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ExampleTest extends TestCase
 {
     /**
-     * A basic test example.
+     * Toda la aplicación exige sesión: un invitado que entra en la raíz
+     * se redirige al login.
      */
-    public function test_the_application_returns_a_successful_response(): void
+    public function test_invitado_en_la_raiz_va_al_login(): void
     {
-        $response = $this->get('/');
-
-        $response->assertStatus(200);
+        $this->get('/')->assertRedirect(route('login'));
     }
 }

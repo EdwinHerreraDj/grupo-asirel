@@ -132,10 +132,11 @@ Contratado (presupuesto de venta) frente a ejecutado (`certificacion_detalles.ca
 ## 8. Desarrollo, tests y despliegue
 
 - **Tests:** `php artisan test`.
-  - `tests/Feature`: `UserManagementTest`, `AccesoModulosPorRolTest`, `IntegridadPertenenciaTest`, `RutasYLogoutTest`, `FacturaDesgloseCapitulosTest`.
+  - `tests/Feature`: `UserManagementTest`, `AccesoModulosPorRolTest`, `IntegridadPertenenciaTest`, `RutasYLogoutTest`, `FacturaDesgloseCapitulosTest`, `CertificacionFiscalTest`, `FacturacionFiscalTest`, `RelacionesModelosTest`.
   - `tests/Unit/ReferenciasClasesMayusculasTest`.
   - Usan `DatabaseTransactions` sobre la base de datos de `.env`. **Nunca ejecutarlos contra producción.**
 - **Mayúsculas en namespaces:** producción es Linux y distingue mayúsculas. `App\Services\facturas` va en minúscula (carpeta `app/Services/facturas`). El test de mayúsculas lo vigila, porque en Windows no falla.
+- **Relaciones Eloquent:** si la clave foránea no sigue la convención de Laravel, indicarla explícitamente (p. ej. `belongsTo(FacturaVenta::class, 'factura_venta_id')`). Si no, la relación devuelve `null` sin avisar. `RelacionesModelosTest` lo vigila.
 - **Ramas:** `develop` para trabajar, `main` para producción.
 - **Despliegue** (en el servidor, carpeta del proyecto):
   ```bash
