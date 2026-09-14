@@ -6,9 +6,7 @@
 
 
 @section('content')
-    {{-- Renderizamos el componente Livewire --}}
-    {{-- @livewire('proveedores.index') --}}
-    {{-- @livewire('proveedores.formulario') --}}
+    {{-- Pantalla React (resources/js/react/Proveedores) --}}
     <div id="react-proveedores"></div>
 @endsection
 
