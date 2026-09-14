@@ -217,7 +217,12 @@
         <tbody>
             @forelse ($factura->detalles as $linea)
                 <tr>
-                    <td>{{ $linea->concepto }}</td>
+                    <td>
+                        {{ $linea->concepto }}
+                        @if (!empty($linea->comentario))
+                            <div style="margin-top:2px;font-size:8.5px;color:#64748b;font-style:italic;">{{ $linea->comentario }}</div>
+                        @endif
+                    </td>
                     <td>{{ $linea->unidad ?: '—' }}</td>
                     <td class="num">{{ number_format($linea->cantidad, 2, ',', '.') }}</td>
                     <td class="num">{{ number_format($linea->precio_unitario, 2, ',', '.') }} €</td>

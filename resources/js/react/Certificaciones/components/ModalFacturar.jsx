@@ -11,6 +11,7 @@ export default function ModalFacturar({
     const [resumen, setResumen] = useState(null);
     const [series, setSeries] = useState([]);
     const [serieSeleccionada, setSerie] = useState("");
+    const [modo, setModo] = useState("resumen");
     const [loading, setLoading] = useState(true);
     const [emitiendo, setEmitiendo] = useState(false);
     const [error, setError] = useState(null);
@@ -40,6 +41,7 @@ export default function ModalFacturar({
                 {
                     numero_certificacion: numeroCertificacion,
                     serie: serieSeleccionada,
+                    modo,
                 },
             );
             onFacturado(data.redirect_url);
@@ -92,6 +94,62 @@ export default function ModalFacturar({
                             </p>
                             <p className="text-sm font-semibold border-t border-gray-200 pt-1.5 mt-1.5">
                                 Total: {formatEuro(resumen.total)}
+                            </p>
+                        </div>
+
+                        {/* MODO DE DESGLOSE */}
+                        <div className="mb-5">
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                                Detalle de la factura
+                            </label>
+                            <div className="space-y-2">
+                                {[
+                                    {
+                                        value: "resumen",
+                                        titulo: "Resumen por capítulos",
+                                        desc: "Una línea por capítulo con el total (como hasta ahora).",
+                                    },
+                                    {
+                                        value: "lineas",
+                                        titulo: "Todas las líneas",
+                                        desc: "Una línea por cada partida certificada.",
+                                    },
+                                    {
+                                        value: "lineas_comentarios",
+                                        titulo: "Todas las líneas + comentarios",
+                                        desc: "Incluye el comentario que pusisteis en cada línea.",
+                                    },
+                                ].map((op) => (
+                                    <label
+                                        key={op.value}
+                                        className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition ${
+                                            modo === op.value
+                                                ? "border-primary bg-blue-50"
+                                                : "border-gray-200 hover:border-primary/40 hover:bg-gray-50"
+                                        }`}
+                                    >
+                                        <input
+                                            type="radio"
+                                            name="modo-factura"
+                                            value={op.value}
+                                            checked={modo === op.value}
+                                            onChange={() => setModo(op.value)}
+                                            className="mt-0.5"
+                                        />
+                                        <span className="min-w-0">
+                                            <span className="block text-sm font-medium text-gray-800">
+                                                {op.titulo}
+                                            </span>
+                                            <span className="block text-xs text-gray-500">
+                                                {op.desc}
+                                            </span>
+                                        </span>
+                                    </label>
+                                ))}
+                            </div>
+                            <p className="mt-1.5 text-[11px] text-gray-400">
+                                No cambia importes ni totales, solo cómo se
+                                muestran las líneas en la factura.
                             </p>
                         </div>
 

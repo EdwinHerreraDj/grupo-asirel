@@ -37,6 +37,7 @@ class CertificacionFacturarController extends Controller
         $data = $request->validate([
             'numero_certificacion' => 'required|string',
             'serie'                => 'required|string|exists:factura_series,serie',
+            'modo'                 => 'sometimes|in:' . implode(',', FacturaVentaGenerator::MODOS),
         ]);
 
         $serie = FacturaSerie::where('serie', $data['serie'])->firstOrFail();
@@ -46,6 +47,7 @@ class CertificacionFacturarController extends Controller
                 $obra,
                 $data['numero_certificacion'],
                 $serie,
+                $data['modo'] ?? FacturaVentaGenerator::MODO_RESUMEN,
             );
         } catch (RuntimeException $e) {
             return response()->json(['message' => $e->getMessage()], 422);

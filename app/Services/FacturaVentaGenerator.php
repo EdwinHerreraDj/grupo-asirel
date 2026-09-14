@@ -27,6 +27,17 @@ use RuntimeException;
  */
 class FacturaVentaGenerator
 {
+    /** Modos de desglose de líneas al facturar desde certificaciones. */
+    public const MODO_RESUMEN            = 'resumen';             // 1 línea por capítulo (total)
+    public const MODO_LINEAS             = 'lineas';              // 1 línea por cada línea de certificación
+    public const MODO_LINEAS_COMENTARIOS = 'lineas_comentarios'; // idem + comentario de cada línea
+
+    public const MODOS = [
+        self::MODO_RESUMEN,
+        self::MODO_LINEAS,
+        self::MODO_LINEAS_COMENTARIOS,
+    ];
+
     public function __construct(
         private readonly FacturaPdfService $pdfService,
     ) {}
@@ -39,8 +50,13 @@ class FacturaVentaGenerator
         Obra $obra,
         string $numeroCertificacion,
         FacturaSerie $serie,
+        string $modo = self::MODO_RESUMEN,
     ): FacturaVenta {
-        return DB::transaction(function () use ($obra, $numeroCertificacion, $serie) {
+        if (! in_array($modo, self::MODOS, true)) {
+            $modo = self::MODO_RESUMEN;
+        }
+
+        return DB::transaction(function () use ($obra, $numeroCertificacion, $serie, $modo) {
             $certs = $this->cargarCertificacionesConLock($obra, $numeroCertificacion);
 
             $this->validarInvariantes($certs, $obra, $numeroCertificacion);
@@ -54,8 +70,19 @@ class FacturaVentaGenerator
                 certs: $certs,
             );
 
+            // El desglose de líneas es SOLO presentación: los totales fiscales
+            // de la factura ya están fijados en crearFactura(). En cualquier
+            // modo, la suma de las líneas coincide con la base imponible.
             foreach ($certs as $cert) {
-                $this->crearLineaFactura($factura, $cert);
+                if ($modo === self::MODO_RESUMEN) {
+                    $this->crearLineaFactura($factura, $cert);
+                } else {
+                    $this->crearLineasDesdeDetalles(
+                        $factura,
+                        $cert,
+                        conComentarios: $modo === self::MODO_LINEAS_COMENTARIOS,
+                    );
+                }
             }
 
             $this->marcarCertificacionesComoFacturadas($obra, $numeroCertificacion);
@@ -108,7 +135,7 @@ class FacturaVentaGenerator
             ->where('numero_certificacion', $numero)
             ->where('estado_certificacion', 'aceptada')
             ->where('estado_factura', 'pendiente')
-            ->with(['oficio', 'cliente'])
+            ->with(['oficio', 'cliente', 'detalles'])
             ->lockForUpdate()
             ->get();
     }
@@ -196,6 +223,31 @@ class FacturaVentaGenerator
             'precio_unitario'  => $cert->base_imponible,
             'importe_linea'    => $cert->base_imponible,
         ]);
+    }
+
+    /**
+     * Crea una línea de factura por CADA línea de la certificación (modo
+     * detallado). Copia concepto/unidad/cantidad/precio/importe congelados y,
+     * si procede, el comentario que el usuario puso en la certificación.
+     */
+    private function crearLineasDesdeDetalles(
+        FacturaVenta $factura,
+        Certificacion $cert,
+        bool $conComentarios,
+    ): void {
+        foreach ($cert->detalles as $detalle) {
+            FacturaVentaDetalle::create([
+                'factura_venta_id'         => $factura->id,
+                'certificacion_id'         => $cert->id,
+                'certificacion_detalle_id' => $detalle->id,
+                'concepto'                 => $detalle->concepto,
+                'unidad'                   => $detalle->unidad,
+                'cantidad'                 => $detalle->cantidad,
+                'precio_unitario'          => $detalle->precio_unitario,
+                'importe_linea'            => $detalle->importe_linea,
+                'comentario'               => $conComentarios ? $detalle->comentario : null,
+            ]);
+        }
     }
 
     private function marcarCertificacionesComoFacturadas(Obra $obra, string $numero): void
