@@ -86,25 +86,38 @@
             }
         });
 
+        // Sesión caducada: al login con aviso (sin dialogs nativos).
+        window.irALoginPorSesionCaducada = () => {
+            window.location.href = "{{ route('login') }}?sesion=caducada";
+        };
+
+        // Mantiene viva la sesión y detecta si ya ha caducado.
         setInterval(() => {
             fetch("{{ route('ping') }}", {
                 method: 'GET',
                 credentials: 'same-origin',
                 headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
                 }
-            });
+            }).then((response) => {
+                if (response.status === 401 || response.status === 419) {
+                    window.irALoginPorSesionCaducada();
+                }
+            }).catch(() => {});
         }, 5 * 60 * 1000);
     </script>
 
     <script>
-        document.addEventListener('livewire:load', () => {
-            Livewire.onError((status) => {
-                if (status === 419) {
-                    alert('Tu sesión ha expirado. Por favor, vuelve a iniciar sesión.');
-                    window.location.href = "{{ route('login') }}";
-                    return false;
-                }
+        // Livewire 3: peticiones que fallan por sesión caducada.
+        document.addEventListener('livewire:init', () => {
+            Livewire.hook('request', ({ fail }) => {
+                fail(({ status, preventDefault }) => {
+                    if (status === 419 || status === 401) {
+                        preventDefault();
+                        window.irALoginPorSesionCaducada();
+                    }
+                });
             });
         });
     </script>

@@ -45,6 +45,18 @@
                                 </div>
                             @endif
 
+                            <!-- Aviso de sesión caducada (redirigido desde la app) -->
+                            @if (request('sesion') === 'caducada' && ! $errors->any())
+                                <div
+                                    class="mb-6 flex items-start gap-3 bg-amber-50 border border-amber-300 text-amber-800 p-4 rounded-lg">
+                                    <i class="mgc_time_line text-xl"></i>
+                                    <div>
+                                        <p class="font-semibold text-sm">Sesión caducada</p>
+                                        <p class="text-sm">Tu sesión ha caducado. Vuelve a iniciar sesión.</p>
+                                    </div>
+                                </div>
+                            @endif
+
                             <!-- Formulario -->
                             <form method="POST" action="{{ route('login') }}">
                                 @csrf
@@ -72,7 +84,7 @@
                                 <!-- Opciones -->
                                 <div class="flex items-center justify-between mb-6">
                                     <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                                        <input type="checkbox" class="rounded border-gray-300 dark:border-gray-600">
+                                        <input type="checkbox" name="remember" value="1" class="rounded border-gray-300 dark:border-gray-600">
                                         Recordar sesión
                                     </label>
                                 </div>

@@ -31,12 +31,14 @@ api.interceptors.request.use(
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
-            console.error("No autenticado en API", error.response);
-        }
-
-        if (error.response?.status === 419) {
-            console.error("Error CSRF / sesión expirada", error.response);
+        // Sesión caducada (419 token CSRF / 401 no autenticado): al login con aviso.
+        const status = error.response?.status;
+        if (status === 401 || status === 419) {
+            if (typeof window.irALoginPorSesionCaducada === "function") {
+                window.irALoginPorSesionCaducada();
+            } else {
+                window.location.href = "/login?sesion=caducada";
+            }
         }
 
         return Promise.reject(error);
