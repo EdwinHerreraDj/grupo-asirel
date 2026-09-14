@@ -60,6 +60,12 @@
                         </thead>
                         <tbody>
                             @foreach ($users as $user)
+                                @php
+                                    $gestionable = $actor->puedeGestionarUsuario($user);
+                                    $borrable = $gestionable
+                                        && $user->id !== $actor->id
+                                        && ! ($user->isSuperAdmin() && $totalSuperAdmins <= 1);
+                                @endphp
                                 <tr>
                                     <td>{{ $user->id }}</td>
                                     <td>{{ $user->name }}</td>
@@ -68,24 +74,26 @@
                                     <td>{{ $user->created_at }}</td>
                                     <td>
                                         <div class="actions">
-                                            <button
-                                                onclick="editUser({{ $user->id }}, '{{ $user->name }}', '{{ $user->email }}', '{{ $user->role }}')"
-                                                title="Editar usuario"
-                                                class="inline-flex items-center justify-center w-9 h-9 rounded-full 
-                                                bg-blue-100 text-blue-700 border border-blue-200 
-                                                hover:bg-blue-200 hover:border-blue-300 transition-all duration-200 shadow-sm">
-                                                <i class="mgc_edit_2_line text-lg"></i>
-                                            </button>
+                                            @if ($gestionable)
+                                                <button
+                                                    onclick="editUser({{ $user->id }}, @js($user->name), @js($user->email), @js($user->role))"
+                                                    title="Editar usuario"
+                                                    class="inline-flex items-center justify-center w-9 h-9 rounded-full
+                                                    bg-blue-100 text-blue-700 border border-blue-200
+                                                    hover:bg-blue-200 hover:border-blue-300 transition-all duration-200 shadow-sm">
+                                                    <i class="mgc_edit_2_line text-lg"></i>
+                                                </button>
+                                            @endif
 
-
-                                            <button
-                                                class="delete-user inline-flex items-center justify-center w-9 h-9 rounded-full 
-                                                bg-red-100 text-red-700 border border-red-200 
-                                                hover:bg-red-200 hover:border-red-300 transition-all duration-200 shadow-sm"
-                                                data-user-id="{{ $user->id }}" title="Eliminar usuario">
-                                                <i class="mgc_delete_2_line text-lg"></i>
-                                            </button>
-
+                                            @if ($borrable)
+                                                <button
+                                                    class="delete-user inline-flex items-center justify-center w-9 h-9 rounded-full
+                                                    bg-red-100 text-red-700 border border-red-200
+                                                    hover:bg-red-200 hover:border-red-300 transition-all duration-200 shadow-sm"
+                                                    data-user-id="{{ $user->id }}" title="Eliminar usuario">
+                                                    <i class="mgc_delete_2_line text-lg"></i>
+                                                </button>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>
@@ -183,8 +191,10 @@
                                focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all 
                                @error('role') border-red-500 @enderror">
                             <option value="">Seleccione un rol</option>
-                            <option value="super_admin" {{ old('role') == 'super_admin' ? 'selected' : '' }}>Super Admin
-                            </option>
+                            @if ($actor->isSuperAdmin())
+                                <option value="super_admin" {{ old('role') == 'super_admin' ? 'selected' : '' }}>Super Admin
+                                </option>
+                            @endif
                             <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Admin</option>
                             <option value="user" {{ old('role') == 'user' ? 'selected' : '' }}>User</option>
                         </select>
@@ -275,7 +285,9 @@
                         <select id="edit_user_role" name="role" required
                             class="block w-full rounded-xl border border-gray-300 bg-gray-50 px-4 py-2 text-gray-800 shadow-sm 
                    focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all">
-                            <option value="super_admin">Super Admin</option>
+                            @if ($actor->isSuperAdmin())
+                                <option value="super_admin">Super Admin</option>
+                            @endif
                             <option value="admin">Admin</option>
                             <option value="user">User</option>
                         </select>

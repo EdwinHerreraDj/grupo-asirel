@@ -95,8 +95,12 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
     Route::get('/unidad', [PageController::class, 'index'])->name('unidad');
 
     /* Control de CRUDS para los users */
-    Route::resource('users', UserController::class);
-    Route::get('/login-logs', [LoginLogController::class, 'index'])->name('login.logs');
+    Route::resource('users', UserController::class)
+        ->only(['index', 'store', 'update', 'destroy'])
+        ->middleware('role:admin,super_admin');
+    Route::get('/login-logs', [LoginLogController::class, 'index'])
+        ->middleware('role:super_admin')
+        ->name('login.logs');
 
     // Mi Unidad
     Route::get('/empresa', [EmpresaController::class, 'index'])->name('empresa.index');

@@ -1,5 +1,5 @@
-{{-- Mensaje de éxito --}}
-            @if (session('success'))
+{{-- Mensajes de éxito / error --}}
+            @if (session('success') || session('error'))
                 <script>
                     const notyf = new Notyf({
                         duration: 4000,
@@ -10,7 +10,12 @@
                         },
                     });
 
-                    // Mostrar mensaje de éxito
-                    notyf.success('{{ session('success') }}');
+                    @if (session('success'))
+                        notyf.success(@js(e(session('success'))));
+                    @endif
+
+                    @if (session('error'))
+                        notyf.error(@js(e(session('error'))));
+                    @endif
                 </script>
             @endif

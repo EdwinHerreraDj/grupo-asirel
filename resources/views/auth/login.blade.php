@@ -92,9 +92,7 @@
                             <!-- Footer -->
                             <p class="text-center mt-8 text-sm text-gray-500 dark:text-gray-400">
                                 Soporte técnico ®
-                                <a href="{{ route('register') }}" class="text-primary font-semibold">
-                                    Alminares S.L
-                                </a>
+                                <span class="text-primary font-semibold">Alminares S.L</span>
                             </p>
                         </div>
                     </div>
