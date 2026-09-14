@@ -2,8 +2,6 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\Drive\FolderController;
-use App\Http\Controllers\Api\Drive\FileController;
 use App\Http\Controllers\Api\PresupuestoVentaController;
 use App\Http\Controllers\Api\GastoInicialController;
 use App\Http\Controllers\Api\PresupuestoVentaPdfController;
@@ -14,18 +12,10 @@ use App\Http\Controllers\Api\Certificaciones\ComparativaMensualController;
 use App\Http\Controllers\Api\Certificaciones\CertificacionFacturarController;
 use App\Http\Controllers\Api\TareaController;
 
-// Drive — mantiene sanctum
+// API de las pantallas React (sesión vía sanctum stateful).
+// Las rutas de Drive (folders/files) están en el grupo /api de routes/web.php.
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', fn(Request $request) => $request->user());
-
-    Route::prefix('folders')->group(function () {
-        Route::get('{id}/content', [FolderController::class, 'getContent']);
-        Route::post('/', [FolderController::class, 'store']);
-    });
-
-    Route::prefix('files')->group(function () {
-        Route::post('/', [FileController::class, 'store']);
-    });
 
     // Obras
     Route::prefix('obras/{obra}')->group(function () {
