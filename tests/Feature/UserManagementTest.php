@@ -18,6 +18,9 @@ class UserManagementTest extends TestCase
     {
         return User::factory()->create([
             'role' => $role,
+            // Nombre fijo y corto: el faker a veces supera el max:30 del formulario
+            // y el test fallaba por validación del nombre, no por la regla probada.
+            'name' => 'Usuario '.$role,
             'email' => $role.'-'.uniqid().'@t.es',
             // En claro: el cast 'hashed' lo cifra con la configuración de tests.
             'password' => 'password123',
