@@ -27,6 +27,8 @@ class FacturaVentaPago extends Model
 
     public function factura()
     {
-        return $this->belongsTo(FacturaVenta::class);
+        // Clave explícita: sin ella Laravel deduce `factura_id` (por el nombre
+        // del método) y la relación devolvía null al editar o borrar pagos.
+        return $this->belongsTo(FacturaVenta::class, 'factura_venta_id');
     }
 }
