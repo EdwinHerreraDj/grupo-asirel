@@ -79,7 +79,7 @@ class Detalle extends Component
 
     public function mount(FacturaVenta $factura): void
     {
-        $this->factura = $factura->load(['detalles', 'pagos', 'cliente', 'obra', 'reimpresiones.user', 'documentos.user']);
+        $this->factura = $factura->load(['detalles.certificacion.oficio', 'pagos', 'cliente', 'obra', 'reimpresiones.user', 'documentos.user']);
         $this->editable = $factura->esEditable();
 
         $role = auth()->user()?->role;

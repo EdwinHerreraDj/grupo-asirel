@@ -210,9 +210,33 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 bg-white">
-                    @forelse ($factura->detalles as $linea)
+                    @php
+                        // Facturas desglosadas desde certificaciones: agrupar por capítulo.
+                        // Resumen y manuales: una sola lista, como siempre.
+                        $desglosada = $factura->detalles->contains(fn ($l) => $l->certificacion_detalle_id);
+                        $grupos = $factura->detalles->isEmpty()
+                            ? collect()
+                            : ($desglosada
+                                ? $factura->detalles->groupBy(fn ($l) => $l->certificacion_id ?? 0)
+                                : collect([$factura->detalles]));
+                    @endphp
+                    @forelse ($grupos as $lineasGrupo)
+                        @if ($desglosada)
+                            <tr class="bg-slate-50">
+                                <td colspan="{{ $editable ? 6 : 5 }}"
+                                    class="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-600 sm:px-5">
+                                    {{ $lineasGrupo->first()->certificacion?->oficio?->nombre ?? 'Capítulo' }}
+                                </td>
+                            </tr>
+                        @endif
+                        @foreach ($lineasGrupo as $linea)
                         <tr class="hover:bg-slate-50/70">
-                            <td class="px-4 py-3 sm:px-5 text-slate-800">{{ $linea->concepto }}</td>
+                            <td class="px-4 py-3 sm:px-5 text-slate-800">
+                                {{ $linea->concepto }}
+                                @if (!empty($linea->comentario))
+                                    <p class="mt-0.5 text-xs italic text-slate-500">{{ $linea->comentario }}</p>
+                                @endif
+                            </td>
                             <td class="px-4 py-3 sm:px-5 text-center text-slate-600">{{ $linea->unidad ?: '—' }}</td>
                             <td class="px-4 py-3 sm:px-5 text-right text-slate-700">
                                 {{ number_format($linea->cantidad, 2, ',', '.') }}
@@ -238,6 +262,18 @@
                                 </td>
                             @endif
                         </tr>
+                        @endforeach
+                        @if ($desglosada)
+                            <tr>
+                                <td colspan="4" class="px-4 py-2 text-right text-xs text-slate-500 sm:px-5">Subtotal capítulo</td>
+                                <td class="px-4 py-2 text-right text-sm font-semibold text-slate-800 sm:px-5">
+                                    {{ number_format($lineasGrupo->sum('importe_linea'), 2, ',', '.') }} €
+                                </td>
+                                @if ($editable)
+                                    <td></td>
+                                @endif
+                            </tr>
+                        @endif
                     @empty
                         <tr>
                             <td colspan="{{ $editable ? 6 : 5 }}" class="px-4 py-10 text-center text-sm text-slate-500 sm:px-5">

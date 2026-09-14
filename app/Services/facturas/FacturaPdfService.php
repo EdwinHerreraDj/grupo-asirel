@@ -33,7 +33,7 @@ class FacturaPdfService
             return;
         }
 
-        $factura->load(['cliente', 'detalles']);
+        $factura->load(['cliente', 'detalles.certificacion.oficio']);
 
         $pdf = $this->render($factura, esCopia: false);
 
@@ -69,7 +69,7 @@ class FacturaPdfService
      */
     public function generarCopia(FacturaVenta $factura): string
     {
-        $factura->load(['cliente', 'detalles']);
+        $factura->load(['cliente', 'detalles.certificacion.oficio']);
 
         $pdf = $this->render($factura, esCopia: true);
         $bytes = $pdf->output();

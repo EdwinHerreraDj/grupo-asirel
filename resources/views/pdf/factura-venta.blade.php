@@ -98,6 +98,14 @@
         }
         table.lineas tbody td.num { text-align: right; }
         table.lineas tbody tr:nth-child(even) td { background-color: #fafafa; }
+        table.lineas tbody tr.capitulo td {
+            background-color: #f1f5f9; color: #334155; font-weight: bold; font-size: 9px;
+            text-transform: uppercase; letter-spacing: 0.5px; padding-top: 8px;
+        }
+        table.lineas tbody tr.subtotal td {
+            background-color: #ffffff; text-align: right; font-weight: bold; color: #334155;
+            border-top: 1px solid #e2e8f0;
+        }
 
         .totales-wrap { margin-top: 16px; }
         table.totales { margin-left: auto; width: 45%; border-collapse: collapse; }
@@ -214,20 +222,43 @@
                 <th class="num" style="width:100px">Importe</th>
             </tr>
         </thead>
+        @php
+            // Facturas desglosadas desde certificaciones: agrupar por capítulo.
+            // Resumen y manuales: una sola lista, como siempre.
+            $desglosada = $factura->detalles->contains(fn ($l) => $l->certificacion_detalle_id);
+            $grupos = $factura->detalles->isEmpty()
+                ? collect()
+                : ($desglosada
+                    ? $factura->detalles->groupBy(fn ($l) => $l->certificacion_id ?? 0)
+                    : collect([$factura->detalles]));
+        @endphp
         <tbody>
-            @forelse ($factura->detalles as $linea)
-                <tr>
-                    <td>
-                        {{ $linea->concepto }}
-                        @if (!empty($linea->comentario))
-                            <div style="margin-top:2px;font-size:8.5px;color:#64748b;font-style:italic;">{{ $linea->comentario }}</div>
-                        @endif
-                    </td>
-                    <td>{{ $linea->unidad ?: '—' }}</td>
-                    <td class="num">{{ number_format($linea->cantidad, 2, ',', '.') }}</td>
-                    <td class="num">{{ number_format($linea->precio_unitario, 2, ',', '.') }} €</td>
-                    <td class="num">{{ number_format($linea->importe_linea, 2, ',', '.') }} €</td>
-                </tr>
+            @forelse ($grupos as $lineasGrupo)
+                @if ($desglosada)
+                    <tr class="capitulo">
+                        <td colspan="5">{{ $lineasGrupo->first()->certificacion?->oficio?->nombre ?? 'Capítulo' }}</td>
+                    </tr>
+                @endif
+                @foreach ($lineasGrupo as $linea)
+                    <tr>
+                        <td>
+                            {{ $linea->concepto }}
+                            @if (!empty($linea->comentario))
+                                <div style="margin-top:2px;font-size:8.5px;color:#64748b;font-style:italic;">{{ $linea->comentario }}</div>
+                            @endif
+                        </td>
+                        <td>{{ $linea->unidad ?: '—' }}</td>
+                        <td class="num">{{ number_format($linea->cantidad, 2, ',', '.') }}</td>
+                        <td class="num">{{ number_format($linea->precio_unitario, 2, ',', '.') }} €</td>
+                        <td class="num">{{ number_format($linea->importe_linea, 2, ',', '.') }} €</td>
+                    </tr>
+                @endforeach
+                @if ($desglosada)
+                    <tr class="subtotal">
+                        <td colspan="4">Subtotal capítulo</td>
+                        <td class="num">{{ number_format($lineasGrupo->sum('importe_linea'), 2, ',', '.') }} €</td>
+                    </tr>
+                @endif
             @empty
                 <tr>
                     <td colspan="5" style="text-align:center;padding:20px;color:#999;font-style:italic;">Sin líneas.</td>

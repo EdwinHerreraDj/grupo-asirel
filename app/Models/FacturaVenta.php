@@ -114,7 +114,11 @@ class FacturaVenta extends Model
 
     public function detalles(): HasMany
     {
-        return $this->hasMany(FacturaVentaDetalle::class, 'factura_venta_id');
+        // `orden` lo fija el generador; en facturas manuales y antiguas vale 1
+        // para todas, así que el desempate por id mantiene el orden de siempre.
+        return $this->hasMany(FacturaVentaDetalle::class, 'factura_venta_id')
+            ->orderBy('orden')
+            ->orderBy('id');
     }
 
     public function pagos(): HasMany

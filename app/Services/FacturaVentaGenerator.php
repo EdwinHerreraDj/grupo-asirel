@@ -73,13 +73,16 @@ class FacturaVentaGenerator
             // El desglose de líneas es SOLO presentación: los totales fiscales
             // de la factura ya están fijados en crearFactura(). En cualquier
             // modo, la suma de las líneas coincide con la base imponible.
+            // Orden visual estable: capítulos por id y, dentro, líneas por id.
+            $orden = 0;
             foreach ($certs as $cert) {
                 if ($modo === self::MODO_RESUMEN) {
-                    $this->crearLineaFactura($factura, $cert);
+                    $this->crearLineaFactura($factura, $cert, ++$orden);
                 } else {
                     $this->crearLineasDesdeDetalles(
                         $factura,
                         $cert,
+                        $orden,
                         conComentarios: $modo === self::MODO_LINEAS_COMENTARIOS,
                     );
                 }
@@ -135,7 +138,8 @@ class FacturaVentaGenerator
             ->where('numero_certificacion', $numero)
             ->where('estado_certificacion', 'aceptada')
             ->where('estado_factura', 'pendiente')
-            ->with(['oficio', 'cliente', 'detalles'])
+            ->with(['oficio', 'cliente', 'detalles' => fn ($q) => $q->orderBy('id')])
+            ->orderBy('id')
             ->lockForUpdate()
             ->get();
     }
@@ -211,11 +215,12 @@ class FacturaVentaGenerator
         ]);
     }
 
-    private function crearLineaFactura(FacturaVenta $factura, Certificacion $cert): void
+    private function crearLineaFactura(FacturaVenta $factura, Certificacion $cert, int $orden): void
     {
         FacturaVentaDetalle::create([
             'factura_venta_id' => $factura->id,
             'certificacion_id' => $cert->id,
+            'orden'            => $orden,
             'concepto'         => 'Certificación ' . $cert->numero_certificacion
                 . ' – ' . ($cert->oficio->nombre ?? 'Capítulo'),
             'cantidad'         => 1,
@@ -233,6 +238,7 @@ class FacturaVentaGenerator
     private function crearLineasDesdeDetalles(
         FacturaVenta $factura,
         Certificacion $cert,
+        int &$orden,
         bool $conComentarios,
     ): void {
         foreach ($cert->detalles as $detalle) {
@@ -240,6 +246,7 @@ class FacturaVentaGenerator
                 'factura_venta_id'         => $factura->id,
                 'certificacion_id'         => $cert->id,
                 'certificacion_detalle_id' => $detalle->id,
+                'orden'                    => ++$orden,
                 'concepto'                 => $detalle->concepto,
                 'unidad'                   => $detalle->unidad,
                 'cantidad'                 => $detalle->cantidad,

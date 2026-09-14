@@ -22,6 +22,7 @@ class FacturaVentaDetalle extends Model
         'precio_unitario',
         'importe_linea',
         'comentario',
+        'orden',
     ];
 
     protected $casts = [
