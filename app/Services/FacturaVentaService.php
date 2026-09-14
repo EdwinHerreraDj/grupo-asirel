@@ -9,7 +9,7 @@ use App\Support\EstadoCobro;
 use App\Models\FacturaVenta;
 use App\Models\FacturaVentaDetalle;
 use App\Models\FacturaVentaPago;
-use App\Services\Facturas\FacturaPdfService;
+use App\Services\facturas\FacturaPdfService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;

@@ -8,7 +8,7 @@ use App\Models\FacturaSerie;
 use App\Models\FacturaVenta;
 use App\Models\FacturaVentaDetalle;
 use App\Models\Obra;
-use App\Services\Facturas\FacturaPdfService;
+use App\Services\facturas\FacturaPdfService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
