@@ -9,6 +9,7 @@ import SelectionBar from "./components/SelectionBar";
 import ExpiringFilesModal from "./components/ExpiringFilesModal";
 import FilePreviewModal from "./components/FilePreviewModal";
 import SearchBar from "./components/SearchBar";
+import DeleteConfirmModal from "./components/DeleteConfirmModal";
 
 export default function DriveLayout({
     onBack,
@@ -43,6 +44,11 @@ export default function DriveLayout({
     onClearSearch,
     searchResults,
     isSearching,
+    pendienteBorrar,
+    borrando,
+    errorBorrado,
+    onConfirmarBorrado,
+    onCancelarBorrado,
 }) {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const handleCreateFolderSubmit = async (nombre) => {
@@ -225,6 +231,14 @@ export default function DriveLayout({
                     loading={loadingExpiring}
                 />
             )}
+
+            <DeleteConfirmModal
+                elemento={pendienteBorrar}
+                borrando={borrando}
+                error={errorBorrado}
+                onConfirm={onConfirmarBorrado}
+                onCancel={onCancelarBorrado}
+            />
 
             <FilePreviewModal
                 show={!!previewFile}

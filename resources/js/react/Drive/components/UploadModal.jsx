@@ -77,9 +77,11 @@ export default function UploadModal({ isOpen, onClose, onUpload }) {
         if (selectedFiles.length === 0) return;
 
         if (hasExpiry && !expiryDate) {
-            alert("Por favor selecciona una fecha de caducidad");
+            setErrorMessage("Selecciona la fecha de caducidad.");
             return;
         }
+
+        setErrorMessage("");
 
         setUploading(true);
 
@@ -92,6 +94,11 @@ export default function UploadModal({ isOpen, onClose, onUpload }) {
                 if (success) {
                     successCount++;
                 }
+            }
+
+            if (successCount === 0) {
+                setErrorMessage("No se pudo subir ningún archivo.");
+                return;
             }
 
             // Limpiar y cerrar

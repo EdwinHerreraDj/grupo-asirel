@@ -13,8 +13,8 @@ export default function CreateFolderModal({ onClose, onSubmit }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        // El botón ya está deshabilitado con el nombre vacío.
         if (!folderName.trim()) {
-            alert("El nombre de la carpeta no puede estar vacío");
             return;
         }
 

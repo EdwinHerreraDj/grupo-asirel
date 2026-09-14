@@ -172,6 +172,7 @@
                         <span class="sidebar-text">Mi unidad</span>
                     </a>
                 </li>
+                @if ($isAdmin)
                 <li>
                     <a href="{{ route('empresa.driveApp') }}"
                         class="{{ $linkBase }} {{ request()->routeIs('empresa.driveApp') ? $linkActive : $linkIdle }}">
@@ -180,7 +181,6 @@
                     </a>
                 </li>
 
-                @if ($isAdmin)
                     {{-- Submen\u00fa: Gastos empresa --}}
                     <li x-data="{ open: @json($gastosEmpresaActive) }">
                         <button type="button" x-on:click="open = !open"

@@ -3,86 +3,121 @@
 namespace App\Http\Controllers\Api\Drive;
 
 use App\Http\Controllers\Controller;
+use App\Models\DriveEliminacion;
 use App\Models\File;
 use App\Models\Folder;
+use App\Services\Drive\DriveStorage;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+use RuntimeException;
+use Throwable;
 use ZipArchive;
 
 class FileController extends Controller
 {
+    /** Límites al extraer ZIP (evita ZIP bombs y extracciones enormes). */
+    private const ZIP_MAX_ENTRADAS = 2000;
+
+    private const ZIP_MAX_BYTES = 524288000; // 500 MB descomprimido
+
+    /** Restos de sistema que no se importan desde un ZIP. */
+    private const ZIP_IGNORAR = ['__MACOSX', '.DS_Store', 'Thumbs.db', 'desktop.ini'];
+
+    public function __construct(
+        private readonly DriveStorage $storage,
+    ) {}
+
     public function store(Request $request)
     {
         $validated = $request->validate([
             'file' => 'required|file|max:51200', // 50MB
-            'folder_id' => 'required|integer|min:0',
-            'tiene_caducidad' => 'boolean',
-            'fecha_caducidad' => 'nullable|date|after:today'
+            'folder_id' => ['required', 'integer', 'min:1', Rule::exists('folders', 'id')],
+            'tiene_caducidad' => 'nullable|boolean',
+            'fecha_caducidad' => 'nullable|date|after_or_equal:today',
+        ], [
+            'folder_id.min' => 'No se pueden subir archivos en la carpeta raíz.',
+            'folder_id.exists' => 'La carpeta de destino no existe.',
         ]);
 
-        $file = $request->file('file');
-        $originalName = $file->getClientOriginalName();
-        $mimeType = $file->getMimeType();
-        $size = $file->getSize();
+        $archivo = $request->file('file');
+        $tieneCaducidad = (bool) ($validated['tiene_caducidad'] ?? false);
 
-        // Convertir 0 a null
-        $folderId = $validated['folder_id'] == 0 ? null : $validated['folder_id'];
+        $guardado = $this->storage->guardarSubida($archivo);
 
-        $fileName = time() . '_' . uniqid() . '_' . str_replace(' ', '_', $originalName);
-        $path = $file->storeAs('uploads', $fileName, 'public');
-
-        $fileRecord = File::create([
-            'folder_id' => $folderId,
-            'usuario_id' => auth()->id(),
-            'nombre' => $originalName,
-            'ruta' => $path,
-            'tipo' => $mimeType,
-            'tamaño' => $size,
-            'tiene_caducidad' => $validated['tiene_caducidad'] ?? false,
-            'fecha_caducidad' => $validated['fecha_caducidad'] ?? null
-        ]);
+        try {
+            $fileRecord = File::create([
+                'folder_id' => (int) $validated['folder_id'],
+                'usuario_id' => auth()->id(),
+                'nombre' => $archivo->getClientOriginalName(),
+                'ruta' => $guardado['ruta'],
+                'disco' => $guardado['disco'],
+                'tipo' => $archivo->getMimeType(),
+                'tamaño' => $archivo->getSize(),
+                'tiene_caducidad' => $tieneCaducidad,
+                'fecha_caducidad' => $tieneCaducidad ? ($validated['fecha_caducidad'] ?? null) : null,
+            ]);
+        } catch (Throwable $e) {
+            // Sin registro en BD no debe quedar el fichero huérfano.
+            Storage::disk($guardado['disco'])->delete($guardado['ruta']);
+            throw $e;
+        }
 
         return response()->json([
             'message' => 'Archivo subido exitosamente',
-            'file' => $fileRecord
+            'file' => $fileRecord,
         ], 201);
     }
-
 
     public function update(Request $request, $id)
     {
         $file = File::findOrFail($id);
 
         $validated = $request->validate([
-            'nombre' => 'required|string|max:255'
+            'nombre' => 'required|string|max:255',
         ]);
 
-        $file->update([
-            'nombre' => $validated['nombre']
-        ]);
+        $file->update(['nombre' => $validated['nombre']]);
 
         return response()->json([
             'message' => 'Archivo renombrado exitosamente',
-            'file' => $file
+            'file' => $file,
         ]);
     }
 
     public function destroy($id)
     {
-        $file = File::findOrFail($id);
+        $file = File::with('folder')->findOrFail($id);
 
-        // Eliminar archivo físico
-        if (Storage::disk('public')->exists($file->ruta)) {
-            Storage::disk('public')->delete($file->ruta);
+        DB::transaction(function () use ($file) {
+            DriveEliminacion::create([
+                'user_id' => auth()->id(),
+                'tipo' => 'archivo',
+                'nombre' => $file->nombre,
+                'ubicacion' => $file->folder?->rutaCompleta() ?? 'Inicio',
+                'carpetas' => 0,
+                'archivos' => 1,
+            ]);
+
+            $file->delete();
+        });
+
+        try {
+            $this->storage->borrar($file);
+        } catch (Throwable $e) {
+            Log::warning('Drive: no se pudo borrar el fichero físico', [
+                'file_id' => $file->id,
+                'ruta' => $file->ruta,
+                'error' => $e->getMessage(),
+            ]);
         }
 
-        // Eliminar registro
-        $file->delete();
-
         return response()->json([
-            'message' => 'Archivo eliminado exitosamente'
+            'message' => 'Archivo eliminado exitosamente',
         ]);
     }
 
@@ -90,110 +125,39 @@ class FileController extends Controller
     {
         $file = File::findOrFail($id);
 
-        $storage = Storage::disk('public');
+        if (! $this->storage->existe($file)) {
+            Log::error('Drive: fichero no encontrado', ['file_id' => $file->id, 'ruta' => $file->ruta]);
 
-        if (!$storage->exists($file->ruta)) {
-            Log::error("File not found: " . $file->ruta);
             return response()->json([
-                'message' => 'Archivo no encontrado en el servidor'
+                'message' => 'Archivo no encontrado en el servidor',
             ], 404);
         }
 
-        return response()->download(
-            $storage->path($file->ruta),
-            $file->nombre
-        );
-    }
-
-    public function copy(Request $request, $id)
-    {
-        $validated = $request->validate([
-            'target_folder_id' => 'required|integer|min:0'
-        ]);
-
-        $sourceFile = File::findOrFail($id);
-        $targetFolderId = $validated['target_folder_id'];
-
-        $storage = Storage::disk('public');
-
-        // Generar nuevo nombre de archivo físico único
-        $fileName = time() . '_' . uniqid() . '_' . basename($sourceFile->ruta);
-        $newPath = 'uploads/' . $fileName;
-
-        // Copiar el archivo físico
-        if ($storage->exists($sourceFile->ruta)) {
-            $storage->copy($sourceFile->ruta, $newPath);
-        } else {
-            return response()->json([
-                'message' => 'Archivo físico no encontrado'
-            ], 404);
-        }
-
-        // Generar nombre único para mostrar al usuario si ya existe
-        $uniqueName = $this->getUniqueFileName($sourceFile->nombre, $targetFolderId);
-
-        // Crear nuevo registro en BD
-        $newFile = File::create([
-            'folder_id' => $targetFolderId,
-            'usuario_id' => auth()->id(),
-            'nombre' => $uniqueName,
-            'ruta' => $newPath,
-            'tipo' => $sourceFile->tipo,
-            'tamaño' => $sourceFile->tamaño,
-            'tiene_caducidad' => $sourceFile->tiene_caducidad,
-            'fecha_caducidad' => $sourceFile->fecha_caducidad
-        ]);
-
-        return response()->json([
-            'message' => 'Archivo copiado exitosamente',
-            'file' => $newFile,
-            'was_renamed' => $uniqueName !== $sourceFile->nombre
-        ]);
+        return $this->storage->descargar($file);
     }
 
     public function move(Request $request, $id)
     {
         $validated = $request->validate([
-            'target_folder_id' => 'required|integer|exists:folders,id'
+            'target_folder_id' => 'required|integer|exists:folders,id',
         ]);
 
         $file = File::findOrFail($id);
-
         $targetFolderId = (int) $validated['target_folder_id'];
 
-        // Bloquear raíz explícitamente (doble seguridad)
-        if ($targetFolderId === 0) {
+        if ((int) $file->folder_id === $targetFolderId) {
             return response()->json([
-                'message' => 'No se pueden mover archivos a la carpeta raíz.'
+                'message' => 'El archivo ya se encuentra en esta carpeta.',
             ], 422);
         }
 
-        // Seguridad: verificar que el archivo pertenece al usuario
-        if ($file->usuario_id !== auth()->id()) {
-            return response()->json([
-                'message' => 'No tienes permiso para mover este archivo.'
-            ], 403);
-        }
-
-        // Verificar que no esté intentando mover al mismo lugar
-        if ($file->folder_id == $targetFolderId) {
-            return response()->json([
-                'message' => 'El archivo ya se encuentra en esta carpeta.'
-            ], 422);
-        }
-
-        // Verificar si ya existe un archivo con el mismo nombre en destino
-        $existingFile = File::where('folder_id', $targetFolderId)
+        $wasRenamed = File::where('folder_id', $targetFolderId)
             ->where('nombre', $file->nombre)
-            ->where('id', '!=', $id)
-            ->first();
+            ->where('id', '!=', $file->id)
+            ->exists();
 
-        $wasRenamed = false;
-
-        if ($existingFile) {
-            $uniqueName = $this->getUniqueFileName($file->nombre, $targetFolderId);
-            $file->nombre = $uniqueName;
-            $wasRenamed = true;
+        if ($wasRenamed) {
+            $file->nombre = $this->getUniqueFileName($file->nombre, $targetFolderId);
         }
 
         $file->folder_id = $targetFolderId;
@@ -202,226 +166,123 @@ class FileController extends Controller
         return response()->json([
             'message' => 'Archivo movido exitosamente',
             'file' => $file,
-            'was_renamed' => $wasRenamed
+            'was_renamed' => $wasRenamed,
         ]);
     }
 
-
-    private function getUniqueFileName($baseName, $folderId)
-    {
-        $name = $baseName;
-        $counter = 1;
-
-        while ($this->nameExists($name, $folderId)) {
-            // Extraer nombre y extensión
-            $pathInfo = pathinfo($baseName);
-            $nameWithoutExt = $pathInfo['filename'];
-            $extension = isset($pathInfo['extension']) ? '.' . $pathInfo['extension'] : '';
-
-            // Formato: "documento (1).pdf", "documento (2).pdf", etc.
-            $name = $nameWithoutExt . " ({$counter})" . $extension;
-            $counter++;
-        }
-
-        return $name;
-    }
-
-    private function nameExists($name, $folderId)
-    {
-        return File::where('folder_id', $folderId)
-            ->where('nombre', $name)
-            ->exists();
-    }
-
+    /**
+     * Extrae un ZIP en la carpeta donde está.
+     *
+     * Si el ZIP contiene una única carpeta raíz (lo habitual al comprimir una
+     * carpeta), se usa esa carpeta como base: evita el duplicado "X/X/...".
+     */
     public function extract(Request $request, $id)
     {
         $file = File::findOrFail($id);
 
-        // Verificar que sea un ZIP
-        $extension = strtolower(pathinfo($file->nombre, PATHINFO_EXTENSION));
-        if (!in_array($extension, ['zip'])) {
-            return response()->json([
-                'message' => 'Solo se pueden extraer archivos ZIP'
-            ], 422);
+        if (strtolower(pathinfo($file->nombre, PATHINFO_EXTENSION)) !== 'zip') {
+            return response()->json(['message' => 'Solo se pueden extraer archivos ZIP'], 422);
         }
 
-        $disk = Storage::disk('public');
-        $zipPath = $disk->path($file->ruta);
-
-        if (!file_exists($zipPath)) {
-            return response()->json([
-                'message' => 'Archivo ZIP no encontrado'
-            ], 404);
+        if (! $this->storage->existe($file)) {
+            return response()->json(['message' => 'Archivo ZIP no encontrado'], 404);
         }
 
         $zip = new ZipArchive;
 
-        if ($zip->open($zipPath) !== TRUE) {
-            return response()->json([
-                'message' => 'No se pudo abrir el archivo ZIP'
-            ], 500);
+        if ($zip->open($this->storage->rutaAbsoluta($file)) !== true) {
+            return response()->json(['message' => 'No se pudo abrir el archivo ZIP'], 422);
         }
 
-        DB::beginTransaction();
-        try {
-            $targetFolderId = $file->folder_id;
-            $baseFolderName = pathinfo($file->nombre, PATHINFO_FILENAME);
-
-            // Crear carpeta base para el contenido extraído
-            $baseFolder = Folder::create([
-                'nombre' => $baseFolderName,
-                'parent_id' => $targetFolderId,
-                'tipo' => 1,
-                'usuario_id' => auth()->id()
-            ]);
-
-
-            // Extraer contenido
-            $tempExtractPath = storage_path('app' . DIRECTORY_SEPARATOR . 'temp' . DIRECTORY_SEPARATOR . uniqid());
-            mkdir($tempExtractPath, 0755, true);
-
-            $zip->extractTo($tempExtractPath);
+        if ($problema = $this->validarContenidoZip($zip)) {
             $zip->close();
 
-            // Procesar estructura de carpetas y archivos
-            $stats = $this->processExtractedContent($tempExtractPath, $baseFolder->id);
+            return response()->json(['message' => $problema], 422);
+        }
 
-            // Limpiar carpeta temporal
-            $this->deleteDirectory($tempExtractPath);
+        $temporal = storage_path('app'.DIRECTORY_SEPARATOR.'temp'.DIRECTORY_SEPARATOR.'zip_'.Str::uuid());
+        $guardados = [];
 
-            DB::commit();
+        try {
+            mkdir($temporal, 0755, true);
 
-            Log::info("ZIP extraído exitosamente", [
+            if (! $zip->extractTo($temporal)) {
+                throw new RuntimeException('No se pudo extraer el contenido del ZIP.');
+            }
+
+            $zip->close();
+            $zip = null;
+
+            [$origen, $nombreBase] = $this->raizDelContenido(
+                $temporal,
+                $this->nombreSeguro(pathinfo($file->nombre, PATHINFO_FILENAME)),
+            );
+
+            $resultado = DB::transaction(function () use ($file, $origen, $nombreBase, &$guardados) {
+                $base = Folder::create([
+                    'nombre' => $this->nombreCarpetaUnico($nombreBase, (int) $file->folder_id),
+                    'parent_id' => (int) $file->folder_id,
+                    'tipo' => 1,
+                    'usuario_id' => auth()->id(),
+                ]);
+
+                return [
+                    'base' => $base,
+                    'stats' => $this->importarDirectorio($origen, (int) $base->id, $guardados),
+                ];
+            });
+
+            Log::info('ZIP extraído exitosamente', [
                 'file' => $file->nombre,
-                'carpetas_creadas' => $stats['folders'],
-                'archivos_creados' => $stats['files']
+                'carpetas_creadas' => $resultado['stats']['folders'],
+                'archivos_creados' => $resultado['stats']['files'],
             ]);
 
             return response()->json([
                 'message' => 'ZIP extraído exitosamente',
-                'stats' => $stats,
-                'base_folder_id' => $baseFolder->id
+                'stats' => $resultado['stats'],
+                'base_folder_id' => $resultado['base']->id,
             ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            if (isset($tempExtractPath) && is_dir($tempExtractPath)) {
-                $this->deleteDirectory($tempExtractPath);
+        } catch (Throwable $e) {
+            // La BD ya se ha revertido: borrar los ficheros copiados.
+            foreach ($guardados as $guardado) {
+                Storage::disk($guardado['disco'])->delete($guardado['ruta']);
             }
 
             Log::error('Error extrayendo ZIP', [
                 'file' => $file->nombre,
                 'error' => $e->getMessage(),
-                'line' => $e->getLine()
+                'line' => $e->getLine(),
             ]);
 
             return response()->json([
-                'message' => 'Error al extraer el archivo ZIP: ' . $e->getMessage()
+                'message' => 'Error al extraer el archivo ZIP: '.$e->getMessage(),
             ], 500);
-        }
-    }
-
-    private function processExtractedContent($sourcePath, $parentFolderId)
-    {
-        $stats = ['folders' => 0, 'files' => 0];
-        $disk = Storage::disk('public');
-
-        $items = scandir($sourcePath);
-
-        foreach ($items as $item) {
-            if ($item === '.' || $item === '..') {
-                continue;
+        } finally {
+            if ($zip instanceof ZipArchive) {
+                @$zip->close();
             }
 
-            $itemPath = $sourcePath . DIRECTORY_SEPARATOR . $item;
-
-            if (is_dir($itemPath)) {
-                // Crear carpeta en BD
-                $folder = Folder::create([
-                    'nombre' => $item,
-                    'parent_id' => $parentFolderId,
-                    'tipo' => 1,
-                    'usuario_id' => auth()->id()
-                ]);
-
-                $stats['folders']++;
-
-                // Procesar contenido de la subcarpeta recursivamente
-                $subStats = $this->processExtractedContent($itemPath, $folder->id);
-                $stats['folders'] += $subStats['folders'];
-                $stats['files'] += $subStats['files'];
-            } else {
-                // Es un archivo
-                $fileName = time() . '_' . uniqid() . '_' . basename($item);
-                $destinationPath = 'uploads' . DIRECTORY_SEPARATOR . $fileName;
-
-                // Copiar archivo a storage/app/public/uploads
-                $fullDestPath = $disk->path($destinationPath);
-
-                if (copy($itemPath, $fullDestPath)) {
-                    // Crear registro en BD
-                    File::create([
-                        'folder_id' => $parentFolderId,
-                        'usuario_id' => auth()->id(),
-                        'nombre' => basename($item),
-                        'ruta' => 'uploads/' . $fileName,
-                        'tipo' => mime_content_type($itemPath) ?: 'application/octet-stream',
-                        'tamaño' => filesize($itemPath),
-                        'tiene_caducidad' => false
-                    ]);
-
-                    $stats['files']++;
-                }
-            }
+            $this->borrarDirectorio($temporal);
         }
-
-        return $stats;
-    }
-
-    private function deleteDirectory($dir)
-    {
-        if (!is_dir($dir)) {
-            return;
-        }
-
-        $items = scandir($dir);
-
-        foreach ($items as $item) {
-            if ($item === '.' || $item === '..') {
-                continue;
-            }
-
-            $path = $dir . DIRECTORY_SEPARATOR . $item;
-
-            if (is_dir($path)) {
-                $this->deleteDirectory($path);
-            } else {
-                unlink($path);
-            }
-        }
-
-        rmdir($dir);
     }
 
     public function expiringFiles(Request $request)
     {
-        $days = $request->get('days', 30);
+        $days = min(max((int) $request->get('days', 30), 1), 365);
+        $hoy = today();
 
-        $now = now()->startOfDay();
-        $futureLimit = now()->addDays($days)->endOfDay();
-
-        $files = File::where('usuario_id', auth()->id())
-            ->where('tiene_caducidad', true)
+        $files = File::where('tiene_caducidad', true)
             ->whereNotNull('fecha_caducidad')
             ->whereBetween('fecha_caducidad', [
-                now()->subYears(1), // límite inferior razonable
-                $futureLimit
+                now()->subYears(1)->toDateString(),
+                now()->addDays($days)->toDateString(),
             ])
             ->with('folder')
             ->orderBy('fecha_caducidad', 'asc')
             ->get()
-            ->map(function ($file) use ($now) {
-                $file->estado_caducidad = $file->fecha_caducidad < $now
+            ->map(function ($file) use ($hoy) {
+                $file->estado_caducidad = Carbon::parse($file->fecha_caducidad)->lt($hoy)
                     ? 'vencido'
                     : 'proximo';
 
@@ -430,7 +291,184 @@ class FileController extends Controller
 
         return response()->json([
             'files' => $files,
-            'total' => $files->count()
+            'total' => $files->count(),
         ]);
+    }
+
+    // -------------------------------------------------------------
+    // Internos
+    // -------------------------------------------------------------
+
+    private function getUniqueFileName(string $baseName, int $folderId): string
+    {
+        $name = $baseName;
+        $counter = 1;
+        $pathInfo = pathinfo($baseName);
+        $sinExtension = $pathInfo['filename'];
+        $extension = isset($pathInfo['extension']) ? '.'.$pathInfo['extension'] : '';
+
+        while (File::where('folder_id', $folderId)->where('nombre', $name)->exists()) {
+            $name = $sinExtension." ({$counter})".$extension;
+            $counter++;
+        }
+
+        return $name;
+    }
+
+    private function nombreCarpetaUnico(string $baseName, int $parentId): string
+    {
+        $baseName = mb_substr($baseName !== '' ? $baseName : 'Carpeta', 0, 150);
+        $name = $baseName;
+        $counter = 1;
+
+        while (Folder::where('parent_id', $parentId)->where('nombre', $name)->exists()) {
+            $name = mb_substr($baseName, 0, 140)." ({$counter})";
+            $counter++;
+        }
+
+        return $name;
+    }
+
+    private function validarContenidoZip(ZipArchive $zip): ?string
+    {
+        if ($zip->numFiles > self::ZIP_MAX_ENTRADAS) {
+            return 'El ZIP tiene demasiados elementos (máximo '.self::ZIP_MAX_ENTRADAS.').';
+        }
+
+        $total = 0;
+
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $stat = $zip->statIndex($i);
+
+            if ($stat === false) {
+                return 'El archivo ZIP está dañado.';
+            }
+
+            $nombre = str_replace('\\', '/', $stat['name']);
+
+            if (str_starts_with($nombre, '/') || preg_match('#(^|/)\.\.(/|$)#', $nombre) || preg_match('#^[A-Za-z]:#', $nombre)) {
+                return 'El ZIP contiene rutas no válidas.';
+            }
+
+            $total += (int) $stat['size'];
+
+            if ($total > self::ZIP_MAX_BYTES) {
+                return 'El contenido del ZIP es demasiado grande (máximo 500 MB descomprimido).';
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Si el contenido extraído es una única carpeta, se toma como raíz.
+     *
+     * @return array{0: string, 1: string} [directorio origen, nombre de la carpeta base]
+     */
+    private function raizDelContenido(string $directorio, string $nombreZip): array
+    {
+        $elementos = array_values(array_filter(
+            scandir($directorio) ?: [],
+            fn ($e) => $e !== '.' && $e !== '..' && ! $this->ignorar($e),
+        ));
+
+        if (count($elementos) === 1 && is_dir($directorio.DIRECTORY_SEPARATOR.$elementos[0])) {
+            return [$directorio.DIRECTORY_SEPARATOR.$elementos[0], $this->nombreSeguro($elementos[0])];
+        }
+
+        return [$directorio, $nombreZip];
+    }
+
+    /** @return array{folders: int, files: int} */
+    private function importarDirectorio(string $directorio, int $parentId, array &$guardados): array
+    {
+        $stats = ['folders' => 0, 'files' => 0];
+
+        foreach (scandir($directorio) ?: [] as $elemento) {
+            if ($elemento === '.' || $elemento === '..' || $this->ignorar($elemento)) {
+                continue;
+            }
+
+            $ruta = $directorio.DIRECTORY_SEPARATOR.$elemento;
+            $nombre = $this->nombreSeguro($elemento);
+
+            if (is_link($ruta)) {
+                continue;
+            }
+
+            if (is_dir($ruta)) {
+                $carpeta = Folder::create([
+                    'nombre' => $this->nombreCarpetaUnico($nombre, $parentId),
+                    'parent_id' => $parentId,
+                    'tipo' => 1,
+                    'usuario_id' => auth()->id(),
+                ]);
+
+                $stats['folders']++;
+                $sub = $this->importarDirectorio($ruta, (int) $carpeta->id, $guardados);
+                $stats['folders'] += $sub['folders'];
+                $stats['files'] += $sub['files'];
+
+                continue;
+            }
+
+            if (is_file($ruta)) {
+                $guardado = $this->storage->guardarDesdeRuta($ruta, $nombre);
+                $guardados[] = $guardado;
+
+                File::create([
+                    'folder_id' => $parentId,
+                    'usuario_id' => auth()->id(),
+                    'nombre' => mb_substr($nombre, 0, 255),
+                    'ruta' => $guardado['ruta'],
+                    'disco' => $guardado['disco'],
+                    'tipo' => mime_content_type($ruta) ?: 'application/octet-stream',
+                    'tamaño' => filesize($ruta),
+                    'tiene_caducidad' => false,
+                ]);
+
+                $stats['files']++;
+            }
+        }
+
+        return $stats;
+    }
+
+    private function ignorar(string $elemento): bool
+    {
+        return in_array($elemento, self::ZIP_IGNORAR, true) || str_starts_with($elemento, '._');
+    }
+
+    /** Los ZIP de Windows pueden traer nombres en otra codificación. */
+    private function nombreSeguro(string $nombre): string
+    {
+        if (! mb_check_encoding($nombre, 'UTF-8')) {
+            $nombre = mb_convert_encoding($nombre, 'UTF-8', 'CP850');
+        }
+
+        return trim(str_replace(['/', '\\'], '-', $nombre));
+    }
+
+    private function borrarDirectorio(string $directorio): void
+    {
+        if (! is_dir($directorio)) {
+            return;
+        }
+
+        foreach (scandir($directorio) ?: [] as $elemento) {
+            if ($elemento === '.' || $elemento === '..') {
+                continue;
+            }
+
+            $ruta = $directorio.DIRECTORY_SEPARATOR.$elemento;
+
+            if (is_dir($ruta) && ! is_link($ruta)) {
+                $this->borrarDirectorio($ruta);
+            } else {
+                @unlink($ruta);
+            }
+        }
+
+        @rmdir($directorio);
     }
 }

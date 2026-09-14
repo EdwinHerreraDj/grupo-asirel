@@ -15,6 +15,7 @@ class File extends Model
         'usuario_id',
         'nombre',
         'ruta',
+        'disco',
         'tipo',
         'tamaño',
         'tiene_caducidad',

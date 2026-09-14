@@ -28,11 +28,11 @@ class AccesoModulosPorRolTest extends TestCase
         '/proveedores',
         '/empresa/facturas-series',
         '/empresa/facturas-ventas',
+        '/empresa/drive-app',
     ];
 
     private const PARA_TODOS = [
         '/empresa',
-        '/empresa/drive-app',
         '/facturas-recibidas',
         '/tareas',
     ];
@@ -84,6 +84,7 @@ class AccesoModulosPorRolTest extends TestCase
         $html = $this->actingAs($this->usuario(User::ROLE_USER))->get('/empresa')->getContent();
         $this->assertStringNotContainsString(route('empresa.gastosEmpresa'), $html);
         $this->assertStringNotContainsString(route('empresa.facturas-ventas'), $html);
+        $this->assertStringNotContainsString(route('empresa.driveApp'), $html);
 
         $html = $this->actingAs($this->usuario(User::ROLE_ADMIN))->get('/empresa')->getContent();
         $this->assertStringContainsString(route('empresa.gastosEmpresa'), $html);

@@ -39,6 +39,24 @@ class Folder extends Model
         return $this->hasMany(self::class, 'parent_id');
     }
 
+    /**
+     * Ruta legible desde la raíz: "Inicio / Empresa / Contratos".
+     */
+    public function rutaCompleta(): string
+    {
+        $partes = [];
+        $visitadas = [];
+        $actual = $this;
+
+        while ($actual && ! isset($visitadas[$actual->id])) {
+            $visitadas[$actual->id] = true;
+            array_unshift($partes, $actual->nombre);
+            $actual = $actual->parent_id > 0 ? self::find($actual->parent_id) : null;
+        }
+
+        return 'Inicio'.($partes ? ' / '.implode(' / ', $partes) : '');
+    }
+
     /* Scopes útiles */
     public function scopeRoot($query)
     {

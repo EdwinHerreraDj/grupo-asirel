@@ -55,28 +55,31 @@ Route::middleware('auth')->prefix('api')->group(function () {
     Route::put('proveedores/{id}', [ApiProveedorController::class, 'update'])->middleware('role:admin,super_admin');
     Route::delete('proveedores/{id}', [ApiProveedorController::class, 'destroy'])->middleware('role:admin,super_admin');
 
-    /* Buscador de folder files */
-    Route::get('drive/search', [SearchController::class, 'search'])->name('api.drive.search');
+    /* ===== DRIVE: solo admin y super_admin ===== */
+    Route::middleware('role:admin,super_admin')->group(function () {
+        /* Buscador de folder files */
+        Route::get('drive/search', [SearchController::class, 'search'])->name('api.drive.search');
 
-    /* Rutas de folder Componentes DRIVE */
-    Route::prefix('folders')->group(function () {
-        Route::get('{id}/content', [FolderController::class, 'getContent']);
-        Route::post('/', [FolderController::class, 'store']);
-        Route::put('{id}', [FolderController::class, 'update']);
-        Route::delete('{id}', [FolderController::class, 'destroy']);
-        Route::post('{id}/move', [FolderController::class, 'move']);
-        Route::get('{id}/download', [FolderController::class, 'download']);
-    });
+        /* Rutas de folder Componentes DRIVE */
+        Route::prefix('folders')->group(function () {
+            Route::get('{id}/content', [FolderController::class, 'getContent']);
+            Route::post('/', [FolderController::class, 'store']);
+            Route::put('{id}', [FolderController::class, 'update']);
+            Route::delete('{id}', [FolderController::class, 'destroy']);
+            Route::post('{id}/move', [FolderController::class, 'move']);
+            Route::get('{id}/download', [FolderController::class, 'download']);
+        });
 
-    /* Rutas de archivos Componentes DRIVE */
-    Route::prefix('files')->group(function () {
-        Route::get('expiring', [ApiFileController::class, 'expiringFiles']);
-        Route::post('/', [ApiFileController::class, 'store']);
-        Route::put('{id}', [ApiFileController::class, 'update']);
-        Route::delete('{id}', [ApiFileController::class, 'destroy']);
-        Route::get('{id}/download', [ApiFileController::class, 'download']);
-        Route::post('{id}/move', [ApiFileController::class, 'move']);
-        Route::post('{id}/extract', [ApiFileController::class, 'extract']);
+        /* Rutas de archivos Componentes DRIVE */
+        Route::prefix('files')->group(function () {
+            Route::get('expiring', [ApiFileController::class, 'expiringFiles']);
+            Route::post('/', [ApiFileController::class, 'store']);
+            Route::put('{id}', [ApiFileController::class, 'update']);
+            Route::delete('{id}', [ApiFileController::class, 'destroy']);
+            Route::get('{id}/download', [ApiFileController::class, 'download']);
+            Route::post('{id}/move', [ApiFileController::class, 'move']);
+            Route::post('{id}/extract', [ApiFileController::class, 'extract']);
+        });
     });
 });
 
@@ -104,7 +107,7 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
     // Mi Unidad
     Route::get('/empresa', [EmpresaController::class, 'index'])->name('empresa.index');
     Route::get('/empresa/configuracion', [EmpresaController::class, 'configuracion'])->middleware('role:admin,super_admin')->name('empresa.configuracion');
-    Route::get('/empresa/drive-app', [FoldersController::class, 'index'])->name('empresa.driveApp');
+    Route::get('/empresa/drive-app', [FoldersController::class, 'index'])->middleware('role:admin,super_admin')->name('empresa.driveApp');
 
     // Rutas de Obras
     Route::get('/obra/{id}/informe-general', [ObraController::class, 'informeGeneral'])->name('obra.informe.general');
@@ -162,10 +165,8 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
     Route::put('/resumen/{id}', [FichajeController::class, 'update'])->name('resumen.update');
     Route::get('/obra/{id}/fichajes/informes/excel', [FichajeController::class, 'fichajesExcel'])->name('obra.fichajes.excel');
 
-    // Rutas de Drive App (Carpetas y Archivos)
-    Route::get('/descargar/{file}', [FileController::class, 'descargar'])->name('files.descargar');
-    Route::get('/descargar-carpeta/{id}', [FileController::class, 'descargarCarpeta'])->name('folders.descargarCarpeta');
-    Route::get('/drive/ver/{file}', [FileController::class, 'ver'])->name('drive.ver');
+    // Drive: vista previa de archivos (solo admin y super_admin)
+    Route::get('/drive/ver/{file}', [FileController::class, 'ver'])->middleware('role:admin,super_admin')->name('drive.ver');
 
     // Rutas de Gastos de la Empresa
     Route::get('/empresa/gastos-empresa', [GastosEmpresaController::class, 'index'])->middleware('role:admin,super_admin')->name('empresa.gastosEmpresa');

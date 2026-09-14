@@ -3,60 +3,74 @@
 namespace App\Http\Controllers\Api\Drive;
 
 use App\Http\Controllers\Controller;
-use App\Models\Folder;
+use App\Models\DriveEliminacion;
 use App\Models\File;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Log;
-use ZipArchive;
+use App\Models\Folder;
+use App\Services\Drive\DriveStorage;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\Rule;
+use Throwable;
+use ZipArchive;
 
 class FolderController extends Controller
 {
+    /** Intentos de contraseña por minuto al borrar carpetas. */
+    private const INTENTOS_CONTRASENA = 5;
+
+    public function __construct(
+        private readonly DriveStorage $storage,
+    ) {}
+
     public function getContent($id)
     {
         $id = (int) $id;
 
-
-        // Obtener carpetas hijas
         $folders = Folder::where('parent_id', $id)
             ->orderBy('nombre', 'asc')
             ->get();
 
-        // Obtener archivos de esta carpeta
         $files = File::where('folder_id', $id)
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // Construir breadcrumbs
-        $breadcrumbs = $this->buildBreadcrumbs($id);
-
         return response()->json([
             'folders' => $folders,
             'files' => $files,
-            'breadcrumbs' => $breadcrumbs,
-            'current_folder_id' => $id
+            'breadcrumbs' => $this->buildBreadcrumbs($id),
+            'current_folder_id' => $id,
         ]);
     }
 
     public function store(Request $request)
     {
+        $parentId = (int) $request->input('parent_id', 0);
+
         $validated = $request->validate([
-            'nombre' => 'required|string|max:255',
-            'parent_id' => 'required|integer|min:0',
-        ]);
+            'parent_id' => ['required', 'integer', 'min:0'],
+            'nombre' => [
+                'required', 'string', 'max:150',
+                Rule::unique('folders', 'nombre')->where('parent_id', $parentId),
+            ],
+        ], $this->mensajesNombre());
+
+        if ($parentId > 0 && ! Folder::whereKey($parentId)->exists()) {
+            return response()->json(['message' => 'La carpeta de destino no existe.'], 422);
+        }
 
         $folder = Folder::create([
             'nombre' => $validated['nombre'],
-            'parent_id' => $validated['parent_id'],
+            'parent_id' => $parentId,
             'tipo' => 1,
-            'usuario_id' => auth()->id()
+            'usuario_id' => auth()->id(),
         ]);
-
 
         return response()->json([
             'message' => 'Carpeta creada exitosamente',
-            'folder' => $folder
+            'folder' => $folder,
         ], 201);
     }
 
@@ -65,131 +79,121 @@ class FolderController extends Controller
         $folder = Folder::findOrFail($id);
 
         $validated = $request->validate([
-            'nombre' => 'required|string|max:255'
-        ]);
+            'nombre' => [
+                'required', 'string', 'max:150',
+                Rule::unique('folders', 'nombre')
+                    ->where('parent_id', (int) $folder->parent_id)
+                    ->ignore($folder->id),
+            ],
+        ], $this->mensajesNombre());
 
-        $folder->update($validated);
+        $folder->update(['nombre' => $validated['nombre']]);
 
         return response()->json([
             'message' => 'Carpeta actualizada exitosamente',
-            'folder' => $folder
+            'folder' => $folder,
         ]);
     }
 
-    public function destroy($id)
+    /**
+     * Borra la carpeta con TODO su contenido (subcarpetas y archivos).
+     * Exige la contraseña del usuario para evitar borrados accidentales.
+     */
+    public function destroy(Request $request, $id)
     {
         $folder = Folder::findOrFail($id);
+        $user = $request->user();
 
-        // Verificar que no tenga carpetas hijas
-        if ($folder->children()->count() > 0) {
+        $request->validate(
+            ['password' => ['required', 'string']],
+            ['password.required' => 'Introduce tu contraseña para confirmar el borrado.'],
+        );
+
+        $claveIntentos = 'drive-borrar-carpeta:'.$user->id;
+
+        if (RateLimiter::tooManyAttempts($claveIntentos, self::INTENTOS_CONTRASENA)) {
             return response()->json([
-                'message' => 'No se puede eliminar una carpeta que contiene otras carpetas'
+                'message' => 'Demasiados intentos. Espera '.RateLimiter::availableIn($claveIntentos).' segundos.',
+            ], 429);
+        }
+
+        if (! Hash::check($request->input('password'), $user->password)) {
+            RateLimiter::hit($claveIntentos, 60);
+
+            return response()->json([
+                'message' => 'La contraseña no es correcta.',
+                'errors' => ['password' => ['La contraseña no es correcta.']],
             ], 422);
         }
 
-        // Verificar que no tenga archivos
-        if ($folder->files()->count() > 0) {
-            return response()->json([
-                'message' => 'No se puede eliminar una carpeta que contiene archivos'
-            ], 422);
-        }
+        RateLimiter::clear($claveIntentos);
 
-        $folder->delete();
+        $carpetaIds = $this->idsConDescendientes($folder);
+        $archivos = File::whereIn('folder_id', $carpetaIds)->get();
+        $ubicacion = $folder->parent_id > 0
+            ? optional(Folder::find($folder->parent_id))->rutaCompleta() ?? 'Inicio'
+            : 'Inicio';
+
+        DB::transaction(function () use ($folder, $carpetaIds, $archivos, $ubicacion, $user) {
+            DriveEliminacion::create([
+                'user_id' => $user->id,
+                'tipo' => 'carpeta',
+                'nombre' => $folder->nombre,
+                'ubicacion' => $ubicacion,
+                'carpetas' => count($carpetaIds),
+                'archivos' => $archivos->count(),
+            ]);
+
+            File::whereIn('folder_id', $carpetaIds)->delete();
+            Folder::whereIn('id', $carpetaIds)->delete();
+        });
+
+        // Ficheros físicos solo después de confirmar el borrado en BD.
+        foreach ($archivos as $archivo) {
+            try {
+                $this->storage->borrar($archivo);
+            } catch (Throwable $e) {
+                Log::warning('Drive: no se pudo borrar el fichero físico', [
+                    'file_id' => $archivo->id,
+                    'ruta' => $archivo->ruta,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
 
         return response()->json([
-            'message' => 'Carpeta eliminada exitosamente'
+            'message' => 'Carpeta eliminada exitosamente',
+            'carpetas' => count($carpetaIds),
+            'archivos' => $archivos->count(),
         ]);
-    }
-
-    private function buildBreadcrumbs($folderId)
-    {
-        $breadcrumbs = [];
-        $current = $folderId > 0 ? Folder::find($folderId) : null;
-
-        // Construir cadena desde el nodo actual hasta la raíz
-        while ($current) {
-            array_unshift($breadcrumbs, [
-                'id' => $current->id,
-                'nombre' => $current->nombre
-            ]);
-
-            $current = $current->parent_id > 0 ? Folder::find($current->parent_id) : null;
-        }
-
-        // Agregar "Inicio" al principio
-        array_unshift($breadcrumbs, [
-            'id' => 0,
-            'nombre' => 'Inicio'
-        ]);
-
-        return $breadcrumbs;
-    }
-
-
-    public function copy(Request $request, $id)
-    {
-        $validated = $request->validate([
-            'target_folder_id' => 'required|integer|min:0'
-        ]);
-
-        $sourceFolder = Folder::findOrFail($id);
-        $targetFolderId = $validated['target_folder_id'];
-
-        // Verificar que no se copie dentro de sí misma
-        if ($this->isDescendant($targetFolderId, $id)) {
-            return response()->json([
-                'message' => 'No se puede copiar una carpeta dentro de sí misma'
-            ], 422);
-        }
-
-        DB::beginTransaction();
-        try {
-            $newFolder = $this->copyFolderRecursive($sourceFolder, $targetFolderId);
-            DB::commit();
-
-            return response()->json([
-                'message' => 'Carpeta copiada exitosamente',
-                'folder' => $newFolder
-            ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Error copying folder: ' . $e->getMessage());
-            return response()->json([
-                'message' => 'Error al copiar la carpeta',
-                'error' => $e->getMessage()
-            ], 500);
-        }
     }
 
     public function move(Request $request, $id)
     {
         $validated = $request->validate([
-            'target_folder_id' => 'required|integer|min:0'
+            'target_folder_id' => 'required|integer|min:0',
         ]);
 
         $folder = Folder::findOrFail($id);
-        $targetFolderId = $validated['target_folder_id'];
+        $targetFolderId = (int) $validated['target_folder_id'];
 
-        // Verificar que no se mueva dentro de sí misma
-        if ($this->isDescendant($targetFolderId, $id)) {
+        if ($targetFolderId > 0 && ! Folder::whereKey($targetFolderId)->exists()) {
+            return response()->json(['message' => 'La carpeta de destino no existe.'], 422);
+        }
+
+        if ($this->isDescendant($targetFolderId, (int) $id)) {
             return response()->json([
-                'message' => 'No se puede mover una carpeta dentro de sí misma'
+                'message' => 'No se puede mover una carpeta dentro de sí misma',
             ], 422);
         }
 
-        // Verificar si ya existe una carpeta con el mismo nombre
-        $existingFolder = Folder::where('parent_id', $targetFolderId)
+        $wasRenamed = Folder::where('parent_id', $targetFolderId)
             ->where('nombre', $folder->nombre)
-            ->where('id', '!=', $id)
-            ->first();
+            ->where('id', '!=', $folder->id)
+            ->exists();
 
-        if ($existingFolder) {
-            // Generar nombre único automáticamente
-            $uniqueName = $this->getUniqueFolderName($folder->nombre, $targetFolderId);
-            $folder->nombre = $uniqueName;
-            $wasRenamed = true;
-        } else {
-            $wasRenamed = false;
+        if ($wasRenamed) {
+            $folder->nombre = $this->getUniqueFolderName($folder->nombre, $targetFolderId);
         }
 
         $folder->parent_id = $targetFolderId;
@@ -198,221 +202,148 @@ class FolderController extends Controller
         return response()->json([
             'message' => 'Carpeta movida exitosamente',
             'folder' => $folder,
-            'was_renamed' => $wasRenamed
+            'was_renamed' => $wasRenamed,
         ]);
     }
 
-    private function copyFolderRecursive(Folder $sourceFolder, $targetParentId)
+    public function download($id)
     {
-        // Generar nombre único si ya existe
-        $newName = $this->getUniqueFolderName($sourceFolder->nombre, $targetParentId);
+        $folder = Folder::findOrFail($id);
 
-        // Crear la nueva carpeta
-        $newFolder = Folder::create([
-            'nombre' => $newName,
-            'parent_id' => $targetParentId,
-            'tipo' => $sourceFolder->tipo,
-            'usuario_id' => auth()->id()
-        ]);
+        $tempDir = storage_path('app'.DIRECTORY_SEPARATOR.'temp');
+        $zipPath = $tempDir.DIRECTORY_SEPARATOR.uniqid('carpeta_', true).'.zip';
 
-        // Copiar archivos de la carpeta
-        foreach ($sourceFolder->files as $file) {
-            $this->copyFile($file, $newFolder->id);
+        if (! is_dir($tempDir)) {
+            mkdir($tempDir, 0755, true);
         }
 
-        // Copiar subcarpetas recursivamente
-        foreach ($sourceFolder->children as $childFolder) {
-            $this->copyFolderRecursive($childFolder, $newFolder->id);
+        $zip = new ZipArchive;
+
+        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+            return response()->json(['message' => 'No se pudo crear el archivo ZIP'], 500);
         }
 
-        return $newFolder;
+        try {
+            $this->addFolderRecursively($folder, $zip, '');
+            $zip->close();
+
+            if (! file_exists($zipPath)) {
+                return response()->json(['message' => 'No se pudo generar el ZIP'], 500);
+            }
+
+            return response()->download($zipPath, str_replace(['/', '\\'], '-', $folder->nombre).'.zip', [
+                'Content-Type' => 'application/zip',
+            ])->deleteFileAfterSend(true);
+        } catch (Throwable $e) {
+            @$zip->close();
+
+            if (file_exists($zipPath)) {
+                @unlink($zipPath);
+            }
+
+            Log::error('Error creando ZIP', ['folder_id' => $id, 'error' => $e->getMessage()]);
+
+            return response()->json(['message' => 'Error al crear el archivo ZIP'], 500);
+        }
     }
 
+    // -------------------------------------------------------------
+    // Internos
+    // -------------------------------------------------------------
 
-    private function copyFile($sourceFile, $targetFolderId)
+    private function mensajesNombre(): array
     {
-        $storage = Storage::disk('public');
-
-        // Generar nuevo nombre de archivo físico único
-        $fileName = time() . '_' . uniqid() . '_' . basename($sourceFile->ruta);
-        $newPath = 'uploads/' . $fileName;
-
-        // Copiar el archivo físico
-        if ($storage->exists($sourceFile->ruta)) {
-            $storage->copy($sourceFile->ruta, $newPath);
-        }
-
-        // Generar nombre único para la BD si ya existe
-        $uniqueName = $this->getUniqueFileName($sourceFile->nombre, $targetFolderId);
-
-        // Crear registro en BD
-        return \App\Models\File::create([
-            'folder_id' => $targetFolderId,
-            'usuario_id' => auth()->id(),
-            'nombre' => $uniqueName,
-            'ruta' => $newPath,
-            'tipo' => $sourceFile->tipo,
-            'tamaño' => $sourceFile->tamaño,
-            'tiene_caducidad' => $sourceFile->tiene_caducidad,
-            'fecha_caducidad' => $sourceFile->fecha_caducidad
-        ]);
+        return [
+            'nombre.unique' => 'Ya existe una carpeta con ese nombre en esta ubicación.',
+            'nombre.max' => 'El nombre de la carpeta no puede superar 150 caracteres.',
+        ];
     }
 
-    private function getUniqueFolderName($baseName, $parentId)
+    private function buildBreadcrumbs($folderId): array
+    {
+        $breadcrumbs = [];
+        $visitadas = [];
+        $current = $folderId > 0 ? Folder::find($folderId) : null;
+
+        while ($current && ! isset($visitadas[$current->id])) {
+            $visitadas[$current->id] = true;
+            array_unshift($breadcrumbs, ['id' => $current->id, 'nombre' => $current->nombre]);
+            $current = $current->parent_id > 0 ? Folder::find($current->parent_id) : null;
+        }
+
+        array_unshift($breadcrumbs, ['id' => 0, 'nombre' => 'Inicio']);
+
+        return $breadcrumbs;
+    }
+
+    /** @return int[] ids de la carpeta y todas sus subcarpetas */
+    private function idsConDescendientes(Folder $folder): array
+    {
+        $ids = [(int) $folder->id];
+        $pendientes = $ids;
+
+        while ($pendientes) {
+            $hijos = Folder::whereIn('parent_id', $pendientes)
+                ->whereNotIn('id', $ids)
+                ->pluck('id')
+                ->map(fn ($id) => (int) $id)
+                ->all();
+
+            $ids = array_merge($ids, $hijos);
+            $pendientes = $hijos;
+        }
+
+        return $ids;
+    }
+
+    private function getUniqueFolderName(string $baseName, int $parentId): string
     {
         $name = $baseName;
         $counter = 1;
 
-        while ($this->folderNameExists($name, $parentId)) {
-            // Formato: "Carpeta (1)", "Carpeta (2)", etc.
-            $name = $baseName . " ({$counter})";
+        while (Folder::where('parent_id', $parentId)->where('nombre', $name)->exists()) {
+            $name = mb_substr($baseName, 0, 140)." ({$counter})";
             $counter++;
         }
 
         return $name;
     }
 
-    private function getUniqueFileName($baseName, $folderId)
+    private function isDescendant(int $potentialDescendantId, int $ancestorId): bool
     {
-        $name = $baseName;
-        $counter = 1;
-
-        while ($this->fileNameExists($name, $folderId)) {
-            // Extraer extensión si es archivo
-            $pathInfo = pathinfo($baseName);
-            $nameWithoutExt = $pathInfo['filename'];
-            $extension = isset($pathInfo['extension']) ? '.' . $pathInfo['extension'] : '';
-
-            $name = $nameWithoutExt . " ({$counter})" . $extension;
-            $counter++;
-        }
-
-        return $name;
-    }
-
-    private function nameExists($name, $folderId, $type)
-    {
-        if ($type === 'folder') {
-            return Folder::where('parent_id', $folderId)
-                ->where('nombre', $name)
-                ->exists();
-        } else {
-            return \App\Models\File::where('folder_id', $folderId)
-                ->where('nombre', $name)
-                ->exists();
-        }
-    }
-
-    private function folderNameExists($name, $parentId)
-    {
-        return Folder::where('parent_id', $parentId)
-            ->where('nombre', $name)
-            ->exists();
-    }
-
-    private function fileNameExists($name, $folderId)
-    {
-        return \App\Models\File::where('folder_id', $folderId)
-            ->where('nombre', $name)
-            ->exists();
-    }
-
-    private function isDescendant($potentialDescendantId, $ancestorId)
-    {
-        if ($potentialDescendantId == $ancestorId) {
+        if ($potentialDescendantId === $ancestorId) {
             return true;
         }
 
+        $visitadas = [];
         $current = Folder::find($potentialDescendantId);
 
-        while ($current && $current->parent_id > 0) {
-            if ($current->parent_id == $ancestorId) {
+        while ($current && $current->parent_id > 0 && ! isset($visitadas[$current->id])) {
+            $visitadas[$current->id] = true;
+
+            if ((int) $current->parent_id === $ancestorId) {
                 return true;
             }
+
             $current = Folder::find($current->parent_id);
         }
 
         return false;
     }
 
-
-
-    public function download($id)
+    private function addFolderRecursively(Folder $folder, ZipArchive $zip, string $parentPath): void
     {
-        $folder = Folder::with(['files', 'children'])->findOrFail($id);
-
-        $zipFileName = preg_replace('/[^A-Za-z0-9_\-\s]/', '_', $folder->nombre) . '.zip';
-
-        $tempDir = storage_path('app' . DIRECTORY_SEPARATOR . 'temp');
-        $zipPath = $tempDir . DIRECTORY_SEPARATOR . uniqid() . '_' . time() . '.zip';
-
-        if (!is_dir($tempDir)) {
-            mkdir($tempDir, 0755, true);
-        }
-
-        $zip = new ZipArchive;
-
-        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== TRUE) {
-            return response()->json(['message' => 'No se pudo crear el archivo ZIP'], 500);
-        }
-
-        try {
-
-            $disk = Storage::disk('public');
-
-            $this->addFolderRecursively($folder, $zip, '', $disk);
-
-            $zip->close();
-
-            if (!file_exists($zipPath)) {
-                return response()->json(['message' => 'No se pudo generar el ZIP'], 500);
-            }
-
-            return response()->download($zipPath, $zipFileName, [
-                'Content-Type' => 'application/zip',
-            ])->deleteFileAfterSend(true);
-        } catch (\Exception $e) {
-
-            if (isset($zip)) {
-                @$zip->close();
-            }
-
-            if (file_exists($zipPath)) {
-                @unlink($zipPath);
-            }
-
-            Log::error('Error creando ZIP', [
-                'folder_id' => $id,
-                'error' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'message' => 'Error al crear el archivo ZIP'
-            ], 500);
-        }
-    }
-    private function addFolderRecursively($folder, $zip, $parentPath, $disk)
-    {
-        $currentPath = $parentPath . $folder->nombre . '/';
-
-        // Crear carpeta aunque esté vacía
+        $currentPath = $parentPath.str_replace(['/', '\\'], '-', $folder->nombre).'/';
         $zip->addEmptyDir($currentPath);
 
-        // Añadir archivos
         foreach ($folder->files as $file) {
-
-            $filePath = $disk->path($file->ruta);
-
-            if (file_exists($filePath) && is_readable($filePath)) {
-                $zip->addFile($filePath, $currentPath . $file->nombre);
+            if ($this->storage->existe($file)) {
+                $zip->addFile($this->storage->rutaAbsoluta($file), $currentPath.$file->nombre);
             }
         }
 
-        // Cargar hijos dinámicamente
-        $children = $folder->children()->with(['files', 'children'])->get();
-
-        foreach ($children as $child) {
-            $this->addFolderRecursively($child, $zip, $currentPath, $disk);
+        foreach ($folder->children()->with('files')->get() as $child) {
+            $this->addFolderRecursively($child, $zip, $currentPath);
         }
     }
 }

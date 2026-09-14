@@ -22,9 +22,11 @@ class SearchController extends Controller
             ]);
         }
 
+        // Drive compartido entre administradores: se busca en todo.
+        $like = '%'.addcslashes($query, '%_\\').'%';
+
         // Buscar carpetas
-        $folders = Folder::where('usuario_id', auth()->id())
-            ->where('nombre', 'LIKE', "%{$query}%")
+        $folders = Folder::where('nombre', 'LIKE', $like)
             ->with('parent')
             ->orderBy('nombre', 'asc')
             ->get()
@@ -35,8 +37,7 @@ class SearchController extends Controller
             });
 
         // Buscar archivos
-        $files = File::where('usuario_id', auth()->id())
-            ->where('nombre', 'LIKE', "%{$query}%")
+        $files = File::where('nombre', 'LIKE', $like)
             ->with('folder')
             ->orderBy('nombre', 'asc')
             ->get()

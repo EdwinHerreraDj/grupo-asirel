@@ -22,6 +22,8 @@
                 </div>
 
                 <div class="grid grid-cols-1 gap-4 px-5 py-5 sm:grid-cols-3 sm:px-6">
+                    {{-- Drive, gastos y facturas: solo admin (mismo criterio que el menú lateral) --}}
+                    @if (auth()->user()?->isAdmin())
                     {{-- Drive --}}
                     <a href="{{ route('empresa.driveApp') }}"
                         class="group flex flex-col items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md">
@@ -34,8 +36,6 @@
                         </p>
                     </a>
 
-                    {{-- Gastos y facturas: solo admin (mismo criterio que el menú lateral) --}}
-                    @if (auth()->user()?->isAdmin())
                     {{-- Gastos --}}
                     <a href="{{ route('empresa.gastosEmpresa') }}"
                         class="group flex flex-col items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-md">
@@ -59,6 +59,8 @@
                             Gestión global de facturas emitidas y certificaciones.
                         </p>
                     </a>
+                    @else
+                    <p class="col-span-full text-sm text-slate-500">No tienes accesos rápidos disponibles.</p>
                     @endif
                 </div>
             </div>

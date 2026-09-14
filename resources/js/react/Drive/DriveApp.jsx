@@ -27,6 +27,9 @@ function DriveAppContent() {
     const [previewFile, setPreviewFile] = useState(null);
 
     const [searchResults, setSearchResults] = useState(null);
+    const [pendienteBorrar, setPendienteBorrar] = useState(null);
+    const [borrando, setBorrando] = useState(false);
+    const [errorBorrado, setErrorBorrado] = useState("");
     const [isSearching, setIsSearching] = useState(false);
 
     const { showSuccess, showError, showWarning, showInfo } = useNotification();
@@ -196,7 +199,6 @@ function DriveAppContent() {
             await api.post("/folders", {
                 nombre,
                 parent_id: currentFolderId,
-                tipo: "general",
             });
             showSuccess("Carpeta creada exitosamente");
             loadFolder(currentFolderId);
@@ -247,29 +249,63 @@ function DriveAppContent() {
         loadFolder(currentFolderId);
     };
 
-    const handleDeleteFolder = async (folderId) => {
-        try {
-            await api.delete(`/folders/${folderId}`);
-            showSuccess("Carpeta eliminada exitosamente");
-            loadFolder(currentFolderId);
-        } catch (error) {
-            console.error("Error deleting folder:", error);
-            showError(
-                error.response?.data?.message || "Error al eliminar la carpeta",
-            );
-        }
+    // Borrado: abre el modal de confirmación (carpetas piden contraseña).
+    const handleDeleteFolder = (folderId) => {
+        const carpeta = folders.find((f) => f.id === folderId);
+        setErrorBorrado("");
+        setPendienteBorrar({
+            tipo: "carpeta",
+            id: folderId,
+            nombre: carpeta?.nombre ?? "Carpeta",
+        });
     };
 
-    const handleDeleteFile = async (fileId) => {
+    const handleDeleteFile = (fileId) => {
+        const archivo = files.find((f) => f.id === fileId);
+        setErrorBorrado("");
+        setPendienteBorrar({
+            tipo: "archivo",
+            id: fileId,
+            nombre: archivo?.nombre ?? "Archivo",
+        });
+    };
+
+    const cancelarBorrado = () => {
+        setPendienteBorrar(null);
+        setErrorBorrado("");
+    };
+
+    const confirmarBorrado = async (password) => {
+        if (!pendienteBorrar) return;
+
+        setBorrando(true);
+        setErrorBorrado("");
+
         try {
-            await api.delete(`/files/${fileId}`);
-            showSuccess("Archivo eliminado exitosamente");
+            if (pendienteBorrar.tipo === "carpeta") {
+                const { data } = await api.delete(
+                    `/folders/${pendienteBorrar.id}`,
+                    { data: { password } },
+                );
+                showSuccess(
+                    `Carpeta eliminada: ${data.carpetas} carpeta(s) y ${data.archivos} archivo(s)`,
+                );
+            } else {
+                await api.delete(`/files/${pendienteBorrar.id}`);
+                showSuccess("Archivo eliminado exitosamente");
+            }
+
+            setPendienteBorrar(null);
             loadFolder(currentFolderId);
         } catch (error) {
-            console.error("Error deleting file:", error);
-            showError(
-                error.response?.data?.message || "Error al eliminar el archivo",
+            console.error("Error deleting:", error);
+            setErrorBorrado(
+                error.response?.data?.errors?.password?.[0] ||
+                    error.response?.data?.message ||
+                    "No se pudo eliminar",
             );
+        } finally {
+            setBorrando(false);
         }
     };
 
@@ -279,10 +315,12 @@ function DriveAppContent() {
                 responseType: "blob",
             });
 
+            // Nombre original (con acentos) desde el listado; la cabecera solo como respaldo.
+            const archivo = files.find((f) => f.id === fileId);
             const contentDisposition = response.headers["content-disposition"];
-            let fileName = "download";
+            let fileName = archivo?.nombre || "download";
 
-            if (contentDisposition) {
+            if (!archivo && contentDisposition) {
                 const fileNameMatch = contentDisposition.match(
                     /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/,
                 );
@@ -442,6 +480,11 @@ function DriveAppContent() {
             onClearSearch={handleClearSearch}
             searchResults={searchResults}
             isSearching={isSearching}
+            pendienteBorrar={pendienteBorrar}
+            borrando={borrando}
+            errorBorrado={errorBorrado}
+            onConfirmarBorrado={confirmarBorrado}
+            onCancelarBorrado={cancelarBorrado}
         />
     );
 }
