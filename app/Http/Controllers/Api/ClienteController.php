@@ -49,7 +49,10 @@ class ClienteController extends Controller
             $query->where('activo', $request->filtroActivo);
         }
 
-        $clientes = $query->orderBy('nombre', 'asc')->paginate(10);
+        // per_page opcional (los selectores piden la lista completa); por defecto 10.
+        $porPagina = min(max((int) $request->input('per_page', 10), 1), 1000);
+
+        $clientes = $query->orderBy('nombre', 'asc')->paginate($porPagina);
 
         $statsBase = Cliente::query();
         $stats = [

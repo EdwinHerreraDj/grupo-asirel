@@ -55,6 +55,7 @@ class CertificacionInformeController extends Controller
             ->map(function ($grupo) {
                 $lineas = $grupo->flatMap->detalles->map(fn($d) => [
                     'descripcion' => $d->concepto,
+                    'comentario'  => $d->comentario,
                     'unidad'      => $d->unidad,
                     'cantidad'    => (float) $d->cantidad,
                     'precio'      => (float) $d->precio_unitario,

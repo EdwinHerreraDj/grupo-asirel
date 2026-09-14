@@ -279,7 +279,12 @@
             <tbody>
                 @foreach ($capitulo['lineas'] as $linea)
                     <tr>
-                        <td>{{ $linea['descripcion'] }}</td>
+                        <td>
+                            {{ $linea['descripcion'] }}
+                            @if (!empty($linea['comentario']))
+                                <div style="margin-top:2px;font-size:8.5px;color:#64748b;font-style:italic;">{{ $linea['comentario'] }}</div>
+                            @endif
+                        </td>
                         <td>{{ $linea['unidad'] ?? '—' }}</td>
                         <td class="right">{{ number_format($linea['cantidad'], 2, ',', '.') }}</td>
                         <td class="right">{{ number_format($linea['precio'], 2, ',', '.') }} €</td>
