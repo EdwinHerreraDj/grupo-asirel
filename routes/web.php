@@ -91,7 +91,6 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
 
     /* Rutas explicitas */
     Route::get('/home', [RoutingController::class, 'home'])->name('home');
-    Route::get('/logout', [RoutingController::class, 'logout'])->name('logout_action');
     Route::get('/unidad', [PageController::class, 'index'])->name('unidad');
 
     /* Control de CRUDS para los users */
@@ -221,8 +220,4 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
     })->name('ping');
 
 
-    // Rutas dinamicas - DEBE IR AL FINAL DE TODO
-    Route::get('{first}/{second}/{third}', [RoutingController::class, 'thirdLevel'])->name('third');
-    Route::get('{first}/{second}', [RoutingController::class, 'secondLevel'])->name('second');
-    Route::get('{any}', [RoutingController::class, 'root'])->name('any');
 });

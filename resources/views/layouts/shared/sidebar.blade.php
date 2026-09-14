@@ -2,7 +2,7 @@
 
     {{-- LOGO --}}
     @php $logoEmpresa = !empty($empresa?->logo) ? \Illuminate\Support\Facades\Storage::url($empresa->logo) : null; @endphp
-    <a href="{{ route('any', 'index') }}" class="logo-box">
+    <a href="{{ route('home') }}" class="logo-box">
         {{-- El tema muestra .logo-dark en menú claro (por defecto) y .logo-light
              en menú oscuro; apuntamos ambos al logo de empresa para que se vea
              en cualquier caso. Tamaño explícito porque el logo suele ser cuadrado. --}}

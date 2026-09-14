@@ -26,13 +26,13 @@ class UserManagementTest extends TestCase
 
     public function test_registro_publico_deshabilitado(): void
     {
-        $this->get('/register')->assertRedirect(route('login'));
+        $this->get('/register')->assertNotFound();
         $this->post('/register', [
             'name' => 'X',
             'email' => 'x@t.es',
             'password' => 'password123',
             'password_confirmation' => 'password123',
-        ])->assertStatus(405);
+        ])->assertNotFound();
         $this->assertDatabaseMissing('users', ['email' => 'x@t.es']);
     }
 

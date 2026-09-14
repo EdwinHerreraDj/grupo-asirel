@@ -16,11 +16,17 @@ class LogSuccessfulLogout
      */
     public function handle(Logout $event)
     {
-        // Registrar el cierre de sesión en la tabla login_logs
+        if (! $event->user) {
+            return;
+        }
+
+        // Registrar el cierre de sesión en la tabla login_logs. Puede no haber
+        // registro abierto (p. ej. sesión iniciada antes de existir los logs):
+        // en ese caso no se registra nada, pero el logout no debe fallar.
         LoginLog::where('user_id', $event->user->id)
             ->whereNull('logged_out_at') // Solo registra si el usuario no tiene un cierre previo
             ->latest()
             ->first()
-            ->update(['logged_out_at' => now()]);
+            ?->update(['logged_out_at' => now()]);
     }
 }

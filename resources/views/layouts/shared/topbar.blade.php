@@ -36,7 +36,7 @@
 
         <!-- Topbar Brand Logo -->
         @php $logoEmpresa = !empty($empresa?->logo) ? \Illuminate\Support\Facades\Storage::url($empresa->logo) : null; @endphp
-        <a href="{{ route('any', 'index') }}" class="logo-box shrink-0">
+        <a href="{{ route('home') }}" class="logo-box shrink-0">
             <div class="logo-light">
                 <img src="{{ $logoEmpresa ?? '/images/logo-light.png' }}" class="logo-lg" style="height:38px;width:auto;object-fit:contain;" alt="Logo">
                 <img src="{{ $logoEmpresa ?? '/images/logo-sm.png' }}" class="logo-sm" style="height:34px;width:auto;object-fit:contain;" alt="Logo">
@@ -77,19 +77,14 @@
 
             <div
                 class="fc-dropdown fc-dropdown-open:opacity-100 hidden opacity-0 w-44 z-50 transition-[margin,opacity] duration-300 mt-2 bg-white shadow-lg border rounded-lg p-2 border-gray-200 dark:border-gray-700 dark:bg-gray-800 right-0">
-                <a class="flex items-center py-2 px-3 rounded-md text-sm text-gray-800 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-300"
-                    href="{{ route('second', ['auth', 'login']) }}">
-                    <i class="mgc_lock_line me-2"></i>
-                    <span>Lock Screen</span>
-                </a>
-
-                <hr class="my-2 -mx-2 border-gray-200 dark:border-gray-700">
-
-                <a class="flex items-center py-2 px-3 rounded-md text-sm text-gray-800 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-300"
-                    href="{{ route('logout_action') }}">
-                    <i class="mgc_exit_line me-2"></i>
-                    <span>Log Out</span>
-                </a>
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit"
+                        class="flex w-full items-center py-2 px-3 rounded-md text-sm text-gray-800 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-300">
+                        <i class="mgc_exit_line me-2"></i>
+                        <span>Log Out</span>
+                    </button>
+                </form>
             </div>
         </div>
     </div>

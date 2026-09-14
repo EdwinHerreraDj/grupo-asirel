@@ -21,7 +21,7 @@
 
                         <!-- Logo -->
                         <div class="p-8">
-                            <a href="{{ route('any', 'index') }}" class="block mb-10 text-center">
+                            <a href="{{ route('home') }}" class="block mb-10 text-center">
 
                                 <img class="h-32 mx-auto block dark:hidden"
                                     src="{{ !empty($empresa?->logo) ? Storage::url($empresa->logo) : asset('images/logo-alminares-500x500.png') }}"
@@ -75,11 +75,6 @@
                                         <input type="checkbox" class="rounded border-gray-300 dark:border-gray-600">
                                         Recordar sesión
                                     </label>
-
-                                    <a href="{{ route('second', ['auth', 'recoverpw']) }}"
-                                        class="text-sm text-primary hover:underline">
-                                        ¿Olvidaste tu contraseña?
-                                    </a>
                                 </div>
 
                                 <!-- Botón -->
