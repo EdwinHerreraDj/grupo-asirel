@@ -33,9 +33,7 @@
             todos los campos requeridos, especialmente el <strong>rol</strong> del usuario (administrador o empleado).
         </p>
         <p class="mt-2">
-            Si el usuario va a fichar en obras, deberá estar vinculado a una empresa y tendrá acceso a su zona de control de
-            presencia.
-            En cambio, si se trata de un administrador, podrá gestionar empleados, obras e informes generales.
+            Un administrador puede gestionar usuarios, obras, facturación e informes generales.
         </p>
     </div>
 

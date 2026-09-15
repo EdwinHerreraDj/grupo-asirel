@@ -69,6 +69,19 @@ class RutasYLogoutTest extends TestCase
         }
     }
 
+    public function test_control_de_presencia_retirado(): void
+    {
+        $user = $this->usuario();
+
+        // Rutas de fichajes (dependían de la BD de Presencia, ya desconectada).
+        foreach (['/fichajes/1', '/obra/1/fichajes/informes/excel'] as $url) {
+            $this->actingAs($user)->get($url)->assertNotFound();
+        }
+        $this->actingAs($user)->put('/resumen/1')->assertNotFound();
+
+        $this->assertNull(config('database.connections.presencia'));
+    }
+
     public function test_paginas_con_layout_y_login_se_pintan(): void
     {
         $this->get('/login')

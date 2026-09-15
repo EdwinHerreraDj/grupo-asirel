@@ -4,7 +4,6 @@ use App\Http\Controllers\AlquilerController;
 use App\Http\Controllers\DocumentoController;
 use App\Http\Controllers\DriveApp\FoldersController;
 use App\Http\Controllers\EmpresaController;
-use App\Http\Controllers\FichajeController;
 use App\Http\Controllers\GastosVariosController;
 use App\Http\Controllers\LoginLogController;
 use App\Http\Controllers\MaterialesController;
@@ -160,10 +159,6 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
     Route::get('/empresa/certificaciones/{certificacion}', [CertificacionDetalleController::class, 'show'])->name('empresa.certificaciones.show');
 
 
-    // Rutas de Fichajes
-    Route::get('/fichajes/{id}', [FichajeController::class, 'index'])->name('obras.fichajes');
-    Route::put('/resumen/{id}', [FichajeController::class, 'update'])->name('resumen.update');
-    Route::get('/obra/{id}/fichajes/informes/excel', [FichajeController::class, 'fichajesExcel'])->name('obra.fichajes.excel');
 
     // Drive: vista previa de archivos (solo admin y super_admin)
     Route::get('/drive/ver/{file}', [FileController::class, 'ver'])->middleware('role:admin,super_admin')->name('drive.ver');
