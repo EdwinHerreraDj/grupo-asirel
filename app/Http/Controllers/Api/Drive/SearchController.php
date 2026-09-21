@@ -27,6 +27,7 @@ class SearchController extends Controller
 
         // Buscar carpetas
         $folders = Folder::where('nombre', 'LIKE', $like)
+            ->withCount(['files', 'children'])
             ->with('parent')
             ->orderBy('nombre', 'asc')
             ->get()
@@ -38,7 +39,7 @@ class SearchController extends Controller
 
         // Buscar archivos
         $files = File::where('nombre', 'LIKE', $like)
-            ->with('folder')
+            ->with(['folder', 'usuario:id,name'])
             ->orderBy('nombre', 'asc')
             ->get()
             ->map(function ($file) {

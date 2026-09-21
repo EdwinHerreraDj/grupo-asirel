@@ -29,11 +29,14 @@ class FolderController extends Controller
     {
         $id = (int) $id;
 
+        // Contadores y autor: los usa la vista de lista del Drive.
         $folders = Folder::where('parent_id', $id)
+            ->withCount(['files', 'children'])
             ->orderBy('nombre', 'asc')
             ->get();
 
         $files = File::where('folder_id', $id)
+            ->with('usuario:id,name')
             ->orderBy('created_at', 'desc')
             ->get();
 

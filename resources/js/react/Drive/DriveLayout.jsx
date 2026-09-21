@@ -10,6 +10,12 @@ import ExpiringFilesModal from "./components/ExpiringFilesModal";
 import FilePreviewModal from "./components/FilePreviewModal";
 import SearchBar from "./components/SearchBar";
 import DeleteConfirmModal from "./components/DeleteConfirmModal";
+import DriveListView from "./components/DriveListView";
+
+const VISTAS = [
+    { valor: "cuadricula", icono: "mgc_layout_grid_line", texto: "Cuadrícula" },
+    { valor: "lista", icono: "mgc_list_check_line", texto: "Lista" },
+];
 
 export default function DriveLayout({
     onBack,
@@ -49,6 +55,8 @@ export default function DriveLayout({
     errorBorrado,
     onConfirmarBorrado,
     onCancelarBorrado,
+    vista = "cuadricula",
+    onCambiarVista,
 }) {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const handleCreateFolderSubmit = async (nombre) => {
@@ -122,12 +130,37 @@ export default function DriveLayout({
                         </div>
                     </div>
 
-                    {/* Barra de búsqueda */}
-                    <div className="mb-6 flex justify-end">
-                        <SearchBar
-                            onSearch={onSearch}
-                            onClear={onClearSearch}
-                        />
+                    {/* Selector de vista + barra de búsqueda */}
+                    <div className="mb-6 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div
+                            className="inline-flex self-start rounded-2xl border border-slate-200 bg-white p-1 shadow-sm"
+                            role="group"
+                            aria-label="Tipo de vista"
+                        >
+                            {VISTAS.map((v) => (
+                                <button
+                                    key={v.valor}
+                                    type="button"
+                                    onClick={() => onCambiarVista?.(v.valor)}
+                                    aria-pressed={vista === v.valor}
+                                    className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold transition ${
+                                        vista === v.valor
+                                            ? "bg-indigo-600 text-white shadow"
+                                            : "text-slate-600 hover:bg-slate-100"
+                                    }`}
+                                >
+                                    <i className={`${v.icono} text-base`}></i>
+                                    <span>{v.texto}</span>
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="flex w-full justify-end sm:w-auto sm:flex-1">
+                            <SearchBar
+                                onSearch={onSearch}
+                                onClear={onClearSearch}
+                            />
+                        </div>
                     </div>
 
                     {/* Breadcrumbs */}
@@ -151,8 +184,28 @@ export default function DriveLayout({
                             </div>
                         ) : (
                             <>
+                                {/* Vista de lista */}
+                                {vista === "lista" &&
+                                    (folders.length > 0 || files.length > 0) && (
+                                        <DriveListView
+                                            folders={folders}
+                                            files={files}
+                                            onFolderClick={onFolderClick}
+                                            onDeleteFolder={onDeleteFolder}
+                                            onRenameFolder={onRenameFolder}
+                                            onDeleteFile={onDeleteFile}
+                                            onDownloadFile={onDownloadFile}
+                                            onRenameFile={onRenameFile}
+                                            onExtractFile={onExtractFile}
+                                            onPreviewFile={onPreviewFile}
+                                            selectedFiles={selectedFiles}
+                                            onSelectFile={onSelectFile}
+                                            mostrarUbicacion={isSearching}
+                                        />
+                                    )}
+
                                 {/* Carpetas */}
-                                {folders.length > 0 && (
+                                {vista !== "lista" && folders.length > 0 && (
                                     <div className="mb-10">
                                         <h3 className="text-lg font-semibold text-slate-700 mb-5 flex items-center gap-2">
                                             <i className="mgc_folder_line text-xl"></i>
@@ -168,7 +221,7 @@ export default function DriveLayout({
                                 )}
 
                                 {/* Archivos */}
-                                {files.length > 0 && (
+                                {vista !== "lista" && files.length > 0 && (
                                     <div>
                                         <h3 className="text-lg font-semibold text-slate-700 mb-5 flex items-center gap-2">
                                             <i className="mgc_file_line text-xl"></i>

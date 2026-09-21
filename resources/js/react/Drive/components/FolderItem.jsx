@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import api from "../../shared/api";
+import useDescargarCarpeta from "../hooks/useDescargarCarpeta";
 import { useClipboard } from "../context/ClipboardContext";
 import { useNotification } from "../context/NotificationContext";
 import DownloadModal from "./DownloadModal";
@@ -8,12 +8,12 @@ export default function FolderItem({ folder, onClick, onDelete, onRename }) {
     const [showMenu, setShowMenu] = useState(false);
     const [isRenaming, setIsRenaming] = useState(false);
     const [newName, setNewName] = useState(folder.nombre);
-    const [downloading, setDownloading] = useState(false);
     const menuRef = useRef(null);
     const inputRef = useRef(null);
 
     const { cutSingleFolder } = useClipboard();
-    const { showSuccess, showError, showWarning } = useNotification(); // ✅ Importar showWarning
+    const { showSuccess } = useNotification();
+    const { descargarCarpeta, carpetaDescargando } = useDescargarCarpeta();
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -64,47 +64,9 @@ export default function FolderItem({ folder, onClick, onDelete, onRename }) {
         }
     };
 
-    const handleDownloadFolder = async () => {
+    const handleDownloadFolder = () => {
         setShowMenu(false);
-        setDownloading(true);
-
-        try {
-            const response = await api.get(`/folders/${folder.id}/download`, {
-                responseType: "blob",
-                timeout: 120000, // 2 minutos
-            });
-
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement("a");
-            link.href = url;
-            link.setAttribute("download", `${folder.nombre}.zip`);
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            window.URL.revokeObjectURL(url);
-
-            showSuccess(
-                `Archivos de "${folder.nombre}" descargados exitosamente`,
-            );
-        } catch (error) {
-            console.error("Error downloading folder:", error);
-
-            if (error.response?.status === 422) {
-                showWarning(
-                    error.response.data.message ||
-                        "Esta carpeta no contiene archivos",
-                );
-            } else if (error.code === "ECONNABORTED") {
-                showError("La descarga tardó demasiado tiempo");
-            } else {
-                showError(
-                    error.response?.data?.message ||
-                        "Error al descargar la carpeta",
-                );
-            }
-        } finally {
-            setDownloading(false);
-        }
+        descargarCarpeta(folder);
     };
 
     return (
@@ -265,7 +227,7 @@ export default function FolderItem({ folder, onClick, onDelete, onRename }) {
             </div>
 
             {/* Modal de descarga */}
-            <DownloadModal isOpen={downloading} folderName={folder.nombre} />
+            <DownloadModal isOpen={!!carpetaDescargando} folderName={folder.nombre} />
         </>
     );
 }

@@ -9,6 +9,19 @@ import {
 } from "./context/NotificationContext";
 import api from "../shared/api";
 
+// Vista del Drive (cuadrícula o lista), recordada en el navegador.
+const CLAVE_VISTA = "drive.vista";
+
+const leerVista = () => {
+    try {
+        return window.localStorage.getItem(CLAVE_VISTA) === "lista"
+            ? "lista"
+            : "cuadricula";
+    } catch {
+        return "cuadricula";
+    }
+};
+
 function DriveAppContent() {
     const [currentFolderId, setCurrentFolderId] = useState(0);
     const [folders, setFolders] = useState([]);
@@ -30,6 +43,16 @@ function DriveAppContent() {
     const [pendienteBorrar, setPendienteBorrar] = useState(null);
     const [borrando, setBorrando] = useState(false);
     const [errorBorrado, setErrorBorrado] = useState("");
+    const [vista, setVista] = useState(leerVista);
+
+    const cambiarVista = (nueva) => {
+        setVista(nueva);
+        try {
+            window.localStorage.setItem(CLAVE_VISTA, nueva);
+        } catch {
+            // Sin almacenamiento disponible: solo dura esta visita.
+        }
+    };
     const [isSearching, setIsSearching] = useState(false);
 
     const { showSuccess, showError, showWarning, showInfo } = useNotification();
@@ -485,6 +508,8 @@ function DriveAppContent() {
             errorBorrado={errorBorrado}
             onConfirmarBorrado={confirmarBorrado}
             onCancelarBorrado={cancelarBorrado}
+            vista={vista}
+            onCambiarVista={cambiarVista}
         />
     );
 }

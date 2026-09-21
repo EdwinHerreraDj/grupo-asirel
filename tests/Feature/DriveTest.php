@@ -146,6 +146,30 @@ class DriveTest extends TestCase
             ->assertJsonValidationErrors('nombre');
     }
 
+    public function test_el_listado_trae_autor_y_contadores_para_la_vista_de_lista(): void
+    {
+        $carpeta = $this->carpeta('Lista');
+        $sub = Folder::forceCreate(['nombre' => 'Sub', 'parent_id' => $carpeta->id, 'tipo' => 1]);
+        Folder::forceCreate(['nombre' => 'Nieta', 'parent_id' => $sub->id, 'tipo' => 1]);
+        $this->archivo($sub, 'dentro.pdf', 'local', 'drive/archivos/t/dentro.pdf');
+        $this->archivo($carpeta, 'fuera.pdf', 'local', 'drive/archivos/t/fuera.pdf');
+
+        $json = $this->actingAs($this->admin)->getJson("/api/folders/{$carpeta->id}/content")->assertOk();
+
+        $subcarpeta = collect($json->json('folders'))->firstWhere('id', $sub->id);
+        $this->assertSame(1, $subcarpeta['files_count']);
+        $this->assertSame(1, $subcarpeta['children_count']);
+
+        $archivo = collect($json->json('files'))->firstWhere('nombre', 'fuera.pdf');
+        $this->assertSame('Usuario drive', $archivo['usuario']['name']);
+        $this->assertArrayNotHasKey('email', $archivo['usuario']);
+
+        // La búsqueda también trae el autor.
+        $busqueda = $this->actingAs($this->admin)->getJson('/api/drive/search?q=fuera.pdf')->assertOk();
+        $encontrado = collect($busqueda->json('files'))->firstWhere('nombre', 'fuera.pdf');
+        $this->assertSame('Usuario drive', $encontrado['usuario']['name']);
+    }
+
     // -------------------------------------------------------------
     // Borrados
     // -------------------------------------------------------------
