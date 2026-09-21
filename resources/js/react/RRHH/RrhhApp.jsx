@@ -1,17 +1,22 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { NotificationProvider } from "../shared/NotificationContext";
 import ListaEmpleados from "./components/ListaEmpleados";
 import FichaEmpleado from "./components/FichaEmpleado";
-import DocumentacionPendiente from "./components/DocumentacionPendiente";
+import Alertas from "./components/Alertas";
+import Cuadrante from "./components/Cuadrante";
+import Informes from "./components/Informes";
+import api from "../shared/api";
 import Calendario from "./components/Calendario";
 import NominasMes from "./components/NominasMes";
 import Configuracion from "./components/Configuracion";
 
 const PESTANAS = [
     { id: "empleados", texto: "Empleados", icono: "mgc_group_line" },
-    { id: "calendario", texto: "Calendario", icono: "mgc_calendar_month_line" },
+    { id: "cuadrante", texto: "Cuadrante", icono: "mgc_time_line" },
+    { id: "calendario", texto: "Ausencias", icono: "mgc_calendar_month_line" },
     { id: "nominas", texto: "Nóminas", icono: "mgc_currency_euro_line" },
-    { id: "pendiente", texto: "Documentación pendiente", icono: "mgc_alert_line" },
+    { id: "alertas", texto: "Alertas", icono: "mgc_alert_line" },
+    { id: "informes", texto: "Informes", icono: "mgc_chart_bar_line" },
     { id: "configuracion", texto: "Configuración", icono: "mgc_settings_3_line" },
 ];
 
@@ -34,6 +39,13 @@ const escribirEmpleadoEnUrl = (id) => {
 function RrhhAppContent() {
     const [pestana, setPestana] = useState("empleados");
     const [empleadoId, setEmpleadoId] = useState(leerEmpleadoDeUrl);
+    const [avisos, setAvisos] = useState(null); // {critico, aviso}
+
+    // Contador de alertas urgentes y avisos en la pestaña.
+    useEffect(() => {
+        if (empleadoId) return;
+        api.get("/rrhh/alertas").then(({ data }) => setAvisos(data.totales)).catch(() => {});
+    }, [empleadoId]);
 
     const abrirFicha = useCallback((id) => {
         setEmpleadoId(id);
@@ -70,7 +82,7 @@ function RrhhAppContent() {
                         </div>
                         <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-900">Recursos humanos</h2>
                         <p className="mt-1 text-sm text-slate-500">
-                            Fichas de empleados, altas y bajas, ausencias, nóminas, formación y su documentación en el Drive.
+                            Fichas de empleados, cuadrante de turnos, ausencias, nóminas, formación, alertas e informes.
                         </p>
                     </div>
 
@@ -88,6 +100,15 @@ function RrhhAppContent() {
                             >
                                 <i className={`${p.icono} text-base`}></i>
                                 {p.texto}
+                                {p.id === "alertas" && avisos && avisos.critico + avisos.aviso > 0 && (
+                                    <span
+                                        className={`flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1 text-[11px] font-bold text-white ${
+                                            avisos.critico ? "bg-rose-500" : "bg-amber-500"
+                                        }`}
+                                    >
+                                        {avisos.critico + avisos.aviso}
+                                    </span>
+                                )}
                             </button>
                         ))}
                     </nav>
@@ -96,7 +117,9 @@ function RrhhAppContent() {
                 {pestana === "empleados" && <ListaEmpleados onAbrirFicha={abrirFicha} />}
                 {pestana === "calendario" && <Calendario onAbrirFicha={abrirFicha} />}
                 {pestana === "nominas" && <NominasMes onAbrirFicha={abrirFicha} />}
-                {pestana === "pendiente" && <DocumentacionPendiente onAbrirFicha={abrirFicha} />}
+                {pestana === "cuadrante" && <Cuadrante onAbrirFicha={abrirFicha} />}
+                {pestana === "alertas" && <Alertas onAbrirFicha={abrirFicha} onCambio={setAvisos} />}
+                {pestana === "informes" && <Informes />}
                 {pestana === "configuracion" && <Configuracion />}
             </div>
         </div>

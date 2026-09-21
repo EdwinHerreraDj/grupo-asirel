@@ -289,6 +289,9 @@ export default function FichaEmpleado({ id, onVolver }) {
                                     {p.tipo_contrato && (
                                         <p className="mt-0.5 text-xs text-slate-500">Contrato: {texto(opciones?.tipos_contrato, p.tipo_contrato)}</p>
                                     )}
+                                    {p.fecha_fin_contrato && !p.fecha_baja && (
+                                        <p className="mt-0.5 text-xs font-medium text-amber-700">Fin de contrato previsto: {fechaCorta(p.fecha_fin_contrato)}</p>
+                                    )}
                                     {p.motivo_baja && (
                                         <p className="mt-0.5 text-xs text-slate-500">Motivo de baja: {texto(opciones?.motivos_baja, p.motivo_baja)}</p>
                                     )}

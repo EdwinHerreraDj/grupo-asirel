@@ -94,12 +94,15 @@ class EmpleadoController extends Controller
         $this->normalizar($request);
 
         $datos = $request->validate(
-            $this->reglas() + ['fecha_alta' => ['required', 'date']],
+            $this->reglas() + [
+                'fecha_alta' => ['required', 'date'],
+                'fecha_fin_contrato' => ['nullable', 'date', 'after_or_equal:fecha_alta'],
+            ],
             $this->mensajes(),
         );
 
         $empleado = DB::transaction(function () use ($datos) {
-            $empleado = Empleado::create(Arr::except($datos, ['fecha_alta', 'obra_ids']) + [
+            $empleado = Empleado::create(Arr::except($datos, ['fecha_alta', 'fecha_fin_contrato', 'obra_ids']) + [
                 'estado' => Empleado::ESTADO_ACTIVO,
             ]);
             $empleado->obras()->sync($datos['obra_ids'] ?? []);
@@ -107,6 +110,7 @@ class EmpleadoController extends Controller
             $empleado->periodos()->create([
                 'fecha_alta' => $datos['fecha_alta'],
                 'tipo_contrato' => $datos['tipo_contrato'] ?? null,
+                'fecha_fin_contrato' => $datos['fecha_fin_contrato'] ?? null,
             ]);
 
             $this->carpetas->asegurarCarpeta($empleado);
@@ -132,10 +136,28 @@ class EmpleadoController extends Controller
     {
         $this->normalizar($request);
 
-        $datos = $request->validate($this->reglas($empleado), $this->mensajes());
+        $abierto = $empleado->periodos()->whereNull('fecha_baja')->orderByDesc('fecha_alta')->first();
 
-        DB::transaction(function () use ($empleado, $datos) {
-            $empleado->update(Arr::except($datos, ['obra_ids']));
+        $datos = $request->validate(
+            $this->reglas($empleado) + [
+                'fecha_fin_contrato' => array_filter([
+                    'nullable',
+                    'date',
+                    $abierto ? 'after_or_equal:'.$abierto->fecha_alta->toDateString() : null,
+                ]),
+            ],
+            $this->mensajes() + ['fecha_fin_contrato.after_or_equal' => 'El fin de contrato no puede ser anterior al alta.'],
+        );
+
+        DB::transaction(function () use ($empleado, $datos, $abierto) {
+            $empleado->update(Arr::except($datos, ['obra_ids', 'fecha_fin_contrato']));
+            // El fin de contrato previsto es del periodo de alta en curso.
+            if ($abierto && array_key_exists('fecha_fin_contrato', $datos)) {
+                $abierto->update([
+                    'fecha_fin_contrato' => $datos['fecha_fin_contrato'],
+                    'tipo_contrato' => $datos['tipo_contrato'] ?? $abierto->tipo_contrato,
+                ]);
+            }
             if (array_key_exists('obra_ids', $datos)) {
                 $empleado->obras()->sync($datos['obra_ids'] ?? []);
             }
@@ -214,14 +236,17 @@ class EmpleadoController extends Controller
                 $ultimo?->fecha_baja ? 'after:'.$ultimo->fecha_baja->toDateString() : null,
             ]),
             'tipo_contrato' => ['nullable', Rule::in(array_keys(Empleado::TIPOS_CONTRATO))],
+            'fecha_fin_contrato' => ['nullable', 'date', 'after_or_equal:fecha_alta'],
         ], [
             'fecha_alta.after' => 'La nueva fecha de alta debe ser posterior a la última baja.',
+            'fecha_fin_contrato.after_or_equal' => 'El fin de contrato no puede ser anterior al alta.',
         ]);
 
         DB::transaction(function () use ($empleado, $datos) {
             $empleado->periodos()->create([
                 'fecha_alta' => $datos['fecha_alta'],
                 'tipo_contrato' => $datos['tipo_contrato'] ?? $empleado->tipo_contrato,
+                'fecha_fin_contrato' => $datos['fecha_fin_contrato'] ?? null,
             ]);
 
             $empleado->update(array_filter([

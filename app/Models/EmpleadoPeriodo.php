@@ -18,6 +18,7 @@ class EmpleadoPeriodo extends Model
         'fecha_alta',
         'fecha_baja',
         'tipo_contrato',
+        'fecha_fin_contrato',
         'motivo_baja',
         'observaciones_baja',
     ];
@@ -25,6 +26,7 @@ class EmpleadoPeriodo extends Model
     protected $casts = [
         'fecha_alta' => 'date:Y-m-d',
         'fecha_baja' => 'date:Y-m-d',
+        'fecha_fin_contrato' => 'date:Y-m-d',
     ];
 
     public function empleado(): BelongsTo

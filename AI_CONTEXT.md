@@ -120,6 +120,14 @@ Contratado (presupuesto de venta) frente a ejecutado (`certificacion_detalles.ca
   - **Cursos** (`rrhh_cursos`): con caducidad. Un curso posterior con el mismo nombre "renueva" al anterior. Los que caducan en ≤ 30 días salen en documentación pendiente.
   - **Sanciones** (`rrhh_sanciones`): con prescripción orientativa del art. 60.2 del Estatuto de los Trabajadores.
   - Los adjuntos se guardan con `App\Services\Rrhh\AdjuntosRrhh` en subcarpetas internas protegidas (`CarpetasEmpleados::CARPETAS_INTERNAS`). Nunca se borran al borrar el registro.
+- **Fase 4:**
+  - **Turnos** (`rrhh_turnos`, con jornada partida y descanso; `Turno::horas`) y **cuadrante** (`rrhh_cuadrante`: un turno y una obra por empleado y día).
+    - Al asignar en bloque o copiar semanas (`CuadranteController`) se saltan los días sin alta, con ausencia y los festivos (salvo que se indique lo contrario).
+  - **Alertas** en `App\Services\Rrhh\AlertasRrhh` (contratos, documentación, formación, bajas médicas, nóminas, anticipos, vacaciones, cuadrante, obras y cumpleaños).
+    - `php artisan rrhh:alertas --enviar` manda el resumen por email a los administradores.
+    - No está en el scheduler: hay que añadirlo al cron si se quiere.
+  - `empleado_periodos.fecha_fin_contrato` es el fin de contrato previsto del periodo.
+  - **Informes** en `App\Services\Rrhh\InformesRrhh`: cifras del año y exportación a Excel con `App\Exports\Rrhh\TablaExport`.
 
 ---
 

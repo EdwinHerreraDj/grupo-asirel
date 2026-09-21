@@ -2,10 +2,12 @@ import React, { useState } from "react";
 import TiposDocumento from "./TiposDocumento";
 import TiposAusencia from "./TiposAusencia";
 import Festivos from "./Festivos";
+import TiposTurno from "./TiposTurno";
 
 const APARTADOS = [
     { id: "documentos", texto: "Tipos de documento", icono: "mgc_file_line" },
     { id: "ausencias", texto: "Tipos de ausencia", icono: "mgc_tag_line" },
+    { id: "turnos", texto: "Turnos", icono: "mgc_time_line" },
     { id: "festivos", texto: "Festivos", icono: "mgc_flag_1_line" },
 ];
 
@@ -35,6 +37,7 @@ export default function Configuracion() {
 
             {apartado === "documentos" && <TiposDocumento integrado />}
             {apartado === "ausencias" && <TiposAusencia />}
+            {apartado === "turnos" && <TiposTurno />}
             {apartado === "festivos" && <Festivos />}
         </div>
     );

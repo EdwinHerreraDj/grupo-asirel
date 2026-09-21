@@ -127,7 +127,7 @@ export function ModalBaja({ empleado, opciones, onCerrar, onHecho }) {
 }
 
 export function ModalReingreso({ empleado, opciones, onCerrar, onHecho }) {
-    const [datos, setDatos] = useState({ fecha_alta: hoyISO(), tipo_contrato: empleado.tipo_contrato || "" });
+    const [datos, setDatos] = useState({ fecha_alta: hoyISO(), tipo_contrato: empleado.tipo_contrato || "", fecha_fin_contrato: "" });
     const { errores, enviando, enviar } = useEnvio(`/rrhh/empleados/${empleado.id}/reingreso`, onHecho);
     const cambiar = (e) => setDatos((p) => ({ ...p, [e.target.name]: e.target.value }));
 
@@ -184,6 +184,16 @@ export function ModalReingreso({ empleado, opciones, onCerrar, onHecho }) {
                                     </option>
                                 ))}
                             </select>
+                        </Campo>
+                        <Campo etiqueta="Fin de contrato previsto" error={errores.fecha_fin_contrato} ayuda="Opcional (temporales)." className="sm:col-span-2 sm:max-w-xs">
+                            <input
+                                type="date"
+                                name="fecha_fin_contrato"
+                                min={datos.fecha_alta}
+                                value={datos.fecha_fin_contrato}
+                                onChange={cambiar}
+                                className={claseInput(errores.fecha_fin_contrato)}
+                            />
                         </Campo>
                     </div>
                 </SeccionFormulario>

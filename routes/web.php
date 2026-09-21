@@ -129,6 +129,18 @@ Route::middleware('auth')->prefix('api')->group(function () {
         Route::post('empleados/{empleado}/sanciones', [\App\Http\Controllers\Api\Rrhh\SancionController::class, 'store']);
         Route::put('sanciones/{sancion}', [\App\Http\Controllers\Api\Rrhh\SancionController::class, 'update']);
         Route::delete('sanciones/{sancion}', [\App\Http\Controllers\Api\Rrhh\SancionController::class, 'destroy']);
+
+        // Turnos, cuadrante, alertas e informes (fase 4)
+        Route::get('turnos', [\App\Http\Controllers\Api\Rrhh\TurnoController::class, 'index']);
+        Route::post('turnos', [\App\Http\Controllers\Api\Rrhh\TurnoController::class, 'store']);
+        Route::put('turnos/{turno}', [\App\Http\Controllers\Api\Rrhh\TurnoController::class, 'update']);
+        Route::get('cuadrante', [\App\Http\Controllers\Api\Rrhh\CuadranteController::class, 'index']);
+        Route::post('cuadrante/asignar', [\App\Http\Controllers\Api\Rrhh\CuadranteController::class, 'asignar']);
+        Route::post('cuadrante/copiar', [\App\Http\Controllers\Api\Rrhh\CuadranteController::class, 'copiar']);
+        Route::post('cuadrante/eliminar', [\App\Http\Controllers\Api\Rrhh\CuadranteController::class, 'eliminar']);
+        Route::get('alertas', [\App\Http\Controllers\Api\Rrhh\AlertaController::class, 'index']);
+        Route::get('informes/resumen', [\App\Http\Controllers\Api\Rrhh\InformeController::class, 'resumen']);
+        Route::get('informes/exportar/{tipo}', [\App\Http\Controllers\Api\Rrhh\InformeController::class, 'exportar']);
     });
 });
 

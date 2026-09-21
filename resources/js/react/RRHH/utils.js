@@ -185,3 +185,36 @@ export const num = (v) => {
     const n = parseFloat(String(v ?? "").replace(",", "."));
     return Number.isFinite(n) ? n : 0;
 };
+
+/** Suma días a una fecha ISO (YYYY-MM-DD) sin problemas de zona horaria. */
+export const sumarDias = (fecha, n) => {
+    const [a, m, d] = fecha.split("-").map(Number);
+    const r = new Date(a, m - 1, d + n);
+    return `${r.getFullYear()}-${String(r.getMonth() + 1).padStart(2, "0")}-${String(r.getDate()).padStart(2, "0")}`;
+};
+
+/** Lunes de la semana de una fecha ISO. */
+export const lunesDe = (fecha) => {
+    const [a, m, d] = fecha.split("-").map(Number);
+    const dia = new Date(a, m - 1, d).getDay(); // 0 = domingo
+    return sumarDias(fecha, dia === 0 ? -6 : 1 - dia);
+};
+
+/** "7 ene" */
+export const fechaDiaMes = (fecha) => {
+    const [, m, d] = fecha.split("-").map(Number);
+    return `${d} ${MESES[m - 1].slice(0, 3).toLowerCase()}`;
+};
+
+/** Horas de un horario HH:MM–HH:MM (+ segundo tramo) menos descanso. */
+export const horasTurno = ({ hora_inicio, hora_fin, hora_inicio_2, hora_fin_2, descanso_minutos }) => {
+    const min = (i, f) => {
+        if (!i || !f) return 0;
+        const [hi, mi] = i.split(":").map(Number);
+        const [hf, mf] = f.split(":").map(Number);
+        const diff = hf * 60 + mf - (hi * 60 + mi);
+        return diff <= 0 ? diff + 1440 : diff;
+    };
+    const total = min(hora_inicio, hora_fin) + min(hora_inicio_2, hora_fin_2) - (Number(descanso_minutos) || 0);
+    return Math.max(0, total) / 60;
+};

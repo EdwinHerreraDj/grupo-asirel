@@ -32,7 +32,7 @@ const SECCIONES = [
     { id: "direccion", titulo: "Dirección", descripcion: "Domicilio del empleado", icono: "mgc_home_3_line", color: "violet",
         campos: ["direccion", "codigo_postal", "poblacion", "provincia"] },
     { id: "contrato", titulo: "Puesto y contrato", descripcion: "Condiciones laborales", icono: "mgc_briefcase_line", color: "amber",
-        campos: ["fecha_alta", "puesto", "categoria_convenio", "tipo_contrato", "jornada", "horas_semanales", "dias_vacaciones_anuales"] },
+        campos: ["fecha_alta", "fecha_fin_contrato", "puesto", "categoria_convenio", "tipo_contrato", "jornada", "horas_semanales", "dias_vacaciones_anuales"] },
     { id: "obras", titulo: "Obras", descripcion: "Puede trabajar en varias a la vez", icono: "mgc_building_2_line", color: "emerald",
         campos: ["obra_ids"] },
     { id: "salario", titulo: "Salario y banco", descripcion: "Retribución y cuenta de cobro", icono: "mgc_bank_card_line", color: "indigo",
@@ -49,6 +49,8 @@ const seccionDeCampo = (campo) =>
 const inicial = (empleado) => {
     const datos = Object.fromEntries(CAMPOS.map((c) => [c, empleado?.[c] ?? ""]));
     datos.iban = ibanLegible(datos.iban);
+    // Fin de contrato previsto: del periodo de alta en curso.
+    datos.fecha_fin_contrato = empleado?.periodos?.find((p) => !p.fecha_baja)?.fecha_fin_contrato ?? "";
     if (!empleado) {
         datos.fecha_alta = hoyISO();
         datos.jornada = "completa";
@@ -343,6 +345,15 @@ export default function FormularioEmpleado({ empleado = null, opciones, onCerrar
                                     <span className="pointer-events-none absolute right-8 top-1/2 -translate-y-1/2 text-xs text-slate-400">h</span>
                                 </div>
                             </Campo>
+                            {(!empleado || empleado.estado === "activo") && (
+                                <Campo
+                                    etiqueta="Fin de contrato previsto"
+                                    error={errores.fecha_fin_contrato}
+                                    ayuda="Para contratos temporales: avisaremos 30 días antes."
+                                >
+                                    {input("fecha_fin_contrato", { type: "date", min: datos.fecha_alta || undefined })}
+                                </Campo>
+                            )}
                             <Campo
                                 etiqueta="Días de vacaciones al año"
                                 error={errores.dias_vacaciones_anuales}
