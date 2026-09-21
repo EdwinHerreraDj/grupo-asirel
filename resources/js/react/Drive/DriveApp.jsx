@@ -82,8 +82,12 @@ function DriveAppContent() {
         }
     };
 
+    // ?carpeta=ID abre directamente esa carpeta (p. ej. desde Recursos humanos).
     useEffect(() => {
-        loadFolder(0);
+        const inicial = Number(
+            new URLSearchParams(window.location.search).get("carpeta"),
+        );
+        loadFolder(Number.isInteger(inicial) && inicial > 0 ? inicial : 0);
     }, []);
 
     const handleFolderClick = (folderId) => {

@@ -10,6 +10,7 @@ import PresupuestoVentaGlobalApp from "./PresupuestoObra/PresupuestoVentaGlobalA
 import CertificacionesApp from "./Certificaciones/CertificacionesApp";
 import DetalleApp from "./Certificaciones/Detalle/DetalleApp";
 import TareasApp from "./Tareas/TareasApp";
+import RrhhApp from "./RRHH/RrhhApp";
 
 const mounts = {
     "react-drive": DriveApp,
@@ -21,7 +22,8 @@ const mounts = {
     "react-presupuesto-venta-global": PresupuestoVentaGlobalApp,
     "react-certificaciones-listado": CertificacionesApp,
     "react-certificaciones-detalle": DetalleApp,
-    "react-tareas": TareasApp
+    "react-tareas": TareasApp,
+    "react-rrhh": RrhhApp,
 };
 
 Object.entries(mounts).forEach(([id, Component]) => {

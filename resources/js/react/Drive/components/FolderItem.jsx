@@ -138,6 +138,7 @@ export default function FolderItem({ folder, onClick, onDelete, onRename }) {
                                         Abrir
                                     </button>
 
+                                    {!folder.protegida && (
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
@@ -149,6 +150,7 @@ export default function FolderItem({ folder, onClick, onDelete, onRename }) {
                                         <i className="mgc_edit_line"></i>
                                         Renombrar
                                     </button>
+                                    )}
 
                                     <div className="my-2 border-t border-slate-200"></div>
 
@@ -163,6 +165,13 @@ export default function FolderItem({ folder, onClick, onDelete, onRename }) {
                                         Descargar archivos
                                     </button>
 
+                                    {folder.protegida ? (
+                                        <p className="mt-2 border-t border-slate-200 px-4 pt-2.5 text-xs text-slate-500">
+                                            <i className="mgc_lock_line mr-1"></i>
+                                            Gestionada por Recursos humanos
+                                        </p>
+                                    ) : (
+                                    <>
                                     <div className="my-2 border-t border-slate-200"></div>
 
                                     <button
@@ -189,6 +198,8 @@ export default function FolderItem({ folder, onClick, onDelete, onRename }) {
                                         <i className="mgc_delete_line"></i>
                                         Eliminar
                                     </button>
+                                    </>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -214,7 +225,10 @@ export default function FolderItem({ folder, onClick, onDelete, onRename }) {
                         "
                             />
                         ) : (
-                            <p className="text-sm font-semibold text-slate-700 truncate">
+                            <p className="text-sm font-semibold text-slate-700 truncate" title={folder.nombre}>
+                                {folder.protegida && (
+                                    <i className="mgc_lock_line mr-1 text-slate-400" title="Gestionada por Recursos humanos"></i>
+                                )}
                                 {folder.nombre}
                             </p>
                         )}

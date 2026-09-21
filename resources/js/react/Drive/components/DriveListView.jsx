@@ -297,10 +297,20 @@ export default function DriveListView({
                                     <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
                                         <div className="flex items-center justify-end gap-0.5">
                                             <BotonAccion icono="mgc_folder_open_line" titulo="Abrir" onClick={() => onFolderClick(folder.id)} />
-                                            <BotonAccion icono="mgc_edit_line" titulo="Renombrar" onClick={() => empezarRenombrar("carpeta", folder)} />
+                                            {!folder.protegida && (
+                                                <BotonAccion icono="mgc_edit_line" titulo="Renombrar" onClick={() => empezarRenombrar("carpeta", folder)} />
+                                            )}
                                             <BotonAccion icono="mgc_download_line" titulo="Descargar como ZIP" onClick={() => descargarCarpeta(folder)} />
-                                            <BotonAccion icono="mgc_scissors_line" titulo="Cortar para mover" onClick={() => cortarCarpeta(folder)} />
-                                            <BotonAccion icono="mgc_delete_line" titulo="Eliminar" peligro onClick={() => onDeleteFolder(folder.id)} />
+                                            {folder.protegida ? (
+                                                <span className="inline-flex h-8 w-8 items-center justify-center text-slate-400" title="Gestionada por Recursos humanos">
+                                                    <i className="mgc_lock_line"></i>
+                                                </span>
+                                            ) : (
+                                                <>
+                                                    <BotonAccion icono="mgc_scissors_line" titulo="Cortar para mover" onClick={() => cortarCarpeta(folder)} />
+                                                    <BotonAccion icono="mgc_delete_line" titulo="Eliminar" peligro onClick={() => onDeleteFolder(folder.id)} />
+                                                </>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>

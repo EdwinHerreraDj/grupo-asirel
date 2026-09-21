@@ -180,6 +180,13 @@
                         <span class="sidebar-text">Drive</span>
                     </a>
                 </li>
+                <li>
+                    <a href="{{ route('rrhh.index') }}"
+                        class="{{ $linkBase }} {{ request()->routeIs('rrhh.*') ? $linkActive : $linkIdle }}">
+                        <i class="mgc_group_line text-lg shrink-0"></i>
+                        <span class="sidebar-text">Recursos humanos</span>
+                    </a>
+                </li>
 
                     {{-- Submen\u00fa: Gastos empresa --}}
                     <li x-data="{ open: @json($gastosEmpresaActive) }">
