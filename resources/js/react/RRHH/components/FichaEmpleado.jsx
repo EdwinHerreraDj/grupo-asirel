@@ -5,6 +5,7 @@ import { formatEuro, formatNumero } from "../../shared/formato";
 import FormularioEmpleado from "./FormularioEmpleado";
 import { ModalBaja, ModalReingreso } from "./ModalesAltaBaja";
 import SubirDocumento from "./SubirDocumento";
+import AusenciasEmpleado from "./AusenciasEmpleado";
 import { Cargando, EstadoDocumento, EstadoEmpleado, ObrasChips, Vacio } from "./Comunes";
 import {
     botonPeligro,
@@ -313,6 +314,9 @@ export default function FichaEmpleado({ id, onVolver }) {
                     </Tarjeta>
                 </div>
 
+                {/* AUSENCIAS */}
+                <AusenciasEmpleado key={`${e.id}-${e.estado}`} empleado={e} />
+
                 {/* DATOS */}
                 <Tarjeta titulo="Datos del empleado" icono="mgc_user_3_line">
                     <div className="grid grid-cols-1 gap-6 px-5 py-5 sm:px-6 lg:grid-cols-2">
@@ -344,6 +348,13 @@ export default function FichaEmpleado({ id, onVolver }) {
                             <Dato etiqueta="Alta actual">{periodoAbierto && fechaCorta(periodoAbierto.fecha_alta)}</Dato>
                             <Dato etiqueta="Salario bruto anual">{e.salario_bruto_anual !== null && e.salario_bruto_anual !== undefined && formatEuro(e.salario_bruto_anual)}</Dato>
                             <Dato etiqueta="IBAN"><Iban iban={e.iban} /></Dato>
+                            <Dato etiqueta="Vacaciones al año">
+                                {e.dias_vacaciones_anuales !== null && e.dias_vacaciones_anuales !== undefined
+                                    ? `${formatNumero(e.dias_vacaciones_anuales)} días (propios del empleado)`
+                                    : opciones?.vacaciones
+                                      ? `${formatNumero(opciones.vacaciones.dias_anuales)} días ${opciones.vacaciones.computo} (general)`
+                                      : null}
+                            </Dato>
                         </dl>
                         {e.observaciones && (
                             <Dato etiqueta="Observaciones" className="lg:col-span-2">

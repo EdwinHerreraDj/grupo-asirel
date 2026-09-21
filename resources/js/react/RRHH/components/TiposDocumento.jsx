@@ -139,7 +139,7 @@ function FormularioTipo({ tipo, onCerrar, onGuardado }) {
     );
 }
 
-export default function TiposDocumento() {
+export default function TiposDocumento({ integrado = false }) {
     const { showError } = useNotification();
     const [tipos, setTipos] = useState(null);
     const [editando, setEditando] = useState(null); // null | "nuevo" | tipo
@@ -157,7 +157,7 @@ export default function TiposDocumento() {
     }, []);
 
     return (
-        <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_10px_35px_rgba(15,23,42,0.06)]">
+        <div className={integrado ? "" : "overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_10px_35px_rgba(15,23,42,0.06)]"}>
             <div className="flex flex-col gap-3 border-b border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
                 <p className="text-sm text-slate-500">
                     Cada tipo activo es un apartado dentro de la carpeta de cada empleado en el Drive.

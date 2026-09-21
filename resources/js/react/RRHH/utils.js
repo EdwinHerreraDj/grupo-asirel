@@ -125,3 +125,41 @@ export const ibanValido = (valor) => {
     for (let i = 0; i < numerico.length; i += 7) resto = Number(String(resto) + numerico.slice(i, i + 7)) % 97;
     return resto === 1;
 };
+
+/** Colores de los tipos de ausencia (clases completas para Tailwind). */
+export const COLORES_AUSENCIA = {
+    cyan: { celda: "bg-cyan-500", suave: "border-cyan-200 bg-cyan-50 text-cyan-800", punto: "bg-cyan-500", barra: "bg-cyan-500", barraSuave: "bg-cyan-200" },
+    sky: { celda: "bg-sky-500", suave: "border-sky-200 bg-sky-50 text-sky-800", punto: "bg-sky-500", barra: "bg-sky-500", barraSuave: "bg-sky-200" },
+    blue: { celda: "bg-blue-500", suave: "border-blue-200 bg-blue-50 text-blue-800", punto: "bg-blue-500", barra: "bg-blue-500", barraSuave: "bg-blue-200" },
+    indigo: { celda: "bg-indigo-500", suave: "border-indigo-200 bg-indigo-50 text-indigo-800", punto: "bg-indigo-500", barra: "bg-indigo-500", barraSuave: "bg-indigo-200" },
+    violet: { celda: "bg-violet-500", suave: "border-violet-200 bg-violet-50 text-violet-800", punto: "bg-violet-500", barra: "bg-violet-500", barraSuave: "bg-violet-200" },
+    pink: { celda: "bg-pink-500", suave: "border-pink-200 bg-pink-50 text-pink-800", punto: "bg-pink-500", barra: "bg-pink-500", barraSuave: "bg-pink-200" },
+    rose: { celda: "bg-rose-500", suave: "border-rose-200 bg-rose-50 text-rose-800", punto: "bg-rose-500", barra: "bg-rose-500", barraSuave: "bg-rose-200" },
+    red: { celda: "bg-red-600", suave: "border-red-200 bg-red-50 text-red-800", punto: "bg-red-600", barra: "bg-red-600", barraSuave: "bg-red-200" },
+    orange: { celda: "bg-orange-500", suave: "border-orange-200 bg-orange-50 text-orange-800", punto: "bg-orange-500", barra: "bg-orange-500", barraSuave: "bg-orange-200" },
+    amber: { celda: "bg-amber-500", suave: "border-amber-200 bg-amber-50 text-amber-800", punto: "bg-amber-500", barra: "bg-amber-500", barraSuave: "bg-amber-200" },
+    emerald: { celda: "bg-emerald-500", suave: "border-emerald-200 bg-emerald-50 text-emerald-800", punto: "bg-emerald-500", barra: "bg-emerald-500", barraSuave: "bg-emerald-200" },
+    teal: { celda: "bg-teal-500", suave: "border-teal-200 bg-teal-50 text-teal-800", punto: "bg-teal-500", barra: "bg-teal-500", barraSuave: "bg-teal-200" },
+    slate: { celda: "bg-slate-500", suave: "border-slate-200 bg-slate-100 text-slate-700", punto: "bg-slate-500", barra: "bg-slate-500", barraSuave: "bg-slate-200" },
+};
+
+export const colorAusencia = (color) => COLORES_AUSENCIA[color] ?? COLORES_AUSENCIA.slate;
+
+export const MESES = [
+    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
+];
+
+/** Iniciales de lunes (1) a domingo (7). */
+export const DIAS_SEMANA = { 1: "L", 2: "M", 3: "X", 4: "J", 5: "V", 6: "S", 7: "D" };
+
+/** Número con coma decimal y sin ceros sobrantes: 15.1 → "15,1", 14 → "14". */
+export const numeroDias = (n) =>
+    new Intl.NumberFormat("es-ES", { maximumFractionDigits: 1 }).format(Number(n) || 0);
+
+/** Días naturales entre dos fechas ISO (ambas incluidas). */
+export const diasNaturales = (desde, hasta) => {
+    if (!desde || !hasta) return null;
+    const d = (Date.parse(hasta) - Date.parse(desde)) / 86400000;
+    return Number.isFinite(d) && d >= 0 ? Math.round(d) + 1 : null;
+};

@@ -95,6 +95,20 @@ Route::middleware('auth')->prefix('api')->group(function () {
         Route::get('tipos-documento', [\App\Http\Controllers\Api\Rrhh\TipoDocumentoController::class, 'index']);
         Route::post('tipos-documento', [\App\Http\Controllers\Api\Rrhh\TipoDocumentoController::class, 'store']);
         Route::put('tipos-documento/{tipo}', [\App\Http\Controllers\Api\Rrhh\TipoDocumentoController::class, 'update']);
+
+        // Ausencias, calendario y festivos (fase 2)
+        Route::get('empleados/{empleado}/ausencias', [\App\Http\Controllers\Api\Rrhh\AusenciaController::class, 'index']);
+        Route::post('empleados/{empleado}/ausencias', [\App\Http\Controllers\Api\Rrhh\AusenciaController::class, 'store']);
+        Route::put('ausencias/{ausencia}', [\App\Http\Controllers\Api\Rrhh\AusenciaController::class, 'update']);
+        Route::delete('ausencias/{ausencia}', [\App\Http\Controllers\Api\Rrhh\AusenciaController::class, 'destroy']);
+        Route::get('calendario', [\App\Http\Controllers\Api\Rrhh\CalendarioController::class, 'index']);
+        Route::get('tipos-ausencia', [\App\Http\Controllers\Api\Rrhh\TipoAusenciaController::class, 'index']);
+        Route::post('tipos-ausencia', [\App\Http\Controllers\Api\Rrhh\TipoAusenciaController::class, 'store']);
+        Route::put('tipos-ausencia/{tipo}', [\App\Http\Controllers\Api\Rrhh\TipoAusenciaController::class, 'update']);
+        Route::get('festivos', [\App\Http\Controllers\Api\Rrhh\FestivoController::class, 'index']);
+        Route::post('festivos', [\App\Http\Controllers\Api\Rrhh\FestivoController::class, 'store']);
+        Route::post('festivos/nacionales', [\App\Http\Controllers\Api\Rrhh\FestivoController::class, 'nacionales']);
+        Route::delete('festivos/{festivo}', [\App\Http\Controllers\Api\Rrhh\FestivoController::class, 'destroy']);
     });
 });
 

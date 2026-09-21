@@ -20,7 +20,7 @@ const CAMPOS = [
     "nombre", "apellidos", "dni", "nss", "fecha_nacimiento", "telefono", "email",
     "direccion", "codigo_postal", "poblacion", "provincia",
     "puesto", "categoria_convenio", "tipo_contrato", "jornada", "horas_semanales",
-    "salario_bruto_anual", "iban",
+    "salario_bruto_anual", "dias_vacaciones_anuales", "iban",
     "contacto_emergencia_nombre", "contacto_emergencia_relacion", "contacto_emergencia_telefono",
     "observaciones",
 ];
@@ -32,7 +32,7 @@ const SECCIONES = [
     { id: "direccion", titulo: "Dirección", descripcion: "Domicilio del empleado", icono: "mgc_home_3_line", color: "violet",
         campos: ["direccion", "codigo_postal", "poblacion", "provincia"] },
     { id: "contrato", titulo: "Puesto y contrato", descripcion: "Condiciones laborales", icono: "mgc_briefcase_line", color: "amber",
-        campos: ["fecha_alta", "puesto", "categoria_convenio", "tipo_contrato", "jornada", "horas_semanales"] },
+        campos: ["fecha_alta", "puesto", "categoria_convenio", "tipo_contrato", "jornada", "horas_semanales", "dias_vacaciones_anuales"] },
     { id: "obras", titulo: "Obras", descripcion: "Puede trabajar en varias a la vez", icono: "mgc_building_2_line", color: "emerald",
         campos: ["obra_ids"] },
     { id: "salario", titulo: "Salario y banco", descripcion: "Retribución y cuenta de cobro", icono: "mgc_bank_card_line", color: "indigo",
@@ -342,6 +342,25 @@ export default function FormularioEmpleado({ empleado = null, opciones, onCerrar
                                     {input("horas_semanales", { type: "number", min: 0, max: 60, step: "0.5" })}
                                     <span className="pointer-events-none absolute right-8 top-1/2 -translate-y-1/2 text-xs text-slate-400">h</span>
                                 </div>
+                            </Campo>
+                            <Campo
+                                etiqueta="Días de vacaciones al año"
+                                error={errores.dias_vacaciones_anuales}
+                                className="sm:col-span-2"
+                                ayuda={
+                                    opciones?.vacaciones
+                                        ? `Déjalo vacío para usar los generales (${opciones.vacaciones.dias_anuales} días ${opciones.vacaciones.computo}). Rellénalo solo si este empleado tiene otros.`
+                                        : "Déjalo vacío para usar los generales."
+                                }
+                            >
+                                {input("dias_vacaciones_anuales", {
+                                    type: "number",
+                                    min: 0,
+                                    max: 365,
+                                    step: "0.5",
+                                    placeholder: opciones?.vacaciones ? `${opciones.vacaciones.dias_anuales} (general)` : "General",
+                                    className: claseInput(errores.dias_vacaciones_anuales, "sm:max-w-xs"),
+                                })}
                             </Campo>
                         </div>
                     </SeccionFormulario>

@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Api\Rrhh;
 
 use App\Http\Controllers\Controller;
+use App\Models\Ausencia;
 use App\Models\Empleado;
 use App\Models\Folder;
 use App\Models\Obra;
+use App\Models\RrhhTipoAusencia;
 use App\Rules\DniNie;
 use App\Rules\Iban;
 use App\Services\Rrhh\CarpetasEmpleados;
@@ -14,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Empleados: listado, alta, ficha, edición, baja, reingreso y
@@ -53,7 +56,21 @@ class EmpleadoController extends Controller
 
         $docs = $this->documentacion->paraEmpleados($empleados->getCollection());
 
-        $empleados->getCollection()->each(function (Empleado $empleado) use ($docs) {
+        // Quién está ausente hoy (vacaciones, baja médica…).
+        $hoy = today()->toDateString();
+        $ausentesHoy = Ausencia::whereIn('empleado_id', $empleados->getCollection()->pluck('id'))
+            ->solapadas($hoy, $hoy)
+            ->with('tipo:id,nombre,color')
+            ->get()
+            ->keyBy('empleado_id');
+
+        $empleados->getCollection()->each(function (Empleado $empleado) use ($docs, $ausentesHoy) {
+            $ausencia = $ausentesHoy->get($empleado->id);
+            $empleado->setAttribute('ausencia_hoy', $ausencia ? [
+                'tipo' => $ausencia->tipo->nombre,
+                'color' => $ausencia->tipo->color,
+                'hasta' => $ausencia->fecha_fin?->toDateString(),
+            ] : null);
             $empleado->makeHidden('iban');
             $empleado->setAttribute(
                 'documentacion',
@@ -148,7 +165,26 @@ class EmpleadoController extends Controller
             'fecha_baja.after_or_equal' => 'La fecha de baja no puede ser anterior a la de alta.',
         ]);
 
+        // Las ausencias no pueden empezar después de la baja.
+        $posteriores = Ausencia::where('empleado_id', $empleado->id)
+            ->where('fecha_inicio', '>', $datos['fecha_baja'])
+            ->with('tipo:id,nombre')
+            ->orderBy('fecha_inicio')
+            ->get();
+
+        if ($posteriores->isNotEmpty()) {
+            $lista = $posteriores->map(fn ($a) => $a->tipo->nombre.' ('.$a->fecha_inicio->format('d/m/Y').')')->implode(', ');
+            throw ValidationException::withMessages([
+                'fecha_baja' => "Tiene ausencias posteriores a la fecha de baja: {$lista}. Elimínalas o cámbialas antes.",
+            ]);
+        }
+
         DB::transaction(function () use ($empleado, $periodo, $datos) {
+            // Las ausencias abiertas o que pasan de la baja terminan ese día.
+            Ausencia::where('empleado_id', $empleado->id)
+                ->where(fn ($q) => $q->whereNull('fecha_fin')->orWhere('fecha_fin', '>', $datos['fecha_baja']))
+                ->update(['fecha_fin' => $datos['fecha_baja']]);
+
             if ($periodo && ! $periodo->fecha_baja) {
                 $periodo->update($datos);
             } else {
@@ -289,6 +325,7 @@ class EmpleadoController extends Controller
             'tipos_contrato' => Empleado::TIPOS_CONTRATO,
             'jornadas' => Empleado::JORNADAS,
             'motivos_baja' => Empleado::MOTIVOS_BAJA,
+            'vacaciones' => RrhhTipoAusencia::where('es_vacaciones', true)->first(['id', 'nombre', 'dias_anuales', 'computo']),
         ];
     }
 
@@ -330,6 +367,7 @@ class EmpleadoController extends Controller
             'jornada' => ['nullable', Rule::in(array_keys(Empleado::JORNADAS))],
             'horas_semanales' => ['nullable', 'numeric', 'min:0', 'max:60'],
             'salario_bruto_anual' => ['nullable', 'numeric', 'min:0', 'max:9999999'],
+            'dias_vacaciones_anuales' => ['nullable', 'numeric', 'min:0', 'max:365'],
             'iban' => ['nullable', 'string', new Iban],
             'contacto_emergencia_nombre' => ['nullable', 'string', 'max:150'],
             'contacto_emergencia_relacion' => ['nullable', 'string', 'max:60'],

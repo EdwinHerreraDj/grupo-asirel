@@ -5,7 +5,21 @@ import { useNotification } from "../../shared/NotificationContext";
 import FormularioEmpleado from "./FormularioEmpleado";
 import SelectorObras from "./SelectorObras";
 import { Cargando, EstadoEmpleado, ObrasChips, ResumenDocumentacion, Vacio } from "./Comunes";
-import { botonPrimario, botonSecundario, fechaCorta, inputBase } from "../utils";
+import { botonPrimario, botonSecundario, colorAusencia, fechaCorta, inputBase } from "../utils";
+
+/** "De vacaciones hasta…", "Baja por enfermedad"… si está ausente hoy. */
+function AusenteHoy({ ausencia }) {
+    if (!ausencia) return null;
+    return (
+        <span className={`mt-1 inline-flex max-w-full items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold ${colorAusencia(ausencia.color).suave}`}>
+            <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${colorAusencia(ausencia.color).punto}`}></span>
+            <span className="truncate">
+                {ausencia.tipo}
+                {ausencia.hasta ? ` hasta el ${fechaCorta(ausencia.hasta)}` : ""}
+            </span>
+        </span>
+    );
+}
 
 export default function ListaEmpleados({ onAbrirFicha }) {
     const { showError } = useNotification();
@@ -183,6 +197,9 @@ export default function ListaEmpleados({ onAbrirFicha }) {
                                         </td>
                                         <td className="px-3 py-3">
                                             <EstadoEmpleado estado={e.estado} />
+                                            <div>
+                                                <AusenteHoy ausencia={e.ausencia_hoy} />
+                                            </div>
                                         </td>
                                         <td className="px-6 py-3 text-right text-slate-400">
                                             <i className="mgc_right_line text-lg"></i>
@@ -210,6 +227,7 @@ export default function ListaEmpleados({ onAbrirFicha }) {
                                         </div>
                                         <EstadoEmpleado estado={e.estado} />
                                     </div>
+                                    <AusenteHoy ausencia={e.ausencia_hoy} />
                                     {e.obras?.length > 0 && (
                                         <div className="mt-2">
                                             <ObrasChips obras={e.obras} max={2} />

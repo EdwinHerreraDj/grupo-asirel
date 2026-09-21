@@ -24,6 +24,9 @@ class CarpetasEmpleados
 
     public const SISTEMA_BAJAS = 'rrhh_bajas';
 
+    /** Subcarpeta de justificantes de ausencias dentro de la del empleado. */
+    public const SISTEMA_AUSENCIAS = 'rrhh_ausencias';
+
     private const NOMBRES_SISTEMA = [
         self::SISTEMA_ACTIVOS => 'Trabajadores',
         self::SISTEMA_BAJAS => 'Trabajadores de baja',
@@ -110,6 +113,7 @@ class CarpetasEmpleados
             }
 
             $mismoNombre = $hijas->first(fn ($h) => $h->rrhh_tipo_documento_id === null
+                && $h->sistema === null
                 && mb_strtolower($h->nombre) === mb_strtolower($tipo->nombre));
 
             if ($mismoNombre) {
@@ -126,6 +130,24 @@ class CarpetasEmpleados
                 'rrhh_tipo_documento_id' => $tipo->id,
             ]));
         }
+    }
+
+    /** "Ausencias y bajas": justificantes y partes de baja del empleado. */
+    public function carpetaAusencias(Empleado $empleado): Folder
+    {
+        $carpeta = $this->asegurarCarpeta($empleado);
+
+        $existente = Folder::where('parent_id', $carpeta->id)
+            ->where('sistema', self::SISTEMA_AUSENCIAS)
+            ->first();
+
+        return $existente ?? Folder::create([
+            'nombre' => $this->nombreUnico('Ausencias y bajas', (int) $carpeta->id),
+            'parent_id' => $carpeta->id,
+            'tipo' => 1,
+            'usuario_id' => auth()->id(),
+            'sistema' => self::SISTEMA_AUSENCIAS,
+        ]);
     }
 
     /** Añade un tipo nuevo (o reactivado) a las carpetas de todos los empleados. */

@@ -3,12 +3,14 @@ import { NotificationProvider } from "../shared/NotificationContext";
 import ListaEmpleados from "./components/ListaEmpleados";
 import FichaEmpleado from "./components/FichaEmpleado";
 import DocumentacionPendiente from "./components/DocumentacionPendiente";
-import TiposDocumento from "./components/TiposDocumento";
+import Calendario from "./components/Calendario";
+import Configuracion from "./components/Configuracion";
 
 const PESTANAS = [
     { id: "empleados", texto: "Empleados", icono: "mgc_group_line" },
+    { id: "calendario", texto: "Calendario", icono: "mgc_calendar_month_line" },
     { id: "pendiente", texto: "Documentación pendiente", icono: "mgc_alert_line" },
-    { id: "tipos", texto: "Tipos de documento", icono: "mgc_settings_3_line" },
+    { id: "configuracion", texto: "Configuración", icono: "mgc_settings_3_line" },
 ];
 
 // ?empleado=ID abre la ficha (y se conserva al recargar la página).
@@ -63,7 +65,7 @@ function RrhhAppContent() {
                         </div>
                         <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-900">Recursos humanos</h2>
                         <p className="mt-1 text-sm text-slate-500">
-                            Fichas de empleados, altas y bajas, y su documentación en el Drive.
+                            Fichas de empleados, altas y bajas, ausencias y vacaciones, y su documentación en el Drive.
                         </p>
                     </div>
 
@@ -87,8 +89,9 @@ function RrhhAppContent() {
                 </div>
 
                 {pestana === "empleados" && <ListaEmpleados onAbrirFicha={abrirFicha} />}
+                {pestana === "calendario" && <Calendario onAbrirFicha={abrirFicha} />}
                 {pestana === "pendiente" && <DocumentacionPendiente onAbrirFicha={abrirFicha} />}
-                {pestana === "tipos" && <TiposDocumento />}
+                {pestana === "configuracion" && <Configuracion />}
             </div>
         </div>
     );

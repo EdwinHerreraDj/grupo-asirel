@@ -59,6 +59,7 @@ class Empleado extends Model
         'jornada',
         'horas_semanales',
         'salario_bruto_anual',
+        'dias_vacaciones_anuales',
         'iban',
         'contacto_emergencia_nombre',
         'contacto_emergencia_relacion',
@@ -72,6 +73,7 @@ class Empleado extends Model
         'fecha_nacimiento' => 'date:Y-m-d',
         'horas_semanales' => 'decimal:2',
         'salario_bruto_anual' => 'decimal:2',
+        'dias_vacaciones_anuales' => 'float',
         'iban' => 'encrypted',
     ];
 
@@ -105,6 +107,12 @@ class Empleado extends Model
             'fecha_alta' => 'max',
             'id' => 'max',
         ]);
+    }
+
+    /** Vacaciones, bajas médicas, permisos… */
+    public function ausencias(): HasMany
+    {
+        return $this->hasMany(Ausencia::class)->orderByDesc('fecha_inicio');
     }
 
     public function getNombreCompletoAttribute(): string

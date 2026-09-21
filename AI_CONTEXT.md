@@ -107,6 +107,13 @@ Contratado (presupuesto de venta) frente a ejecutado (`certificacion_detalles.ca
 - Baja y reingreso mueven la carpeta. Editar nombre o DNI la renombra. Un tipo nuevo o reactivado se añade a todas las carpetas.
 - Estas carpetas **no se renombran, mueven ni borran desde el Drive**: `FolderController` responde 422 y el listado las marca con `protegida`. Los archivos se suben con la API normal del Drive (`POST /api/files`).
 - El estado de la documentación (falta, caducado, caduca pronto, etc.) se calcula en `App\Services\Rrhh\EstadoDocumentacion`, a partir de los archivos de cada apartado.
+- **Obras:** un empleado puede estar en varias obras a la vez (tabla pivote `empleado_obra`). Los selectores buscan en el servidor con `/api/rrhh/obras` (máx. 20 resultados), porque habrá muchas obras.
+- **Ausencias (fase 2):**
+  - Tablas: `rrhh_ausencias` (fechas incluidas; `fecha_fin` null = baja médica abierta) y `rrhh_tipos_ausencia` (configurables: color, vacaciones, baja médica, retribuida, días/año y cómputo en días naturales o laborables).
+  - Festivos en `rrhh_festivos`. Los laborables son de lunes a viernes sin festivos.
+  - Cuentas en `App\Services\Rrhh\CalendarioLaboral`. Las vacaciones se prorratean por días de alta en el año; `empleados.dias_vacaciones_anuales` las sustituye si tiene valor.
+  - Reglas: sin solapes; dentro de un periodo de alta. Dar de baja cierra las ausencias abiertas y no se permite si hay ausencias posteriores a la fecha de baja.
+  - El justificante va a la subcarpeta protegida "Ausencias y bajas" del empleado (`folders.sistema = rrhh_ausencias`). Borrar la ausencia no borra el archivo.
 
 ---
 
