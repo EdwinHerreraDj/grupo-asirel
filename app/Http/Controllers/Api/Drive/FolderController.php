@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Drive;
 
 use App\Http\Controllers\Controller;
 use App\Models\DriveEliminacion;
+use App\Models\Empleado;
 use App\Models\File;
 use App\Models\Folder;
 use App\Services\Drive\DriveStorage;
@@ -39,6 +40,13 @@ class FolderController extends Controller
             ->with('usuario:id,name')
             ->orderBy('created_at', 'desc')
             ->get();
+
+        // Carpetas de Recursos humanos: la interfaz oculta renombrar/mover/borrar.
+        $carpetasDeEmpleado = Empleado::whereIn('folder_id', $folders->pluck('id'))->pluck('folder_id')->all();
+        $folders->each(fn (Folder $f) => $f->setAttribute(
+            'protegida',
+            $f->sistema !== null || $f->rrhh_tipo_documento_id !== null || in_array($f->id, $carpetasDeEmpleado),
+        ));
 
         return response()->json([
             'folders' => $folders,
@@ -81,6 +89,10 @@ class FolderController extends Controller
     {
         $folder = Folder::findOrFail($id);
 
+        if ($bloqueo = $this->bloqueoRrhh($folder)) {
+            return $bloqueo;
+        }
+
         $validated = $request->validate([
             'nombre' => [
                 'required', 'string', 'max:150',
@@ -106,6 +118,10 @@ class FolderController extends Controller
     {
         $folder = Folder::findOrFail($id);
         $user = $request->user();
+
+        if ($bloqueo = $this->bloqueoRrhh($folder)) {
+            return $bloqueo;
+        }
 
         $request->validate(
             ['password' => ['required', 'string']],
@@ -180,6 +196,10 @@ class FolderController extends Controller
         $folder = Folder::findOrFail($id);
         $targetFolderId = (int) $validated['target_folder_id'];
 
+        if ($bloqueo = $this->bloqueoRrhh($folder)) {
+            return $bloqueo;
+        }
+
         if ($targetFolderId > 0 && ! Folder::whereKey($targetFolderId)->exists()) {
             return response()->json(['message' => 'La carpeta de destino no existe.'], 422);
         }
@@ -253,6 +273,17 @@ class FolderController extends Controller
     // -------------------------------------------------------------
     // Internos
     // -------------------------------------------------------------
+
+    private function bloqueoRrhh(Folder $folder)
+    {
+        if (! $folder->gestionadaPorRrhh()) {
+            return null;
+        }
+
+        return response()->json([
+            'message' => 'Esta carpeta la gestiona Recursos humanos: se renombra, mueve o archiva desde la ficha del empleado.',
+        ], 422);
+    }
 
     private function mensajesNombre(): array
     {

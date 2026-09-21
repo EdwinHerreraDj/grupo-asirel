@@ -13,6 +13,8 @@ class Folder extends Model
         'usuario_id',
         'nombre',
         'tipo',
+        'sistema',
+        'rrhh_tipo_documento_id',
     ];
 
     public function files(): HasMany
@@ -55,6 +57,18 @@ class Folder extends Model
         }
 
         return 'Inicio'.($partes ? ' / '.implode(' / ', $partes) : '');
+    }
+
+    /**
+     * Carpetas que gestiona Recursos humanos ("Trabajadores", la carpeta de
+     * cada empleado y sus apartados): no se renombran, mueven ni borran desde
+     * el Drive para no romper el vínculo con la ficha del empleado.
+     */
+    public function gestionadaPorRrhh(): bool
+    {
+        return $this->sistema !== null
+            || $this->rrhh_tipo_documento_id !== null
+            || Empleado::where('folder_id', $this->id)->exists();
     }
 
     /* Scopes útiles */

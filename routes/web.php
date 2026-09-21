@@ -80,6 +80,21 @@ Route::middleware('auth')->prefix('api')->group(function () {
             Route::post('{id}/extract', [ApiFileController::class, 'extract']);
         });
     });
+
+    /* ===== RECURSOS HUMANOS: solo admin y super_admin ===== */
+    Route::middleware('role:admin,super_admin')->prefix('rrhh')->group(function () {
+        Route::get('empleados', [\App\Http\Controllers\Api\Rrhh\EmpleadoController::class, 'index']);
+        Route::post('empleados', [\App\Http\Controllers\Api\Rrhh\EmpleadoController::class, 'store']);
+        Route::get('empleados/{empleado}', [\App\Http\Controllers\Api\Rrhh\EmpleadoController::class, 'show']);
+        Route::put('empleados/{empleado}', [\App\Http\Controllers\Api\Rrhh\EmpleadoController::class, 'update']);
+        Route::post('empleados/{empleado}/baja', [\App\Http\Controllers\Api\Rrhh\EmpleadoController::class, 'baja']);
+        Route::post('empleados/{empleado}/reingreso', [\App\Http\Controllers\Api\Rrhh\EmpleadoController::class, 'reingreso']);
+        Route::get('documentacion-pendiente', [\App\Http\Controllers\Api\Rrhh\EmpleadoController::class, 'pendientes']);
+
+        Route::get('tipos-documento', [\App\Http\Controllers\Api\Rrhh\TipoDocumentoController::class, 'index']);
+        Route::post('tipos-documento', [\App\Http\Controllers\Api\Rrhh\TipoDocumentoController::class, 'store']);
+        Route::put('tipos-documento/{tipo}', [\App\Http\Controllers\Api\Rrhh\TipoDocumentoController::class, 'update']);
+    });
 });
 
 
@@ -107,6 +122,7 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
     Route::get('/empresa', [EmpresaController::class, 'index'])->name('empresa.index');
     Route::get('/empresa/configuracion', [EmpresaController::class, 'configuracion'])->middleware('role:admin,super_admin')->name('empresa.configuracion');
     Route::get('/empresa/drive-app', [FoldersController::class, 'index'])->middleware('role:admin,super_admin')->name('empresa.driveApp');
+    Route::get('/rrhh', [\App\Http\Controllers\RrhhController::class, 'index'])->middleware('role:admin,super_admin')->name('rrhh.index');
 
     // Rutas de Obras
     Route::get('/obra/{id}/informe-general', [ObraController::class, 'informeGeneral'])->name('obra.informe.general');

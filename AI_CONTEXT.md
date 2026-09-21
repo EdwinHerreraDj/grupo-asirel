@@ -97,6 +97,19 @@ Contratado (presupuesto de venta) frente a ejecutado (`certificacion_detalles.ca
 
 ---
 
+## 5.4 Recursos humanos (`/rrhh`, solo admin y super_admin)
+
+- **Tablas:** `empleados` (IBAN con cast `encrypted`; DNI/NIE e IBAN validados con `App\Rules\DniNie` e `Iban`), `empleado_periodos` (historial de altas y bajas; un reingreso abre un periodo nuevo en la misma ficha) y `rrhh_tipos_documento` (configurables; no se borran, se desactivan).
+- **Documentación en el Drive** (`App\Services\Rrhh\CarpetasEmpleados`):
+  - carpetas raíz con `folders.sistema` = `rrhh_activos` ("Trabajadores") y `rrhh_bajas` ("Trabajadores de baja");
+  - una carpeta por empleado (`empleados.folder_id`);
+  - un apartado por tipo de documento (`folders.rrhh_tipo_documento_id`).
+- Baja y reingreso mueven la carpeta. Editar nombre o DNI la renombra. Un tipo nuevo o reactivado se añade a todas las carpetas.
+- Estas carpetas **no se renombran, mueven ni borran desde el Drive**: `FolderController` responde 422 y el listado las marca con `protegida`. Los archivos se suben con la API normal del Drive (`POST /api/files`).
+- El estado de la documentación (falta, caducado, caduca pronto, etc.) se calcula en `App\Services\Rrhh\EstadoDocumentacion`, a partir de los archivos de cada apartado.
+
+---
+
 ## 6. Seguridad y permisos
 
 - **Roles** en `users.role`: `super_admin` | `admin` | `user`. No hay registro público: las altas se hacen en `/users`.
