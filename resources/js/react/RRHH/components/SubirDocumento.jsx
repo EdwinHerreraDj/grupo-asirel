@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import api from "../../shared/api";
 import { useNotification } from "../../shared/NotificationContext";
-import { Campo, Modal, claseInput } from "./Comunes";
+import { Aviso, Campo, Modal, SeccionFormulario, claseInput } from "./Comunes";
 import { botonPrimario, botonSecundario, hoyISO, mensajeDeError } from "../utils";
 
 const MAX_MB = 50;
@@ -90,46 +90,63 @@ export default function SubirDocumento({ apartado, empleado, onCerrar, onSubido 
             }
         >
             <form id="form-subir" onSubmit={subir} className="space-y-4">
-                <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50/60 px-4 py-8 text-center transition hover:border-cyan-400 hover:bg-cyan-50/40">
-                    <i className="mgc_upload_2_line text-3xl text-cyan-600"></i>
-                    <span className="text-sm font-semibold text-slate-700">
-                        {archivos.length ? "Cambiar archivos" : "Elegir archivos"}
-                    </span>
-                    <span className="text-xs text-slate-500">PDF, imágenes u otros documentos · máx. {MAX_MB} MB cada uno</span>
-                    <input type="file" multiple onChange={elegir} className="sr-only" disabled={!!subiendo} />
-                </label>
+                <SeccionFormulario titulo="Archivos" descripcion={`PDF, imágenes u otros documentos · máx. ${MAX_MB} MB cada uno`} icono="mgc_upload_2_line" color="cyan">
+                    <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50/60 px-4 py-7 text-center transition hover:border-cyan-400 hover:bg-cyan-50/40">
+                        <i className="mgc_upload_2_line text-3xl text-cyan-600"></i>
+                        <span className="text-sm font-semibold text-slate-700">
+                            {archivos.length ? "Cambiar archivos" : "Pulsa para elegir archivos"}
+                        </span>
+                        <span className="text-xs text-slate-500">Puedes elegir varios a la vez</span>
+                        <input type="file" multiple onChange={elegir} className="sr-only" disabled={!!subiendo} />
+                    </label>
 
-                {archivos.length > 0 && (
-                    <ul className="space-y-1">
-                        {archivos.map((f) => (
-                            <li key={f.name + f.size} className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-700">
-                                <i className="mgc_file_line text-slate-400"></i>
-                                <span className="min-w-0 flex-1 break-all">{f.name}</span>
-                            </li>
-                        ))}
-                    </ul>
-                )}
+                    {archivos.length > 0 && (
+                        <ul className="mt-3 space-y-1.5">
+                            {archivos.map((f, i) => (
+                                <li key={f.name + f.size} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
+                                    <i className="mgc_file_line text-slate-400"></i>
+                                    <span className="min-w-0 flex-1 break-all">{f.name}</span>
+                                    <span className="shrink-0 text-xs text-slate-400">{(f.size / 1024 / 1024).toFixed(1)} MB</span>
+                                    {!subiendo && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setArchivos(archivos.filter((_, j) => j !== i))}
+                                            aria-label={`Quitar ${f.name}`}
+                                            className="text-slate-400 hover:text-rose-600"
+                                        >
+                                            <i className="mgc_close_line"></i>
+                                        </button>
+                                    )}
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </SeccionFormulario>
 
-                <label className="flex items-center gap-2 text-sm text-slate-700">
-                    <input
-                        type="checkbox"
-                        checked={conCaducidad}
-                        onChange={(e) => setConCaducidad(e.target.checked)}
-                        className="rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
-                    />
-                    Tiene fecha de caducidad
-                    {apartado.requiere_caducidad && <span className="text-xs text-slate-400">(recomendado para este documento)</span>}
-                </label>
+                <SeccionFormulario
+                    titulo="Caducidad"
+                    descripcion={apartado.requiere_caducidad ? "Este documento caduca: indica hasta cuándo es válido" : "Opcional"}
+                    icono="mgc_time_line"
+                    color="amber"
+                >
+                    <label className="flex items-center gap-2 text-sm text-slate-700">
+                        <input
+                            type="checkbox"
+                            checked={conCaducidad}
+                            onChange={(e) => setConCaducidad(e.target.checked)}
+                            className="rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
+                        />
+                        Tiene fecha de caducidad
+                    </label>
 
-                {conCaducidad && (
-                    <Campo etiqueta="Fecha de caducidad" obligatorio>
-                        <input type="date" min={hoyISO()} value={caducidad} onChange={(e) => setCaducidad(e.target.value)} className={claseInput(false)} />
-                    </Campo>
-                )}
+                    {conCaducidad && (
+                        <Campo etiqueta="Válido hasta" obligatorio className="mt-3 sm:max-w-xs">
+                            <input type="date" min={hoyISO()} value={caducidad} onChange={(e) => setCaducidad(e.target.value)} className={claseInput(false)} />
+                        </Campo>
+                    )}
+                </SeccionFormulario>
 
-                {error && (
-                    <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>
-                )}
+                {error && <Aviso tipo="peligro">{error}</Aviso>}
             </form>
         </Modal>
     );

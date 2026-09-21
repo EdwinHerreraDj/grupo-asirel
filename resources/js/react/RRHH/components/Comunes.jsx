@@ -6,7 +6,7 @@ import { ESTADOS_DOCUMENTO, inputBase, inputError } from "../utils";
  * Modal del módulo: bloquea el scroll del body, se cierra con Escape y en
  * móvil aparece como hoja inferior a pantalla completa de ancho.
  */
-export function Modal({ etiqueta, titulo, subtitulo, onCerrar, children, pie, ancho = "max-w-2xl" }) {
+export function Modal({ etiqueta, titulo, subtitulo, onCerrar, children, pie, ancho = "max-w-2xl", refCuerpo, cabeceraExtra }) {
     useLockBodyScroll(true);
 
     useEffect(() => {
@@ -33,6 +33,7 @@ export function Modal({ etiqueta, titulo, subtitulo, onCerrar, children, pie, an
                             )}
                             <h3 className="mt-2 break-words text-lg font-semibold text-slate-900">{titulo}</h3>
                             {subtitulo && <p className="mt-0.5 text-sm text-slate-500">{subtitulo}</p>}
+                            {cabeceraExtra}
                         </div>
                         <button
                             type="button"
@@ -45,7 +46,7 @@ export function Modal({ etiqueta, titulo, subtitulo, onCerrar, children, pie, an
                     </div>
                 </div>
 
-                <div className="overflow-y-auto overscroll-contain px-5 py-5 sm:px-6">{children}</div>
+                <div ref={refCuerpo} className="relative overflow-y-auto overscroll-contain px-5 py-5 sm:px-6">{children}</div>
 
                 {pie && (
                     <div className="shrink-0 border-t border-slate-200 bg-slate-50/70 px-5 py-4 sm:px-6">
@@ -149,6 +150,98 @@ export function Vacio({ icono = "mgc_group_line", titulo, texto, children }) {
             <p className="mt-3 font-semibold text-slate-700">{titulo}</p>
             {texto && <p className="mt-1 max-w-md text-sm text-slate-500">{texto}</p>}
             {children && <div className="mt-4">{children}</div>}
+        </div>
+    );
+}
+
+/** Colores de icono de las secciones (clases completas para Tailwind). */
+export const COLORES_SECCION = {
+    cyan: "bg-cyan-100 text-cyan-700",
+    violet: "bg-violet-100 text-violet-700",
+    amber: "bg-amber-100 text-amber-700",
+    emerald: "bg-emerald-100 text-emerald-700",
+    indigo: "bg-indigo-100 text-indigo-700",
+    rose: "bg-rose-100 text-rose-700",
+    slate: "bg-slate-100 text-slate-600",
+    sky: "bg-sky-100 text-sky-700",
+};
+
+/**
+ * Apartado de un formulario dentro de un modal: tarjeta con icono, título,
+ * descripción y aviso si tiene errores.
+ */
+export const SeccionFormulario = React.forwardRef(function SeccionFormulario(
+    { id, titulo, descripcion, icono, color = "cyan", conError = false, children, className = "" },
+    ref,
+) {
+    return (
+        <section
+            id={id}
+            ref={ref}
+            className={`scroll-mt-20 overflow-hidden rounded-2xl border bg-white md:scroll-mt-2 ${
+                conError ? "border-red-200 ring-1 ring-red-100" : "border-slate-200"
+            } ${className}`}
+        >
+            <header className="flex items-center gap-3 border-b border-slate-100 bg-slate-50/60 px-4 py-3 sm:px-5">
+                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${COLORES_SECCION[color] ?? COLORES_SECCION.cyan}`}>
+                    <i className={`${icono} text-lg`}></i>
+                </span>
+                <div className="min-w-0 flex-1">
+                    <h4 className="text-sm font-semibold text-slate-900">{titulo}</h4>
+                    {descripcion && <p className="text-xs text-slate-500">{descripcion}</p>}
+                </div>
+                {conError && (
+                    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-600">
+                        <i className="mgc_warning_line"></i> Revisar
+                    </span>
+                )}
+            </header>
+            <div className="p-4 sm:p-5">{children}</div>
+        </section>
+    );
+});
+
+/** Obras del empleado como etiquetas; con `max` se resume el resto en "+N". */
+export function ObrasChips({ obras, max = null, vacio = "—" }) {
+    if (!obras?.length) return <span className="text-slate-400">{vacio}</span>;
+    const visibles = max ? obras.slice(0, max) : obras;
+    const resto = obras.length - visibles.length;
+    return (
+        <div className="flex flex-wrap gap-1">
+            {visibles.map((o) => (
+                <span
+                    key={o.id ?? o}
+                    className="inline-flex max-w-[14rem] items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs text-slate-700"
+                    title={o.nombre ?? o}
+                >
+                    <i className="mgc_building_2_line text-slate-400"></i>
+                    <span className="truncate">{o.nombre ?? o}</span>
+                </span>
+            ))}
+            {resto > 0 && (
+                <span
+                    className="rounded-lg border border-slate-200 bg-white px-2 py-0.5 text-xs font-semibold text-slate-500"
+                    title={obras.slice(visibles.length).map((o) => o.nombre ?? o).join(", ")}
+                >
+                    +{resto}
+                </span>
+            )}
+        </div>
+    );
+}
+
+/** Aviso informativo dentro de un modal. */
+export function Aviso({ tipo = "info", icono, children }) {
+    const estilos = {
+        info: "border-sky-200 bg-sky-50 text-sky-800",
+        aviso: "border-amber-200 bg-amber-50 text-amber-800",
+        peligro: "border-rose-200 bg-rose-50 text-rose-800",
+    };
+    const iconos = { info: "mgc_information_line", aviso: "mgc_warning_line", peligro: "mgc_warning_line" };
+    return (
+        <div className={`flex gap-2.5 rounded-xl border px-3.5 py-3 text-sm ${estilos[tipo]}`}>
+            <i className={`${icono ?? iconos[tipo]} mt-0.5 shrink-0 text-base`}></i>
+            <div className="min-w-0">{children}</div>
         </div>
     );
 }

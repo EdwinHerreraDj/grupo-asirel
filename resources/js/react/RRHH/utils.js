@@ -93,3 +93,35 @@ export const botonSecundario =
     "inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60";
 export const botonPeligro =
     "inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(225,29,72,0.22)] transition hover:from-rose-500 hover:to-red-500 disabled:cursor-not-allowed disabled:opacity-60";
+
+/** Estados de obra (obras.estado). */
+export const ESTADOS_OBRA = {
+    ejecucion: { texto: "En ejecución", clases: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+    planificacion: { texto: "Planificación", clases: "bg-sky-50 text-sky-700 border-sky-200" },
+    en_pausa: { texto: "En pausa", clases: "bg-amber-50 text-amber-700 border-amber-200" },
+    finalizada: { texto: "Finalizada", clases: "bg-slate-100 text-slate-500 border-slate-200" },
+};
+
+/** Normaliza como el servidor: mayúsculas y sin espacios ni separadores. */
+export const limpiarDni = (v) => String(v || "").toUpperCase().replace(/[\s.\-]/g, "");
+export const limpiarIban = (v) => String(v || "").toUpperCase().replace(/\s+/g, "");
+
+/** Comprobación previa (la definitiva la hace el servidor). null = vacío. */
+export const dniValido = (valor) => {
+    const v = limpiarDni(valor);
+    if (!v) return null;
+    const m = v.match(/^([XYZ]?)(\d{7,8})([A-Z])$/);
+    if (!m || (m[1] ? m[2].length !== 7 : m[2].length !== 8)) return false;
+    const numero = Number(({ X: "0", Y: "1", Z: "2" }[m[1]] ?? "") + m[2]);
+    return "TRWAGMYFPDXBNJZSQVHLCKE"[numero % 23] === m[3];
+};
+
+export const ibanValido = (valor) => {
+    const v = limpiarIban(valor);
+    if (!v) return null;
+    if (!/^[A-Z]{2}\d{2}[A-Z0-9]{10,30}$/.test(v) || (v.startsWith("ES") && v.length !== 24)) return false;
+    const numerico = (v.slice(4) + v.slice(0, 4)).replace(/[A-Z]/g, (c) => String(c.charCodeAt(0) - 55));
+    let resto = 0;
+    for (let i = 0; i < numerico.length; i += 7) resto = Number(String(resto) + numerico.slice(i, i + 7)) % 97;
+    return resto === 1;
+};

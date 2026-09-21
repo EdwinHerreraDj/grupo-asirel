@@ -90,6 +90,7 @@ Route::middleware('auth')->prefix('api')->group(function () {
         Route::post('empleados/{empleado}/baja', [\App\Http\Controllers\Api\Rrhh\EmpleadoController::class, 'baja']);
         Route::post('empleados/{empleado}/reingreso', [\App\Http\Controllers\Api\Rrhh\EmpleadoController::class, 'reingreso']);
         Route::get('documentacion-pendiente', [\App\Http\Controllers\Api\Rrhh\EmpleadoController::class, 'pendientes']);
+        Route::get('obras', [\App\Http\Controllers\Api\Rrhh\EmpleadoController::class, 'buscarObras']);
 
         Route::get('tipos-documento', [\App\Http\Controllers\Api\Rrhh\TipoDocumentoController::class, 'index']);
         Route::post('tipos-documento', [\App\Http\Controllers\Api\Rrhh\TipoDocumentoController::class, 'store']);

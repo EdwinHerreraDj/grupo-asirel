@@ -61,7 +61,7 @@ export default function DocumentacionPendiente({ onAbrirFicha }) {
                                         <p className="text-xs text-slate-500">
                                             <span className="font-mono">{empleado.dni}</span>
                                             {empleado.puesto && ` · ${empleado.puesto}`}
-                                            {empleado.obra && ` · ${empleado.obra}`}
+                                            {empleado.obras?.length > 0 && ` · ${empleado.obras.join(", ")}`}
                                         </p>
                                     </div>
                                     <i className="mgc_right_line text-lg text-slate-400"></i>

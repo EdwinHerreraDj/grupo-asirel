@@ -3,7 +3,8 @@ import api from "../../shared/api";
 import Pagination from "../../shared/Pagination";
 import { useNotification } from "../../shared/NotificationContext";
 import FormularioEmpleado from "./FormularioEmpleado";
-import { Cargando, EstadoEmpleado, ResumenDocumentacion, Vacio } from "./Comunes";
+import SelectorObras from "./SelectorObras";
+import { Cargando, EstadoEmpleado, ObrasChips, ResumenDocumentacion, Vacio } from "./Comunes";
 import { botonPrimario, botonSecundario, fechaCorta, inputBase } from "../utils";
 
 export default function ListaEmpleados({ onAbrirFicha }) {
@@ -13,15 +14,14 @@ export default function ListaEmpleados({ onAbrirFicha }) {
     const [cargando, setCargando] = useState(true);
     const [pagina, setPagina] = useState({ actual: 1, ultima: 1, total: 0 });
     const [stats, setStats] = useState(null);
-    const [obras, setObras] = useState([]);
     const [opciones, setOpciones] = useState(null);
     const [nuevo, setNuevo] = useState(false);
 
     const [search, setSearch] = useState("");
     const [estado, setEstado] = useState("activo");
-    const [obraId, setObraId] = useState("");
+    const [obra, setObra] = useState(null);
 
-    const cargar = async (page = 1, filtros = { search, estado, obraId }) => {
+    const cargar = async (page = 1, filtros = { search, estado, obraId: obra?.id }) => {
         setCargando(true);
         try {
             const params = { page };
@@ -33,7 +33,6 @@ export default function ListaEmpleados({ onAbrirFicha }) {
             setEmpleados(data.data || []);
             setPagina({ actual: data.current_page || 1, ultima: data.last_page || 1, total: data.total || 0 });
             setStats(data.stats || null);
-            setObras(data.obras || []);
             setOpciones(data.opciones || null);
         } catch (error) {
             showError("Error al cargar los empleados");
@@ -53,12 +52,12 @@ export default function ListaEmpleados({ onAbrirFicha }) {
 
     const cambiarEstado = (valor) => {
         setEstado(valor);
-        cargar(1, { search, estado: valor, obraId });
+        cargar(1, { search, estado: valor, obraId: obra?.id });
     };
 
     const limpiar = () => {
         setSearch("");
-        setObraId("");
+        setObra(null);
         setEstado("activo");
         cargar(1, { search: "", estado: "activo", obraId: "" });
     };
@@ -97,7 +96,7 @@ export default function ListaEmpleados({ onAbrirFicha }) {
                     </button>
                 </div>
 
-                <form onSubmit={aplicar} className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_minmax(0,16rem)_auto]">
+                <form onSubmit={aplicar} className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_minmax(0,18rem)_auto]">
                     <div className="relative">
                         <i className="mgc_search_line pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
                         <input
@@ -108,26 +107,19 @@ export default function ListaEmpleados({ onAbrirFicha }) {
                             className={`${inputBase} pl-9`}
                         />
                     </div>
-                    <select
-                        value={obraId}
-                        onChange={(e) => {
-                            setObraId(e.target.value);
-                            cargar(1, { search, estado, obraId: e.target.value });
+                    <SelectorObras
+                        value={obra}
+                        placeholder="Filtrar por obra…"
+                        onChange={(o) => {
+                            setObra(o);
+                            cargar(1, { search, estado, obraId: o?.id });
                         }}
-                        className={inputBase}
-                    >
-                        <option value="">Todas las obras</option>
-                        {obras.map((o) => (
-                            <option key={o.id} value={o.id}>
-                                {o.nombre}
-                            </option>
-                        ))}
-                    </select>
+                    />
                     <div className="flex gap-2">
                         <button type="submit" className={`${botonSecundario} flex-1 sm:flex-none`}>
                             <i className="mgc_search_line"></i> Buscar
                         </button>
-                        {(search || obraId || estado !== "activo") && (
+                        {(search || obra || estado !== "activo") && (
                             <button type="button" onClick={limpiar} className={botonSecundario} title="Limpiar filtros">
                                 <i className="mgc_close_line"></i>
                             </button>
@@ -141,14 +133,14 @@ export default function ListaEmpleados({ onAbrirFicha }) {
                 <Cargando texto="Cargando empleados…" />
             ) : empleados.length === 0 ? (
                 <Vacio
-                    titulo={search || obraId ? "Sin resultados" : estado === "baja" ? "No hay empleados de baja" : "Todavía no hay empleados"}
+                    titulo={search || obra ? "Sin resultados" : estado === "baja" ? "No hay empleados de baja" : "Todavía no hay empleados"}
                     texto={
-                        search || obraId
+                        search || obra
                             ? "Prueba con otros filtros."
                             : "Al dar de alta un empleado se crea su carpeta en el Drive con un apartado por cada tipo de documento."
                     }
                 >
-                    {!search && !obraId && estado !== "baja" && (
+                    {!search && !obra && estado !== "baja" && (
                         <button type="button" onClick={() => setNuevo(true)} className={botonPrimario} disabled={!opciones}>
                             <i className="mgc_user_add_line"></i> Dar de alta al primero
                         </button>
@@ -163,7 +155,7 @@ export default function ListaEmpleados({ onAbrirFicha }) {
                                 <tr>
                                     <th className="px-6 py-3">Empleado</th>
                                     <th className="px-3 py-3">Puesto</th>
-                                    <th className="hidden px-3 py-3 lg:table-cell">Obra</th>
+                                    <th className="hidden px-3 py-3 lg:table-cell">Obras</th>
                                     <th className="px-3 py-3">Alta</th>
                                     <th className="px-3 py-3">Documentación</th>
                                     <th className="px-3 py-3">Estado</th>
@@ -180,8 +172,8 @@ export default function ListaEmpleados({ onAbrirFicha }) {
                                             <p className="font-mono text-xs text-slate-500">{e.dni}</p>
                                         </td>
                                         <td className="px-3 py-3 text-slate-600">{e.puesto || "—"}</td>
-                                        <td className="hidden max-w-[14rem] truncate px-3 py-3 text-slate-600 lg:table-cell" title={e.obra?.nombre}>
-                                            {e.obra?.nombre || "—"}
+                                        <td className="hidden max-w-[18rem] px-3 py-3 text-slate-600 lg:table-cell">
+                                            <ObrasChips obras={e.obras} max={2} />
                                         </td>
                                         <td className="whitespace-nowrap px-3 py-3 text-slate-600">
                                             {fechaCorta(e.periodo_actual?.fecha_alta)}
@@ -218,6 +210,11 @@ export default function ListaEmpleados({ onAbrirFicha }) {
                                         </div>
                                         <EstadoEmpleado estado={e.estado} />
                                     </div>
+                                    {e.obras?.length > 0 && (
+                                        <div className="mt-2">
+                                            <ObrasChips obras={e.obras} max={2} />
+                                        </div>
+                                    )}
                                     <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
                                         <ResumenDocumentacion resumen={e.documentacion} />
                                         <span className="text-xs text-slate-400">Alta: {fechaCorta(e.periodo_actual?.fecha_alta)}</span>
@@ -242,7 +239,6 @@ export default function ListaEmpleados({ onAbrirFicha }) {
 
             {nuevo && (
                 <FormularioEmpleado
-                    obras={obras}
                     opciones={opciones}
                     onCerrar={() => setNuevo(false)}
                     onGuardado={(data) => {

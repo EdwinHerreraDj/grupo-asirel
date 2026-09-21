@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Empleado;
 use App\Models\File;
 use App\Models\Folder;
+use App\Models\Obra;
 use App\Models\RrhhTipoDocumento;
 use App\Models\User;
 use App\Services\Rrhh\CarpetasEmpleados;
@@ -179,6 +180,44 @@ class RrhhEmpleadosTest extends TestCase
         ]))->assertOk();
 
         $this->assertSame('García López, Juan Carlos (X1234567L)', Folder::find($empleado->folder_id)->nombre);
+    }
+
+    public function test_un_empleado_puede_trabajar_en_varias_obras(): void
+    {
+        $uniq = uniqid();
+        $a = Obra::forceCreate(['nombre' => "Obra A rrhh {$uniq}", 'importe_presupuestado' => 0, 'estado' => 'ejecucion']);
+        $b = Obra::forceCreate(['nombre' => "Obra B rrhh {$uniq}", 'importe_presupuestado' => 0, 'estado' => 'finalizada']);
+        $c = Obra::forceCreate(['nombre' => "Obra C rrhh {$uniq}", 'importe_presupuestado' => 0]);
+
+        $this->alta(['obra_ids' => [$a->id, $b->id]])->assertCreated()
+            ->assertJsonCount(2, 'empleado.obras');
+        $empleado = Empleado::where('dni', '12345678Z')->firstOrFail();
+
+        // Filtro del listado por cualquiera de sus obras.
+        $this->actingAs($this->admin)->getJson("/api/rrhh/empleados?estado=&obra_id={$b->id}")
+            ->assertOk()->assertJsonPath('data.0.id', $empleado->id);
+        $this->actingAs($this->admin)->getJson("/api/rrhh/empleados?estado=&obra_id={$c->id}")
+            ->assertOk()->assertJsonCount(0, 'data');
+
+        // Editar sustituye las obras; lista vacía = sin obras.
+        $this->actingAs($this->admin)->putJson("/api/rrhh/empleados/{$empleado->id}", $this->datos(['obra_ids' => [$c->id]]))->assertOk();
+        $this->assertSame([$c->id], $empleado->obras()->pluck('obras.id')->all());
+
+        $this->actingAs($this->admin)->putJson("/api/rrhh/empleados/{$empleado->id}", $this->datos(['obra_ids' => []]))->assertOk();
+        $this->assertSame(0, $empleado->obras()->count());
+
+        // Obras inexistentes o repetidas: no.
+        $this->actingAs($this->admin)->putJson("/api/rrhh/empleados/{$empleado->id}", $this->datos(['obra_ids' => [999999999]]))
+            ->assertStatus(422)->assertJsonValidationErrors('obra_ids.0');
+        $this->actingAs($this->admin)->putJson("/api/rrhh/empleados/{$empleado->id}", $this->datos(['obra_ids' => [$a->id, $a->id]]))
+            ->assertStatus(422);
+
+        // Buscador: filtra por nombre, en ejecución antes que finalizadas.
+        $nombres = collect($this->actingAs($this->admin)->getJson('/api/rrhh/obras?search='.urlencode("rrhh {$uniq}"))
+            ->assertOk()->json('obras'))->pluck('nombre')->all();
+        $this->assertSame("Obra A rrhh {$uniq}", $nombres[0]);
+        $this->assertSame("Obra B rrhh {$uniq}", end($nombres));
+        $this->assertCount(3, $nombres);
     }
 
     // -------------------------------------------------------------

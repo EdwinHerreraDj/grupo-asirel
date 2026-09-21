@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import api from "../../shared/api";
 import { useNotification } from "../../shared/NotificationContext";
-import { Campo, Cargando, Modal, Vacio, claseInput } from "./Comunes";
+import { Campo, Cargando, Modal, SeccionFormulario, Vacio, claseInput } from "./Comunes";
 import { botonPrimario, botonSecundario, erroresDeValidacion, mensajeDeError } from "../utils";
 
 function Interruptor({ checked, onChange, etiqueta, ayuda }) {
@@ -77,47 +77,62 @@ function FormularioTipo({ tipo, onCerrar, onGuardado }) {
                 </>
             }
         >
-            <form id="form-tipo" onSubmit={guardar} className="space-y-5">
-                <Campo etiqueta="Nombre" obligatorio error={errores.nombre}>
-                    <input
-                        value={datos.nombre}
-                        onChange={(e) => poner("nombre", e.target.value)}
-                        placeholder="Ej: Carnet de carretillero"
-                        className={claseInput(errores.nombre)}
-                        autoFocus
-                    />
-                </Campo>
-                <Interruptor
-                    checked={datos.obligatorio}
-                    onChange={(v) => poner("obligatorio", v)}
-                    etiqueta="Obligatorio"
-                    ayuda="Si falta, aparece en «Documentación pendiente»."
-                />
-                <Interruptor
-                    checked={datos.requiere_caducidad}
-                    onChange={(v) => poner("requiere_caducidad", v)}
-                    etiqueta="Caduca"
-                    ayuda="Se avisa cuando esté caducado o a punto de caducar."
-                />
-                {datos.requiere_caducidad && (
-                    <Campo etiqueta="Avisar con antelación (días)" error={errores.dias_aviso}>
-                        <input
-                            type="number"
-                            min={0}
-                            max={365}
-                            value={datos.dias_aviso}
-                            onChange={(e) => poner("dias_aviso", e.target.value)}
-                            className={claseInput(errores.dias_aviso, "sm:w-40")}
+            <form id="form-tipo" onSubmit={guardar} className="space-y-4">
+                <SeccionFormulario titulo="Documento" descripcion="Cómo se llama y si es obligatorio" icono="mgc_file_line" color="cyan" conError={!!errores.nombre}>
+                    <div className="space-y-4">
+                        <Campo etiqueta="Nombre" obligatorio error={errores.nombre} ayuda="Es también el nombre de la subcarpeta en el Drive.">
+                            <input
+                                value={datos.nombre}
+                                onChange={(e) => poner("nombre", e.target.value)}
+                                placeholder="Ej: Carnet de carretillero"
+                                className={claseInput(errores.nombre)}
+                                autoFocus
+                            />
+                        </Campo>
+                        <Interruptor
+                            checked={datos.obligatorio}
+                            onChange={(v) => poner("obligatorio", v)}
+                            etiqueta="Obligatorio"
+                            ayuda="Si falta, aparece en «Documentación pendiente»."
                         />
-                    </Campo>
-                )}
+                    </div>
+                </SeccionFormulario>
+
+                <SeccionFormulario titulo="Caducidad" descripcion="Avisos cuando esté a punto de vencer" icono="mgc_time_line" color="amber" conError={!!errores.dias_aviso}>
+                    <div className="space-y-4">
+                        <Interruptor
+                            checked={datos.requiere_caducidad}
+                            onChange={(v) => poner("requiere_caducidad", v)}
+                            etiqueta="Este documento caduca"
+                            ayuda="Se avisa cuando esté caducado o a punto de caducar."
+                        />
+                        {datos.requiere_caducidad && (
+                            <Campo etiqueta="Avisar con antelación" error={errores.dias_aviso}>
+                                <div className="relative sm:w-44">
+                                    <input
+                                        type="number"
+                                        min={0}
+                                        max={365}
+                                        value={datos.dias_aviso}
+                                        onChange={(e) => poner("dias_aviso", e.target.value)}
+                                        className={claseInput(errores.dias_aviso, "pr-14")}
+                                    />
+                                    <span className="pointer-events-none absolute right-8 top-1/2 -translate-y-1/2 text-xs text-slate-400">días</span>
+                                </div>
+                            </Campo>
+                        )}
+                    </div>
+                </SeccionFormulario>
+
                 {tipo && (
-                    <Interruptor
-                        checked={datos.activo}
-                        onChange={(v) => poner("activo", v)}
-                        etiqueta="Activo"
-                        ayuda="Si lo desactivas deja de pedirse, pero sus carpetas y archivos se conservan."
-                    />
+                    <SeccionFormulario titulo="Estado" descripcion="Desactivar no borra nada" icono="mgc_settings_3_line" color="slate">
+                        <Interruptor
+                            checked={datos.activo}
+                            onChange={(v) => poner("activo", v)}
+                            etiqueta="Activo"
+                            ayuda="Si lo desactivas deja de pedirse, pero sus carpetas y archivos se conservan."
+                        />
+                    </SeccionFormulario>
                 )}
             </form>
         </Modal>

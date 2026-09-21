@@ -21,6 +21,9 @@ use Illuminate\Validation\Rule;
  */
 class EmpleadoController extends Controller
 {
+    /** Obras del empleado (columnas cualificadas: la pivote también tiene id). */
+    private const OBRAS = 'obras:obras.id,obras.nombre,obras.estado';
+
     public function __construct(
         private readonly CarpetasEmpleados $carpetas,
         private readonly EstadoDocumentacion $documentacion,
@@ -28,7 +31,7 @@ class EmpleadoController extends Controller
 
     public function index(Request $request)
     {
-        $query = Empleado::query()->with(['obra:id,nombre', 'periodoActual']);
+        $query = Empleado::query()->with([self::OBRAS, 'periodoActual']);
 
         if ($busqueda = trim((string) $request->input('search'))) {
             $like = '%'.addcslashes($busqueda, '%_\\').'%';
@@ -43,7 +46,7 @@ class EmpleadoController extends Controller
         }
 
         if ($request->filled('obra_id')) {
-            $query->where('obra_id', (int) $request->input('obra_id'));
+            $query->whereHas('obras', fn ($q) => $q->where('obras.id', (int) $request->input('obra_id')));
         }
 
         $empleados = $query->orderBy('apellidos')->orderBy('nombre')->paginate(15);
@@ -63,7 +66,6 @@ class EmpleadoController extends Controller
             'activos' => Empleado::where('estado', Empleado::ESTADO_ACTIVO)->count(),
             'bajas' => Empleado::where('estado', Empleado::ESTADO_BAJA)->count(),
         ];
-        $payload['obras'] = Obra::orderBy('nombre')->get(['id', 'nombre']);
         $payload['opciones'] = $this->opciones();
 
         return response()->json($payload);
@@ -79,9 +81,10 @@ class EmpleadoController extends Controller
         );
 
         $empleado = DB::transaction(function () use ($datos) {
-            $empleado = Empleado::create(Arr::except($datos, ['fecha_alta']) + [
+            $empleado = Empleado::create(Arr::except($datos, ['fecha_alta', 'obra_ids']) + [
                 'estado' => Empleado::ESTADO_ACTIVO,
             ]);
+            $empleado->obras()->sync($datos['obra_ids'] ?? []);
 
             $empleado->periodos()->create([
                 'fecha_alta' => $datos['fecha_alta'],
@@ -114,7 +117,10 @@ class EmpleadoController extends Controller
         $datos = $request->validate($this->reglas($empleado), $this->mensajes());
 
         DB::transaction(function () use ($empleado, $datos) {
-            $empleado->update($datos);
+            $empleado->update(Arr::except($datos, ['obra_ids']));
+            if (array_key_exists('obra_ids', $datos)) {
+                $empleado->obras()->sync($datos['obra_ids'] ?? []);
+            }
             $this->carpetas->renombrarCarpeta($empleado);
             $this->carpetas->asegurarCarpeta($empleado);
         });
@@ -196,7 +202,7 @@ class EmpleadoController extends Controller
     public function pendientes()
     {
         $empleados = Empleado::where('estado', Empleado::ESTADO_ACTIVO)
-            ->with('obra:id,nombre')
+            ->with(self::OBRAS)
             ->orderBy('apellidos')
             ->orderBy('nombre')
             ->get();
@@ -226,7 +232,7 @@ class EmpleadoController extends Controller
                     'nombre_completo' => $empleado->nombre_completo,
                     'dni' => $empleado->dni,
                     'puesto' => $empleado->puesto,
-                    'obra' => $empleado->obra?->nombre,
+                    'obras' => $empleado->obras->pluck('nombre')->all(),
                 ],
                 'problemas' => $problemas,
             ];
@@ -235,13 +241,34 @@ class EmpleadoController extends Controller
         return response()->json(['empleados' => $filas, 'totales' => $totales]);
     }
 
+    /**
+     * Buscador de obras para los selectores (máx. 20 resultados): primero
+     * las que están en ejecución o planificación.
+     */
+    public function buscarObras(Request $request)
+    {
+        $query = Obra::query()->select(['id', 'nombre', 'estado']);
+
+        if ($busqueda = trim((string) $request->input('search'))) {
+            $query->where('nombre', 'like', '%'.addcslashes($busqueda, '%_\\').'%');
+        }
+
+        return response()->json([
+            'obras' => $query
+                ->orderByRaw("FIELD(estado, 'ejecucion', 'planificacion', 'en_pausa', 'finalizada')")
+                ->orderBy('nombre')
+                ->limit(20)
+                ->get(),
+        ]);
+    }
+
     // -------------------------------------------------------------
     // Internos
     // -------------------------------------------------------------
 
     private function ficha(Empleado $empleado): array
     {
-        $empleado->loadMissing(['obra:id,nombre', 'periodos']);
+        $empleado->loadMissing([self::OBRAS, 'periodos']);
 
         $apartados = $this->documentacion->paraEmpleados(collect([$empleado]), true)[$empleado->id] ?? [];
 
@@ -253,7 +280,6 @@ class EmpleadoController extends Controller
                 ? ['id' => $empleado->folder_id, 'ruta' => Folder::find($empleado->folder_id)?->rutaCompleta()]
                 : null,
             'opciones' => $this->opciones(),
-            'obras' => Obra::orderBy('nombre')->get(['id', 'nombre']),
         ];
     }
 
@@ -308,7 +334,8 @@ class EmpleadoController extends Controller
             'contacto_emergencia_nombre' => ['nullable', 'string', 'max:150'],
             'contacto_emergencia_relacion' => ['nullable', 'string', 'max:60'],
             'contacto_emergencia_telefono' => ['nullable', 'string', 'max:30'],
-            'obra_id' => ['nullable', 'integer', Rule::exists('obras', 'id')],
+            'obra_ids' => ['nullable', 'array', 'max:50'],
+            'obra_ids.*' => ['integer', 'distinct', Rule::exists('obras', 'id')],
             'observaciones' => ['nullable', 'string', 'max:2000'],
         ];
     }

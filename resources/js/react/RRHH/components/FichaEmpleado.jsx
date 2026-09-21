@@ -5,7 +5,7 @@ import { formatEuro, formatNumero } from "../../shared/formato";
 import FormularioEmpleado from "./FormularioEmpleado";
 import { ModalBaja, ModalReingreso } from "./ModalesAltaBaja";
 import SubirDocumento from "./SubirDocumento";
-import { Cargando, EstadoDocumento, EstadoEmpleado, Vacio } from "./Comunes";
+import { Cargando, EstadoDocumento, EstadoEmpleado, ObrasChips, Vacio } from "./Comunes";
 import {
     botonPeligro,
     botonPrimario,
@@ -114,7 +114,7 @@ export default function FichaEmpleado({ id, onVolver }) {
         );
     }
 
-    const { empleado: e, documentacion, resumen_documentacion: resumen, carpeta, opciones, obras } = ficha;
+    const { empleado: e, documentacion, resumen_documentacion: resumen, carpeta, opciones } = ficha;
     const activo = e.estado === "activo";
     const periodoAbierto = e.periodos?.find((p) => !p.fecha_baja);
     const texto = (lista, valor) => (valor ? lista?.[valor] ?? valor : null);
@@ -338,7 +338,9 @@ export default function FichaEmpleado({ id, onVolver }) {
                             <Dato etiqueta="Jornada">
                                 {[texto(opciones?.jornadas, e.jornada), e.horas_semanales && `${formatNumero(e.horas_semanales)} h/semana`].filter(Boolean).join(" · ")}
                             </Dato>
-                            <Dato etiqueta="Obra asignada">{e.obra?.nombre}</Dato>
+                            <Dato etiqueta="Obras" className="sm:col-span-2">
+                                {e.obras?.length ? <ObrasChips obras={e.obras} /> : null}
+                            </Dato>
                             <Dato etiqueta="Alta actual">{periodoAbierto && fechaCorta(periodoAbierto.fecha_alta)}</Dato>
                             <Dato etiqueta="Salario bruto anual">{e.salario_bruto_anual !== null && e.salario_bruto_anual !== undefined && formatEuro(e.salario_bruto_anual)}</Dato>
                             <Dato etiqueta="IBAN"><Iban iban={e.iban} /></Dato>
@@ -355,7 +357,6 @@ export default function FichaEmpleado({ id, onVolver }) {
             {modal === "editar" && (
                 <FormularioEmpleado
                     empleado={e}
-                    obras={obras || []}
                     opciones={opciones}
                     onCerrar={() => setModal(null)}
                     onGuardado={actualizar}

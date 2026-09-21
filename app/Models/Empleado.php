@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
@@ -62,7 +63,6 @@ class Empleado extends Model
         'contacto_emergencia_nombre',
         'contacto_emergencia_relacion',
         'contacto_emergencia_telefono',
-        'obra_id',
         'folder_id',
         'estado',
         'observaciones',
@@ -77,9 +77,12 @@ class Empleado extends Model
 
     protected $appends = ['nombre_completo'];
 
-    public function obra(): BelongsTo
+    /** Obras en las que trabaja (puede ser más de una a la vez). */
+    public function obras(): BelongsToMany
     {
-        return $this->belongsTo(Obra::class);
+        return $this->belongsToMany(Obra::class, 'empleado_obra')
+            ->withTimestamps()
+            ->orderBy('obras.nombre');
     }
 
     public function carpeta(): BelongsTo
