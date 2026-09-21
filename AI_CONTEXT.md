@@ -114,6 +114,12 @@ Contratado (presupuesto de venta) frente a ejecutado (`certificacion_detalles.ca
   - Cuentas en `App\Services\Rrhh\CalendarioLaboral`. Las vacaciones se prorratean por días de alta en el año; `empleados.dias_vacaciones_anuales` las sustituye si tiene valor.
   - Reglas: sin solapes; dentro de un periodo de alta. Dar de baja cierra las ausencias abiertas y no se permite si hay ausencias posteriores a la fecha de baja.
   - El justificante va a la subcarpeta protegida "Ausencias y bajas" del empleado (`folders.sistema = rrhh_ausencias`). Borrar la ausencia no borra el archivo.
+- **Fase 3:**
+  - **Nóminas** (`rrhh_nominas`): se registran los importes que da la gestoría, no se calculan. Una por empleado, mes y tipo (mensual, extra, finiquito, atrasos), con estado de pago. Si el neto no cuadra con bruto menos deducciones, avisa sin bloquear.
+  - **Anticipos y vales** (`rrhh_anticipos`): `nomina_id` null = pendiente. Se descuentan eligiéndolos en la nómina. Borrar la nómina los libera (FK nullOnDelete). Descontados no se editan ni se borran.
+  - **Cursos** (`rrhh_cursos`): con caducidad. Un curso posterior con el mismo nombre "renueva" al anterior. Los que caducan en ≤ 30 días salen en documentación pendiente.
+  - **Sanciones** (`rrhh_sanciones`): con prescripción orientativa del art. 60.2 del Estatuto de los Trabajadores.
+  - Los adjuntos se guardan con `App\Services\Rrhh\AdjuntosRrhh` en subcarpetas internas protegidas (`CarpetasEmpleados::CARPETAS_INTERNAS`). Nunca se borran al borrar el registro.
 
 ---
 

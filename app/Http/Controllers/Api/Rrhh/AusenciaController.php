@@ -5,18 +5,15 @@ namespace App\Http\Controllers\Api\Rrhh;
 use App\Http\Controllers\Controller;
 use App\Models\Ausencia;
 use App\Models\Empleado;
-use App\Models\File;
 use App\Models\RrhhTipoAusencia;
-use App\Services\Drive\DriveStorage;
+use App\Services\Rrhh\AdjuntosRrhh;
 use App\Services\Rrhh\CalendarioLaboral;
 use App\Services\Rrhh\CarpetasEmpleados;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use Throwable;
 
 /**
  * Ausencias de un empleado (vacaciones, bajas médicas, permisos…) con su
@@ -27,8 +24,7 @@ class AusenciaController extends Controller
 {
     public function __construct(
         private readonly CalendarioLaboral $calendario,
-        private readonly CarpetasEmpleados $carpetas,
-        private readonly DriveStorage $storage,
+        private readonly AdjuntosRrhh $adjuntos,
     ) {}
 
     public function index(Request $request, Empleado $empleado)
@@ -196,28 +192,13 @@ class AusenciaController extends Controller
     private function guardarJustificante(Ausencia $ausencia, UploadedFile $archivo): void
     {
         $ausencia->loadMissing(['empleado', 'tipo']);
-        $carpeta = $this->carpetas->carpetaAusencias($ausencia->empleado);
-        $guardado = $this->storage->guardarSubida($archivo);
 
-        try {
-            $file = File::create([
-                'folder_id' => $carpeta->id,
-                'usuario_id' => auth()->id(),
-                'nombre' => Str::limit(
-                    $ausencia->fecha_inicio->toDateString().' '.$ausencia->tipo->nombre.' - '.$archivo->getClientOriginalName(),
-                    250,
-                    '',
-                ),
-                'ruta' => $guardado['ruta'],
-                'disco' => $guardado['disco'],
-                'tipo' => $archivo->getMimeType(),
-                'tamaño' => $archivo->getSize(),
-                'tiene_caducidad' => false,
-            ]);
-        } catch (Throwable $e) {
-            \Illuminate\Support\Facades\Storage::disk($guardado['disco'])->delete($guardado['ruta']);
-            throw $e;
-        }
+        $file = $this->adjuntos->guardar(
+            $ausencia->empleado,
+            $archivo,
+            CarpetasEmpleados::SISTEMA_AUSENCIAS,
+            $ausencia->fecha_inicio->toDateString().' '.$ausencia->tipo->nombre,
+        );
 
         $ausencia->update(['file_id' => $file->id]);
     }

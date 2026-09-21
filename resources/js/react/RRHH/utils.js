@@ -163,3 +163,25 @@ export const diasNaturales = (desde, hasta) => {
     const d = (Date.parse(hasta) - Date.parse(desde)) / 86400000;
     return Number.isFinite(d) && d >= 0 ? Math.round(d) + 1 : null;
 };
+
+/**
+ * FormData para la API: arrays como campo[], null/undefined como "" (el
+ * servidor lo convierte en null), archivo opcional y método (PUT) simulado.
+ */
+export const aFormData = (datos, archivo = null, metodo = null) => {
+    const f = new FormData();
+    Object.entries(datos).forEach(([k, v]) => {
+        if (Array.isArray(v)) v.forEach((x) => f.append(`${k}[]`, x));
+        else if (typeof v === "boolean") f.append(k, v ? "1" : "0");
+        else f.append(k, v ?? "");
+    });
+    if (archivo) f.append("archivo", archivo);
+    if (metodo) f.append("_method", metodo);
+    return f;
+};
+
+/** Número desde input ("" → 0). */
+export const num = (v) => {
+    const n = parseFloat(String(v ?? "").replace(",", "."));
+    return Number.isFinite(n) ? n : 0;
+};

@@ -4,11 +4,13 @@ import ListaEmpleados from "./components/ListaEmpleados";
 import FichaEmpleado from "./components/FichaEmpleado";
 import DocumentacionPendiente from "./components/DocumentacionPendiente";
 import Calendario from "./components/Calendario";
+import NominasMes from "./components/NominasMes";
 import Configuracion from "./components/Configuracion";
 
 const PESTANAS = [
     { id: "empleados", texto: "Empleados", icono: "mgc_group_line" },
     { id: "calendario", texto: "Calendario", icono: "mgc_calendar_month_line" },
+    { id: "nominas", texto: "Nóminas", icono: "mgc_currency_euro_line" },
     { id: "pendiente", texto: "Documentación pendiente", icono: "mgc_alert_line" },
     { id: "configuracion", texto: "Configuración", icono: "mgc_settings_3_line" },
 ];
@@ -22,7 +24,10 @@ const leerEmpleadoDeUrl = () => {
 const escribirEmpleadoEnUrl = (id) => {
     const url = new URL(window.location.href);
     if (id) url.searchParams.set("empleado", id);
-    else url.searchParams.delete("empleado");
+    else {
+        url.searchParams.delete("empleado");
+        url.searchParams.delete("pestana");
+    }
     window.history.replaceState(null, "", url);
 };
 
@@ -65,7 +70,7 @@ function RrhhAppContent() {
                         </div>
                         <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-900">Recursos humanos</h2>
                         <p className="mt-1 text-sm text-slate-500">
-                            Fichas de empleados, altas y bajas, ausencias y vacaciones, y su documentación en el Drive.
+                            Fichas de empleados, altas y bajas, ausencias, nóminas, formación y su documentación en el Drive.
                         </p>
                     </div>
 
@@ -90,6 +95,7 @@ function RrhhAppContent() {
 
                 {pestana === "empleados" && <ListaEmpleados onAbrirFicha={abrirFicha} />}
                 {pestana === "calendario" && <Calendario onAbrirFicha={abrirFicha} />}
+                {pestana === "nominas" && <NominasMes onAbrirFicha={abrirFicha} />}
                 {pestana === "pendiente" && <DocumentacionPendiente onAbrirFicha={abrirFicha} />}
                 {pestana === "configuracion" && <Configuracion />}
             </div>

@@ -245,3 +245,155 @@ export function Aviso({ tipo = "info", icono, children }) {
         </div>
     );
 }
+
+/**
+ * Adjuntar un archivo (se guarda en la carpeta del empleado en el Drive).
+ * Muestra el actual (`actual` = {id, nombre}) si lo hay.
+ */
+export function CampoAdjunto({ archivo, onChange, actual = null, texto = "Adjuntar archivo", carpeta, error, maxMb = 50 }) {
+    return (
+        <div>
+            {actual && !archivo && (
+                <a
+                    href={`/drive/ver/${actual.id}`}
+                    target="_blank"
+                    rel="noopener"
+                    className="mb-3 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-cyan-700 hover:bg-cyan-50"
+                >
+                    <i className="mgc_file_line"></i>
+                    <span className="min-w-0 flex-1 break-all">{actual.nombre}</span>
+                    <i className="mgc_eye_line"></i>
+                </a>
+            )}
+            <label className="flex cursor-pointer items-center gap-3 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50/60 px-4 py-3 transition hover:border-cyan-400 hover:bg-cyan-50/40">
+                <i className="mgc_upload_2_line text-xl text-cyan-600"></i>
+                <span className="min-w-0 flex-1 text-sm">
+                    <span className="block break-all font-medium text-slate-700">
+                        {archivo ? archivo.name : actual ? "Sustituir el archivo" : texto}
+                    </span>
+                    <span className="block text-xs text-slate-500">
+                        {carpeta ? `Se guarda en su carpeta del Drive («${carpeta}») · ` : ""}máx. {maxMb} MB
+                    </span>
+                </span>
+                {archivo && (
+                    <button
+                        type="button"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            onChange(null);
+                        }}
+                        aria-label="Quitar archivo"
+                        className="text-slate-400 hover:text-rose-600"
+                    >
+                        <i className="mgc_close_line"></i>
+                    </button>
+                )}
+                <input
+                    type="file"
+                    className="sr-only"
+                    onChange={(e) => {
+                        const f = e.target.files?.[0] ?? null;
+                        e.target.value = "";
+                        if (f && f.size > maxMb * 1024 * 1024) {
+                            onChange(null, `El archivo supera ${maxMb} MB.`);
+                            return;
+                        }
+                        onChange(f);
+                    }}
+                />
+            </label>
+            {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+        </div>
+    );
+}
+
+/** Input de importe con el símbolo € a la derecha. */
+export function InputEuro({ value, onChange, error, disabled = false, placeholder = "0,00", ...resto }) {
+    return (
+        <div className="relative">
+            <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                disabled={disabled}
+                placeholder={placeholder}
+                className={claseInput(error, `pr-8 ${disabled ? "bg-slate-100 text-slate-500" : ""}`)}
+                {...resto}
+            />
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">€</span>
+        </div>
+    );
+}
+
+/** Selector de pocas opciones como botones. */
+export function Segmentado({ opciones, value, onChange, columnas }) {
+    const lista = Object.entries(opciones);
+    return (
+        <div className="grid gap-1 rounded-xl bg-slate-100 p-1" style={{ gridTemplateColumns: `repeat(${columnas ?? lista.length}, minmax(0, 1fr))` }}>
+            {lista.map(([valor, texto]) => (
+                <button
+                    key={valor}
+                    type="button"
+                    onClick={() => onChange(valor)}
+                    className={`rounded-lg px-2 py-1.5 text-sm font-semibold transition ${
+                        value === valor ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-800"
+                    }`}
+                >
+                    {texto}
+                </button>
+            ))}
+        </div>
+    );
+}
+
+/** Cabecera + contenido de una pestaña de la ficha. */
+export function Panel({ titulo, icono, acciones, children }) {
+    return (
+        <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_10px_35px_rgba(15,23,42,0.06)]">
+            <div className="flex flex-col gap-3 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                <h3 className="flex items-center gap-2 font-semibold text-slate-900">
+                    <i className={`${icono} text-lg text-cyan-600`}></i>
+                    {titulo}
+                </h3>
+                {acciones && <div className="flex flex-wrap items-center gap-2">{acciones}</div>}
+            </div>
+            {children}
+        </section>
+    );
+}
+
+/** Botón pequeño de acción en listas. */
+export function BotonIcono({ icono, titulo, onClick, peligro = false, href, target }) {
+    const clases = `inline-flex h-8 w-8 items-center justify-center rounded-lg transition ${
+        peligro ? "text-rose-500 hover:bg-rose-50 hover:text-rose-700" : "text-slate-500 hover:bg-slate-100 hover:text-cyan-700"
+    }`;
+    return href ? (
+        <a href={href} target={target} rel="noopener" title={titulo} aria-label={titulo} className={clases}>
+            <i className={icono}></i>
+        </a>
+    ) : (
+        <button type="button" onClick={onClick} title={titulo} aria-label={titulo} className={clases}>
+            <i className={icono}></i>
+        </button>
+    );
+}
+
+/** Tarjeta de cifra resumen. */
+export function Cifra({ etiqueta, valor, tono = "slate", detalle }) {
+    const tonos = {
+        slate: "border-slate-200 bg-slate-50/70 text-slate-900",
+        emerald: "border-emerald-200 bg-emerald-50 text-emerald-800",
+        amber: "border-amber-200 bg-amber-50 text-amber-800",
+        rose: "border-rose-200 bg-rose-50 text-rose-800",
+        cyan: "border-cyan-200 bg-cyan-50 text-cyan-800",
+    };
+    return (
+        <div className={`rounded-2xl border px-4 py-3 ${tonos[tono]}`}>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] opacity-70">{etiqueta}</p>
+            <p className="mt-1 text-lg font-bold sm:text-xl">{valor}</p>
+            {detalle && <p className="text-[11px] opacity-70">{detalle}</p>}
+        </div>
+    );
+}

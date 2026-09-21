@@ -24,8 +24,24 @@ class CarpetasEmpleados
 
     public const SISTEMA_BAJAS = 'rrhh_bajas';
 
-    /** Subcarpeta de justificantes de ausencias dentro de la del empleado. */
+    /** Subcarpetas internas de la carpeta del empleado (protegidas en el Drive). */
     public const SISTEMA_AUSENCIAS = 'rrhh_ausencias';
+
+    public const SISTEMA_NOMINAS = 'rrhh_nominas';
+
+    public const SISTEMA_ANTICIPOS = 'rrhh_anticipos';
+
+    public const SISTEMA_FORMACION = 'rrhh_formacion';
+
+    public const SISTEMA_SANCIONES = 'rrhh_sanciones';
+
+    public const CARPETAS_INTERNAS = [
+        self::SISTEMA_AUSENCIAS => 'Ausencias y bajas',
+        self::SISTEMA_NOMINAS => 'Recibos de nómina',
+        self::SISTEMA_ANTICIPOS => 'Anticipos y vales',
+        self::SISTEMA_FORMACION => 'Cursos y formación',
+        self::SISTEMA_SANCIONES => 'Sanciones',
+    ];
 
     private const NOMBRES_SISTEMA = [
         self::SISTEMA_ACTIVOS => 'Trabajadores',
@@ -132,21 +148,24 @@ class CarpetasEmpleados
         }
     }
 
-    /** "Ausencias y bajas": justificantes y partes de baja del empleado. */
-    public function carpetaAusencias(Empleado $empleado): Folder
+    /**
+     * Subcarpeta interna del empleado ("Ausencias y bajas", "Recibos de
+     * nómina"…), creada la primera vez que se necesita.
+     */
+    public function carpetaInterna(Empleado $empleado, string $clave): Folder
     {
         $carpeta = $this->asegurarCarpeta($empleado);
 
         $existente = Folder::where('parent_id', $carpeta->id)
-            ->where('sistema', self::SISTEMA_AUSENCIAS)
+            ->where('sistema', $clave)
             ->first();
 
         return $existente ?? Folder::create([
-            'nombre' => $this->nombreUnico('Ausencias y bajas', (int) $carpeta->id),
+            'nombre' => $this->nombreUnico(self::CARPETAS_INTERNAS[$clave], (int) $carpeta->id),
             'parent_id' => $carpeta->id,
             'tipo' => 1,
             'usuario_id' => auth()->id(),
-            'sistema' => self::SISTEMA_AUSENCIAS,
+            'sistema' => $clave,
         ]);
     }
 

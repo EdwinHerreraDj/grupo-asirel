@@ -6,6 +6,10 @@ import FormularioEmpleado from "./FormularioEmpleado";
 import { ModalBaja, ModalReingreso } from "./ModalesAltaBaja";
 import SubirDocumento from "./SubirDocumento";
 import AusenciasEmpleado from "./AusenciasEmpleado";
+import NominasEmpleado from "./NominasEmpleado";
+import AnticiposEmpleado from "./AnticiposEmpleado";
+import FormacionEmpleado from "./FormacionEmpleado";
+import SancionesEmpleado from "./SancionesEmpleado";
 import { Cargando, EstadoDocumento, EstadoEmpleado, ObrasChips, Vacio } from "./Comunes";
 import {
     botonPeligro,
@@ -17,6 +21,21 @@ import {
     mensajeDeError,
     textoDias,
 } from "../utils";
+
+const PESTANAS_FICHA = [
+    { id: "resumen", texto: "Resumen", icono: "mgc_user_3_line" },
+    { id: "documentacion", texto: "Documentación", icono: "mgc_file_check_line" },
+    { id: "ausencias", texto: "Ausencias", icono: "mgc_calendar_month_line" },
+    { id: "nominas", texto: "Nóminas y anticipos", icono: "mgc_currency_euro_line" },
+    { id: "formacion", texto: "Formación", icono: "mgc_star_line" },
+    { id: "sanciones", texto: "Sanciones", icono: "mgc_forbid_circle_line" },
+];
+
+// Pestaña de la ficha recordada en la URL (?pestana=…).
+const leerPestana = () => {
+    const p = new URLSearchParams(window.location.search).get("pestana");
+    return PESTANAS_FICHA.some((x) => x.id === p) ? p : "resumen";
+};
 
 function Tarjeta({ titulo, icono, accion, children, className = "" }) {
     return (
@@ -67,6 +86,15 @@ export default function FichaEmpleado({ id, onVolver }) {
     const [cargando, setCargando] = useState(true);
     const [modal, setModal] = useState(null); // editar | baja | reingreso | {subir: apartado}
     const [abiertos, setAbiertos] = useState({});
+    const [pestana, setPestana] = useState(leerPestana);
+
+    const cambiarPestana = (id) => {
+        setPestana(id);
+        const url = new URL(window.location.href);
+        if (id === "resumen") url.searchParams.delete("pestana");
+        else url.searchParams.set("pestana", id);
+        window.history.replaceState(null, "", url);
+    };
 
     const cargar = async () => {
         try {
@@ -175,12 +203,110 @@ export default function FichaEmpleado({ id, onVolver }) {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
+                {/* PESTAÑAS */}
+                <nav className="flex gap-1 overflow-x-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm" aria-label="Secciones de la ficha">
+                    {PESTANAS_FICHA.map((p) => (
+                        <button
+                            key={p.id}
+                            type="button"
+                            onClick={() => cambiarPestana(p.id)}
+                            className={`inline-flex shrink-0 items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-semibold transition ${
+                                pestana === p.id ? "bg-cyan-50 text-cyan-700" : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
+                            }`}
+                        >
+                            <i className={`${p.icono} text-base`}></i>
+                            {p.texto}
+                            {p.id === "documentacion" && activo && resumen?.total > 0 && (
+                                <span className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-amber-500 px-1 text-[11px] font-bold text-white">
+                                    {resumen.total}
+                                </span>
+                            )}
+                        </button>
+                    ))}
+                </nav>
+
+                {pestana === "resumen" && (
+                    <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+                {/* DATOS */}
+                <Tarjeta titulo="Datos del empleado" icono="mgc_user_3_line" className="xl:col-span-2">
+                    <div className="grid grid-cols-1 gap-6 px-5 py-5 sm:px-6 2xl:grid-cols-2">
+                        <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <Dato etiqueta="Nº Seguridad Social"><span className="font-mono">{e.nss}</span></Dato>
+                            <Dato etiqueta="Fecha de nacimiento">{e.fecha_nacimiento && fechaCorta(e.fecha_nacimiento)}</Dato>
+                            <Dato etiqueta="Teléfono">{e.telefono && <a href={`tel:${e.telefono}`} className="text-cyan-700 hover:underline">{e.telefono}</a>}</Dato>
+                            <Dato etiqueta="Email">{e.email && <a href={`mailto:${e.email}`} className="break-all text-cyan-700 hover:underline">{e.email}</a>}</Dato>
+                            <Dato etiqueta="Dirección" className="sm:col-span-2">
+                                {[e.direccion, [e.codigo_postal, e.poblacion].filter(Boolean).join(" "), e.provincia].filter(Boolean).join(", ")}
+                            </Dato>
+                            <Dato etiqueta="Contacto de emergencia" className="sm:col-span-2">
+                                {e.contacto_emergencia_nombre &&
+                                    [e.contacto_emergencia_nombre, e.contacto_emergencia_relacion && `(${e.contacto_emergencia_relacion})`, e.contacto_emergencia_telefono]
+                                        .filter(Boolean)
+                                        .join(" ")}
+                            </Dato>
+                        </dl>
+                        <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <Dato etiqueta="Puesto">{e.puesto}</Dato>
+                            <Dato etiqueta="Categoría (convenio)">{e.categoria_convenio}</Dato>
+                            <Dato etiqueta="Tipo de contrato">{texto(opciones?.tipos_contrato, e.tipo_contrato)}</Dato>
+                            <Dato etiqueta="Jornada">
+                                {[texto(opciones?.jornadas, e.jornada), e.horas_semanales && `${formatNumero(e.horas_semanales)} h/semana`].filter(Boolean).join(" · ")}
+                            </Dato>
+                            <Dato etiqueta="Obras" className="sm:col-span-2">
+                                {e.obras?.length ? <ObrasChips obras={e.obras} /> : null}
+                            </Dato>
+                            <Dato etiqueta="Alta actual">{periodoAbierto && fechaCorta(periodoAbierto.fecha_alta)}</Dato>
+                            <Dato etiqueta="Salario bruto anual">{e.salario_bruto_anual !== null && e.salario_bruto_anual !== undefined && formatEuro(e.salario_bruto_anual)}</Dato>
+                            <Dato etiqueta="IBAN"><Iban iban={e.iban} /></Dato>
+                            <Dato etiqueta="Vacaciones al año">
+                                {e.dias_vacaciones_anuales !== null && e.dias_vacaciones_anuales !== undefined
+                                    ? `${formatNumero(e.dias_vacaciones_anuales)} días (propios del empleado)`
+                                    : opciones?.vacaciones
+                                      ? `${formatNumero(opciones.vacaciones.dias_anuales)} días ${opciones.vacaciones.computo} (general)`
+                                      : null}
+                            </Dato>
+                        </dl>
+                        {e.observaciones && (
+                            <Dato etiqueta="Observaciones" className="lg:col-span-2">
+                                <span className="whitespace-pre-line">{e.observaciones}</span>
+                            </Dato>
+                        )}
+                    </div>
+                </Tarjeta>
+                    {/* HISTORIAL */}
+                    <Tarjeta titulo="Historial de altas y bajas" icono="mgc_history_line" className="xl:col-span-1">
+                        <ol className="space-y-3 px-5 py-4 sm:px-6">
+                            {(e.periodos || []).map((p) => (
+                                <li key={p.id} className="relative rounded-2xl border border-slate-200 px-4 py-3">
+                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                        <p className="text-sm font-semibold text-slate-800">
+                                            {fechaCorta(p.fecha_alta)} → {p.fecha_baja ? fechaCorta(p.fecha_baja) : "actualidad"}
+                                        </p>
+                                        {!p.fecha_baja && (
+                                            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">En curso</span>
+                                        )}
+                                    </div>
+                                    {p.tipo_contrato && (
+                                        <p className="mt-0.5 text-xs text-slate-500">Contrato: {texto(opciones?.tipos_contrato, p.tipo_contrato)}</p>
+                                    )}
+                                    {p.motivo_baja && (
+                                        <p className="mt-0.5 text-xs text-slate-500">Motivo de baja: {texto(opciones?.motivos_baja, p.motivo_baja)}</p>
+                                    )}
+                                    {p.observaciones_baja && <p className="mt-1 whitespace-pre-line text-xs text-slate-600">{p.observaciones_baja}</p>}
+                                </li>
+                            ))}
+                            {!e.periodos?.length && <p className="text-sm text-slate-400">Sin periodos registrados.</p>}
+                        </ol>
+                    </Tarjeta>
+                    </div>
+                )}
+
+                {pestana === "documentacion" && (
+                    <>
                     {/* DOCUMENTACIÓN */}
                     <Tarjeta
                         titulo="Documentación"
                         icono="mgc_file_check_line"
-                        className="xl:col-span-3"
                         accion={
                             activo && resumen?.total > 0 ? (
                                 <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700">
@@ -286,83 +412,21 @@ export default function FichaEmpleado({ id, onVolver }) {
                             </p>
                         )}
                     </Tarjeta>
+                    </>
+                )}
 
-                    {/* HISTORIAL */}
-                    <Tarjeta titulo="Historial de altas y bajas" icono="mgc_history_line" className="xl:col-span-2">
-                        <ol className="space-y-3 px-5 py-4 sm:px-6">
-                            {(e.periodos || []).map((p) => (
-                                <li key={p.id} className="relative rounded-2xl border border-slate-200 px-4 py-3">
-                                    <div className="flex flex-wrap items-center justify-between gap-2">
-                                        <p className="text-sm font-semibold text-slate-800">
-                                            {fechaCorta(p.fecha_alta)} → {p.fecha_baja ? fechaCorta(p.fecha_baja) : "actualidad"}
-                                        </p>
-                                        {!p.fecha_baja && (
-                                            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">En curso</span>
-                                        )}
-                                    </div>
-                                    {p.tipo_contrato && (
-                                        <p className="mt-0.5 text-xs text-slate-500">Contrato: {texto(opciones?.tipos_contrato, p.tipo_contrato)}</p>
-                                    )}
-                                    {p.motivo_baja && (
-                                        <p className="mt-0.5 text-xs text-slate-500">Motivo de baja: {texto(opciones?.motivos_baja, p.motivo_baja)}</p>
-                                    )}
-                                    {p.observaciones_baja && <p className="mt-1 whitespace-pre-line text-xs text-slate-600">{p.observaciones_baja}</p>}
-                                </li>
-                            ))}
-                            {!e.periodos?.length && <p className="text-sm text-slate-400">Sin periodos registrados.</p>}
-                        </ol>
-                    </Tarjeta>
-                </div>
+                {pestana === "ausencias" && <AusenciasEmpleado key={`${e.id}-${e.estado}`} empleado={e} />}
 
-                {/* AUSENCIAS */}
-                <AusenciasEmpleado key={`${e.id}-${e.estado}`} empleado={e} />
-
-                {/* DATOS */}
-                <Tarjeta titulo="Datos del empleado" icono="mgc_user_3_line">
-                    <div className="grid grid-cols-1 gap-6 px-5 py-5 sm:px-6 lg:grid-cols-2">
-                        <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <Dato etiqueta="Nº Seguridad Social"><span className="font-mono">{e.nss}</span></Dato>
-                            <Dato etiqueta="Fecha de nacimiento">{e.fecha_nacimiento && fechaCorta(e.fecha_nacimiento)}</Dato>
-                            <Dato etiqueta="Teléfono">{e.telefono && <a href={`tel:${e.telefono}`} className="text-cyan-700 hover:underline">{e.telefono}</a>}</Dato>
-                            <Dato etiqueta="Email">{e.email && <a href={`mailto:${e.email}`} className="break-all text-cyan-700 hover:underline">{e.email}</a>}</Dato>
-                            <Dato etiqueta="Dirección" className="sm:col-span-2">
-                                {[e.direccion, [e.codigo_postal, e.poblacion].filter(Boolean).join(" "), e.provincia].filter(Boolean).join(", ")}
-                            </Dato>
-                            <Dato etiqueta="Contacto de emergencia" className="sm:col-span-2">
-                                {e.contacto_emergencia_nombre &&
-                                    [e.contacto_emergencia_nombre, e.contacto_emergencia_relacion && `(${e.contacto_emergencia_relacion})`, e.contacto_emergencia_telefono]
-                                        .filter(Boolean)
-                                        .join(" ")}
-                            </Dato>
-                        </dl>
-                        <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <Dato etiqueta="Puesto">{e.puesto}</Dato>
-                            <Dato etiqueta="Categoría (convenio)">{e.categoria_convenio}</Dato>
-                            <Dato etiqueta="Tipo de contrato">{texto(opciones?.tipos_contrato, e.tipo_contrato)}</Dato>
-                            <Dato etiqueta="Jornada">
-                                {[texto(opciones?.jornadas, e.jornada), e.horas_semanales && `${formatNumero(e.horas_semanales)} h/semana`].filter(Boolean).join(" · ")}
-                            </Dato>
-                            <Dato etiqueta="Obras" className="sm:col-span-2">
-                                {e.obras?.length ? <ObrasChips obras={e.obras} /> : null}
-                            </Dato>
-                            <Dato etiqueta="Alta actual">{periodoAbierto && fechaCorta(periodoAbierto.fecha_alta)}</Dato>
-                            <Dato etiqueta="Salario bruto anual">{e.salario_bruto_anual !== null && e.salario_bruto_anual !== undefined && formatEuro(e.salario_bruto_anual)}</Dato>
-                            <Dato etiqueta="IBAN"><Iban iban={e.iban} /></Dato>
-                            <Dato etiqueta="Vacaciones al año">
-                                {e.dias_vacaciones_anuales !== null && e.dias_vacaciones_anuales !== undefined
-                                    ? `${formatNumero(e.dias_vacaciones_anuales)} días (propios del empleado)`
-                                    : opciones?.vacaciones
-                                      ? `${formatNumero(opciones.vacaciones.dias_anuales)} días ${opciones.vacaciones.computo} (general)`
-                                      : null}
-                            </Dato>
-                        </dl>
-                        {e.observaciones && (
-                            <Dato etiqueta="Observaciones" className="lg:col-span-2">
-                                <span className="whitespace-pre-line">{e.observaciones}</span>
-                            </Dato>
-                        )}
+                {pestana === "nominas" && (
+                    <div className="space-y-4">
+                        <NominasEmpleado empleado={e} />
+                        <AnticiposEmpleado empleado={e} />
                     </div>
-                </Tarjeta>
+                )}
+
+                {pestana === "formacion" && <FormacionEmpleado empleado={e} />}
+
+                {pestana === "sanciones" && <SancionesEmpleado empleado={e} />}
             </div>
 
             {modal === "editar" && (

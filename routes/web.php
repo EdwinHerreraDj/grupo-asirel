@@ -109,6 +109,26 @@ Route::middleware('auth')->prefix('api')->group(function () {
         Route::post('festivos', [\App\Http\Controllers\Api\Rrhh\FestivoController::class, 'store']);
         Route::post('festivos/nacionales', [\App\Http\Controllers\Api\Rrhh\FestivoController::class, 'nacionales']);
         Route::delete('festivos/{festivo}', [\App\Http\Controllers\Api\Rrhh\FestivoController::class, 'destroy']);
+
+        // Nóminas, anticipos, formación y sanciones (fase 3)
+        Route::get('nominas', [\App\Http\Controllers\Api\Rrhh\NominaController::class, 'mes']);
+        Route::post('nominas/marcar-pagadas', [\App\Http\Controllers\Api\Rrhh\NominaController::class, 'marcarPagadas']);
+        Route::get('empleados/{empleado}/nominas', [\App\Http\Controllers\Api\Rrhh\NominaController::class, 'porEmpleado']);
+        Route::post('empleados/{empleado}/nominas', [\App\Http\Controllers\Api\Rrhh\NominaController::class, 'store']);
+        Route::put('nominas/{nomina}', [\App\Http\Controllers\Api\Rrhh\NominaController::class, 'update']);
+        Route::delete('nominas/{nomina}', [\App\Http\Controllers\Api\Rrhh\NominaController::class, 'destroy']);
+        Route::get('empleados/{empleado}/anticipos', [\App\Http\Controllers\Api\Rrhh\AnticipoController::class, 'index']);
+        Route::post('empleados/{empleado}/anticipos', [\App\Http\Controllers\Api\Rrhh\AnticipoController::class, 'store']);
+        Route::put('anticipos/{anticipo}', [\App\Http\Controllers\Api\Rrhh\AnticipoController::class, 'update']);
+        Route::delete('anticipos/{anticipo}', [\App\Http\Controllers\Api\Rrhh\AnticipoController::class, 'destroy']);
+        Route::get('empleados/{empleado}/cursos', [\App\Http\Controllers\Api\Rrhh\CursoController::class, 'index']);
+        Route::post('empleados/{empleado}/cursos', [\App\Http\Controllers\Api\Rrhh\CursoController::class, 'store']);
+        Route::put('cursos/{curso}', [\App\Http\Controllers\Api\Rrhh\CursoController::class, 'update']);
+        Route::delete('cursos/{curso}', [\App\Http\Controllers\Api\Rrhh\CursoController::class, 'destroy']);
+        Route::get('empleados/{empleado}/sanciones', [\App\Http\Controllers\Api\Rrhh\SancionController::class, 'index']);
+        Route::post('empleados/{empleado}/sanciones', [\App\Http\Controllers\Api\Rrhh\SancionController::class, 'store']);
+        Route::put('sanciones/{sancion}', [\App\Http\Controllers\Api\Rrhh\SancionController::class, 'update']);
+        Route::delete('sanciones/{sancion}', [\App\Http\Controllers\Api\Rrhh\SancionController::class, 'destroy']);
     });
 });
 

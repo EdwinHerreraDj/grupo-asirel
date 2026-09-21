@@ -3,6 +3,7 @@ import api from "../../shared/api";
 import { useNotification } from "../../shared/NotificationContext";
 import { Cargando, EstadoDocumento, Vacio } from "./Comunes";
 import { fechaCorta, textoDias } from "../utils";
+import { ESTADOS_CURSO } from "./FormacionEmpleado";
 
 const TARJETAS = [
     { clave: "faltan", texto: "Faltan", clases: "border-rose-200 bg-rose-50 text-rose-700" },
@@ -43,6 +44,34 @@ export default function DocumentacionPendiente({ onAbrirFicha }) {
                     </div>
                 ))}
             </div>
+
+            {datos.formacion?.length > 0 && (
+                <div className="border-b border-slate-200 px-4 py-4 sm:px-6">
+                    <p className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                        <i className="mgc_star_line"></i> Formación caducada o que caduca pronto
+                    </p>
+                    <ul className="space-y-1.5">
+                        {datos.formacion.map((c) => (
+                            <li key={c.id}>
+                                <button
+                                    type="button"
+                                    onClick={() => onAbrirFicha(c.empleado.id)}
+                                    className="flex w-full flex-wrap items-center gap-2 rounded-xl px-2 py-1.5 text-left text-sm transition hover:bg-cyan-50/40"
+                                >
+                                    <span className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold ${ESTADOS_CURSO[c.estado]?.clases}`}>
+                                        {ESTADOS_CURSO[c.estado]?.texto}
+                                    </span>
+                                    <span className="font-medium text-slate-800">{c.empleado.nombre_completo}</span>
+                                    <span className="text-slate-600">· {c.nombre}</span>
+                                    <span className="text-xs text-slate-500">
+                                        {fechaCorta(c.caduca)} ({textoDias(c.dias)})
+                                    </span>
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
 
             {datos.empleados.length === 0 ? (
                 <Vacio icono="mgc_check_circle_line" titulo="Todo al día" texto="Ningún empleado de alta tiene documentación pendiente." />

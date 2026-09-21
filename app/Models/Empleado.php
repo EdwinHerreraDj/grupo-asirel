@@ -109,6 +109,35 @@ class Empleado extends Model
         ]);
     }
 
+    public function nominas(): HasMany
+    {
+        return $this->hasMany(Nomina::class)->orderByDesc('anio')->orderByDesc('mes');
+    }
+
+    public function anticipos(): HasMany
+    {
+        return $this->hasMany(Anticipo::class)->orderByDesc('fecha');
+    }
+
+    public function cursos(): HasMany
+    {
+        return $this->hasMany(Curso::class)->orderByDesc('fecha');
+    }
+
+    public function sanciones(): HasMany
+    {
+        return $this->hasMany(Sancion::class)->orderByDesc('fecha_hechos');
+    }
+
+    /** ¿Estuvo de alta en algún momento entre esas dos fechas (Y-m-d)? */
+    public function estuvoDeAltaEntre(string $desde, string $hasta): bool
+    {
+        return $this->periodos()
+            ->where('fecha_alta', '<=', $hasta)
+            ->where(fn ($q) => $q->whereNull('fecha_baja')->orWhere('fecha_baja', '>=', $desde))
+            ->exists();
+    }
+
     /** Vacaciones, bajas médicas, permisos… */
     public function ausencias(): HasMany
     {

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Rrhh;
 
 use App\Http\Controllers\Controller;
 use App\Models\Ausencia;
+use App\Models\Curso;
 use App\Models\Empleado;
 use App\Models\Folder;
 use App\Models\Obra;
@@ -274,7 +275,27 @@ class EmpleadoController extends Controller
             ];
         }
 
-        return response()->json(['empleados' => $filas, 'totales' => $totales]);
+        // Formación caducada o que caduca pronto (y no renovada).
+        $cursos = CursoController::conEstado(
+            Curso::whereIn('empleado_id', $empleados->pluck('id'))->orderBy('fecha')->get()
+        );
+        $formacion = $cursos
+            ->filter(fn ($c) => in_array($c->estado, ['vencido', 'proximo'], true))
+            ->sortBy('fecha_caducidad')
+            ->map(fn ($c) => [
+                'id' => $c->id,
+                'nombre' => $c->nombre,
+                'estado' => $c->estado,
+                'caduca' => $c->fecha_caducidad->toDateString(),
+                'dias' => $c->dias,
+                'empleado' => [
+                    'id' => $c->empleado_id,
+                    'nombre_completo' => $empleados->firstWhere('id', $c->empleado_id)?->nombre_completo,
+                ],
+            ])
+            ->values();
+
+        return response()->json(['empleados' => $filas, 'totales' => $totales, 'formacion' => $formacion]);
     }
 
     /**
