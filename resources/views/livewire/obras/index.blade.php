@@ -87,20 +87,25 @@
                 <div class="card flex flex-col overflow-visible">
                     {{-- HEADER --}}
                     <div class="card-header flex items-start justify-between gap-3">
-                        <div class="min-w-0">
-                            <h5 class="card-title truncate">{{ $obra->nombre }}</h5>
+                        <div class="min-w-0 flex-1">
+                            {{-- Nombre completo (salta de línea en vez de cortarse) --}}
+                            <h5 class="card-title break-words">{{ $obra->nombre }}</h5>
                             <p class="text-xs text-gray-400 mt-0.5">ID #{{ $obra->id }}</p>
+
+                            {{-- Tipo y estado debajo del nombre --}}
+                            <div class="mt-2 flex flex-wrap items-center gap-2">
+                                <span
+                                    class="text-xs font-medium px-2.5 py-1 rounded-full ring-1 {{ $tipoClases }}">
+                                    {{ $tipoLabel }}
+                                </span>
+                                <span
+                                    class="text-xs font-medium px-2.5 py-1 rounded-full ring-1 {{ $estadoClases }}">
+                                    {{ $estadoLabel }}
+                                </span>
+                            </div>
                         </div>
 
-                        <div class="flex items-center gap-2 shrink-0 flex-wrap">
-                            <span
-                                class="text-xs font-medium px-2.5 py-1 rounded-full ring-1 {{ $tipoClases }}">
-                                {{ $tipoLabel }}
-                            </span>
-                            <span
-                                class="text-xs font-medium px-2.5 py-1 rounded-full ring-1 {{ $estadoClases }}">
-                                {{ $estadoLabel }}
-                            </span>
+                        <div class="shrink-0">
 
                             {{-- DROPDOWN ACCIONES --}}
                             <div class="relative" x-data="{ open: false }"
