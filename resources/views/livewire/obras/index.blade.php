@@ -93,9 +93,11 @@
 
                 <div
                     class="card flex flex-col overflow-visible rounded-2xl ring-1 ring-slate-200 transition duration-200 hover:-translate-y-0.5 hover:shadow-xl">
-                    {{-- CABECERA OSCURA (mismo fondo que el login) --}}
-                    <div class="relative overflow-hidden rounded-t-2xl bg-slate-950 px-6 py-5">
-                        <div class="pointer-events-none absolute inset-0"
+                    {{-- CABECERA OSCURA (mismo fondo que el login).
+                         Sin overflow-hidden: recortaría el menú de acciones. El
+                         resplandor se redondea por su cuenta. --}}
+                    <div class="relative rounded-t-2xl bg-slate-950 px-6 py-5">
+                        <div class="pointer-events-none absolute inset-0 overflow-hidden rounded-t-2xl"
                             style="background:
                                 radial-gradient(70% 90% at 88% 8%, rgba(48,115,241,.45) 0%, rgba(48,115,241,0) 62%),
                                 radial-gradient(60% 80% at 8% 100%, rgba(14,165,233,.28) 0%, rgba(14,165,233,0) 60%);">
