@@ -11,11 +11,11 @@
         $etiqueta = 'mb-1.5 block text-sm font-medium text-slate-700';
     @endphp
 
-    <div class="grid grid-cols-12">
-        <div class="col-span-12 xl:col-span-10 2xl:col-span-8">
+    <div class="space-y-4">
 
-            {{-- CABECERA --}}
-            <div class="mb-4 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_10px_35px_rgba(15,23,42,0.06)]">
+        {{-- CABECERA + DATOS (ocupa el ancho disponible) --}}
+        <div class="grid grid-cols-1 gap-4 2xl:grid-cols-3">
+            <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_10px_35px_rgba(15,23,42,0.06)] 2xl:col-span-2">
                 <div class="relative bg-slate-950 px-5 py-6 sm:px-6">
                     <div class="pointer-events-none absolute inset-0 overflow-hidden"
                         style="background:
@@ -129,7 +129,7 @@
             </div>
 
             {{-- CONTRASEÑA --}}
-            <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_10px_35px_rgba(15,23,42,0.06)]">
+            <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_10px_35px_rgba(15,23,42,0.06)] 2xl:col-span-1">
                 <div class="border-b border-slate-200 px-5 py-4 sm:px-6">
                     <h3 class="flex items-center gap-2 font-semibold text-slate-900">
                         <i class="mgc_lock_line text-lg text-cyan-600"></i> Cambiar la contraseña
@@ -142,7 +142,9 @@
                 <form method="POST" action="{{ route('perfil.contrasena') }}" class="px-5 py-5 sm:px-6">
                     @csrf
 
-                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                    {{-- En pantallas anchas esta tarjeta va en una columna estrecha:
+                         los campos se apilan. --}}
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 2xl:grid-cols-1">
                         <div>
                             <label for="contrasena_actual" class="{{ $etiqueta }}">Contraseña actual <span class="text-red-500">*</span></label>
                             <input type="password" id="contrasena_actual" name="contrasena_actual" required
