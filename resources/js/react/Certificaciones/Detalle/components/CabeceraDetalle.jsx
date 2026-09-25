@@ -41,22 +41,22 @@ export default function CabeceraDetalle({
 
             {/* TÍTULO + ESTADOS + ACCIONES */}
             <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-[0_10px_35px_rgba(15,23,42,0.06)]">
-                <div className="border-b border-slate-200/70 bg-gradient-to-r from-slate-50 via-white to-cyan-50/40 px-5 py-5 sm:px-6">
+                <div className="border-b border-slate-800/70 cabecera-panel px-5 py-5 sm:px-6">
                     <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
                         <div className="min-w-0">
-                            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-100 bg-cyan-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-cyan-700">
-                                <span className="h-2 w-2 rounded-full bg-cyan-500"></span>
+                            <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-cyan-200">
+                                <span className="h-2 w-2 rounded-full bg-cyan-300"></span>
                                 Detalle
                             </div>
 
-                            <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-900">
+                            <h2 className="mt-3 text-2xl font-semibold tracking-tight text-white">
                                 Certificación{" "}
                                 <span className="font-mono">
                                     {certificacion.numero_certificacion ?? "—"}
                                 </span>
                             </h2>
 
-                            <p className="mt-1 text-sm text-slate-500">
+                            <p className="mt-1 text-sm text-slate-300">
                                 {certificacion.oficio_nombre} —{" "}
                                 {certificacion.cliente_nombre}
                             </p>
@@ -76,7 +76,7 @@ export default function CabeceraDetalle({
                                 {facturaEmitida && (
                                     <a
                                         href={facturaEmitida.url}
-                                        className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                                        className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-200 transition hover:bg-emerald-100"
                                         title="Ver factura"
                                     >
                                         <i className="mgc_bill_line"></i>
@@ -86,7 +86,7 @@ export default function CabeceraDetalle({
                                 )}
 
                                 {avance.total > 0 && (
-                                    <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600">
+                                    <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-xs font-medium text-slate-200">
                                         <i className="mgc_pie_chart_line"></i>
                                         {avance.certificadas} de {avance.total}{" "}
                                         partidas del oficio certificadas
@@ -96,7 +96,7 @@ export default function CabeceraDetalle({
 
                             {/* SEGUIMIENTO DE COBRO (informativo, no fiscal) */}
                             <div className="mt-4 flex flex-wrap items-center gap-2">
-                                <span className="text-xs font-medium text-slate-500">
+                                <span className="text-xs font-medium text-slate-300">
                                     Seguimiento de cobro
                                 </span>
                                 <span className="text-[11px] text-slate-400">
@@ -116,7 +116,7 @@ export default function CabeceraDetalle({
                                                 e.target.value,
                                             )
                                         }
-                                        className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-500/30"
+                                        className="rounded-lg border border-white/15 bg-white/10 px-2 py-1 text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/30"
                                     >
                                         {(
                                             certificacion.estados_cobro_opciones ??
@@ -144,7 +144,7 @@ export default function CabeceraDetalle({
                                 <>
                                     <button
                                         onClick={onImpuestos}
-                                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900"
+                                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:border-white/25 hover:bg-white/20 hover:text-white"
                                     >
                                         <i className="mgc_pig_money_line text-base"></i>
                                         Impuestos
@@ -163,7 +163,7 @@ export default function CabeceraDetalle({
                             {puedeAnular && onAnular && (
                                 <button
                                     onClick={onAnular}
-                                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-4 py-2.5 text-sm font-medium text-amber-700 transition hover:border-amber-400 hover:bg-amber-100"
+                                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-4 py-2.5 text-sm font-medium text-amber-200 transition hover:border-amber-400 hover:bg-amber-100"
                                 >
                                     <i className="mgc_refresh_1_line text-base"></i>
                                     Anular aceptación
@@ -174,7 +174,7 @@ export default function CabeceraDetalle({
                                 <button
                                     onClick={onDescargarPdf}
                                     disabled={descargando}
-                                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-60"
+                                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:border-white/25 hover:bg-white/20 hover:text-white disabled:opacity-60"
                                 >
                                     <i className="mgc_download_2_line text-base"></i>
                                     {descargando ? "Generando…" : "Descargar PDF"}

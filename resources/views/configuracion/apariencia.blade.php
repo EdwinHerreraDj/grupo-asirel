@@ -44,14 +44,14 @@
 
             {{-- CABECERA --}}
             <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_10px_35px_rgba(15,23,42,0.06)] mb-4">
-                <div class="border-b border-slate-200 bg-gradient-to-r from-slate-50 via-white to-cyan-50/40 px-5 py-5 sm:px-6">
+                <div class="border-b border-slate-800 cabecera-panel px-5 py-5 sm:px-6">
                     <div
-                        class="inline-flex items-center gap-2 rounded-full border border-cyan-100 bg-cyan-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-cyan-700">
-                        <span class="h-2 w-2 rounded-full bg-cyan-500"></span>
+                        class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-cyan-200">
+                        <span class="h-2 w-2 rounded-full bg-cyan-300"></span>
                         Configuración
                     </div>
-                    <h2 class="mt-3 text-2xl font-semibold tracking-tight text-slate-900">Apariencia del panel</h2>
-                    <p class="mt-1 max-w-3xl text-sm text-slate-500">
+                    <h2 class="mt-3 text-2xl font-semibold tracking-tight text-white">Apariencia del panel</h2>
+                    <p class="mt-1 max-w-3xl text-sm text-slate-300">
                         Las imágenes de la aplicación: el logo del menú, el icono cuando el menú está plegado y el
                         favicon. El <strong>logo de la empresa</strong> no se toca aquí: ese se usa solo en los PDFs e
                         informes y se cambia en <a href="{{ route('empresa.configuracion') }}"

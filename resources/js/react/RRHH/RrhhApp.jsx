@@ -66,22 +66,22 @@ function RrhhAppContent() {
         <div>
             <div className="space-y-4">
                 <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_10px_35px_rgba(15,23,42,0.06)]">
-                    <div className="border-b border-slate-200 bg-gradient-to-r from-slate-50 via-white to-cyan-50/40 px-5 py-5 sm:px-6">
+                    <div className="border-b border-slate-800 cabecera-panel px-5 py-5 sm:px-6">
                         <div className="mb-4">
                             <a
                                 href="/empresa"
-                                className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 hover:text-slate-900"
+                                className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-slate-300 shadow-sm transition hover:bg-white/20 hover:text-white"
                             >
                                 <i className="mgc_arrow_left_line text-lg"></i>
                                 <span className="hidden sm:inline">Regresar</span>
                             </a>
                         </div>
-                        <div className="inline-flex items-center gap-2 rounded-full border border-cyan-100 bg-cyan-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-cyan-700">
-                            <span className="h-2 w-2 rounded-full bg-cyan-500"></span>
+                        <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-cyan-200">
+                            <span className="h-2 w-2 rounded-full bg-cyan-300"></span>
                             Empresa
                         </div>
-                        <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-900">Recursos humanos</h2>
-                        <p className="mt-1 text-sm text-slate-500">
+                        <h2 className="mt-3 text-2xl font-semibold tracking-tight text-white">Recursos humanos</h2>
+                        <p className="mt-1 text-sm text-slate-300">
                             Fichas de empleados, cuadrante de turnos, ausencias, nóminas, formación, alertas e informes.
                         </p>
                     </div>

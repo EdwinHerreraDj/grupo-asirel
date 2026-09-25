@@ -109,17 +109,17 @@ function CertificacionesInner() {
         <div>
             <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
                 {/* CABECERA */}
-                <div className="border-b border-slate-200/70 bg-gradient-to-r from-slate-50 via-white to-cyan-50/40 px-5 py-5 sm:px-6 lg:px-8">
+                <div className="border-b border-slate-800/70 cabecera-panel px-5 py-5 sm:px-6 lg:px-8">
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                         <div className="min-w-0">
-                            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-100 bg-cyan-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-cyan-700">
-                                <span className="h-2 w-2 rounded-full bg-cyan-500"></span>
+                            <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-cyan-200">
+                                <span className="h-2 w-2 rounded-full bg-cyan-300"></span>
                                 Gestión económica
                             </div>
-                            <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-900">
+                            <h2 className="mt-3 text-2xl font-semibold tracking-tight text-white">
                                 Certificaciones
                             </h2>
-                            <p className="mt-1 text-sm text-slate-500">
+                            <p className="mt-1 text-sm text-slate-300">
                                 Gestión de certificaciones de la obra
                             </p>
                         </div>
@@ -127,7 +127,7 @@ function CertificacionesInner() {
                         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
                             <button
                                 onClick={() => setMostrarComparativa((v) => !v)}
-                                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900"
+                                className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:border-white/25 hover:bg-white/20 hover:text-white"
                             >
                                 <i className="mgc_calendar_month_line text-base"></i>
                                 Comparativa mensual

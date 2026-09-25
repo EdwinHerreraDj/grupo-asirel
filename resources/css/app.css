@@ -63,3 +63,29 @@
     animation: progress-indeterminate 1.5s ease-in-out infinite;
     width: 25%;
 }
+/* =========================================================
+   Cabeceras de página del panel: fondo oscuro con un
+   resplandor del color de cada apartado (el mismo lenguaje
+   visual que el login y las tarjetas de obras).
+   Uso: class="cabecera-panel cabecera-panel-amber"
+   ========================================================= */
+.cabecera-panel {
+    --cabecera-acento: 34 211 238;
+    /* cyan por defecto */
+    background-color: #020617;
+    background-image:
+        radial-gradient(70% 95% at 88% 6%, rgb(var(--cabecera-acento) / .38) 0%, transparent 62%),
+        radial-gradient(65% 85% at 6% 100%, rgb(48 115 241 / .30) 0%, transparent 60%);
+}
+
+.cabecera-panel-amber {
+    --cabecera-acento: 245 158 11;
+}
+
+.cabecera-panel-emerald {
+    --cabecera-acento: 16 185 129;
+}
+
+.cabecera-panel-violet {
+    --cabecera-acento: 139 92 246;
+}

@@ -55,11 +55,11 @@
 
         {{-- CABECERA --}}
         <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_10px_35px_rgba(15,23,42,0.06)]">
-            <div class="border-b border-slate-200 bg-gradient-to-r from-slate-50 via-white to-cyan-50/40 px-5 py-5 sm:px-6">
+            <div class="border-b border-slate-800 cabecera-panel px-5 py-5 sm:px-6">
 
                 <div class="flex items-center gap-3 mb-4">
                     <a href="{{ route('empresa.index') }}"
-                        class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 hover:text-slate-900">
+                        class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-slate-300 shadow-sm transition hover:bg-white/20 hover:text-white">
                         <i class="mgc_arrow_left_line text-lg"></i>
                         <span class="hidden sm:inline">Empresa</span>
                     </a>
@@ -67,14 +67,14 @@
 
                 <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <div class="min-w-0">
-                        <div class="inline-flex items-center gap-2 rounded-full border border-cyan-100 bg-cyan-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-cyan-700">
-                            <span class="h-2 w-2 rounded-full bg-cyan-500"></span>
+                        <div class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-cyan-200">
+                            <span class="h-2 w-2 rounded-full bg-cyan-300"></span>
                             Empresa
                         </div>
-                        <h2 class="mt-3 text-2xl font-semibold tracking-tight text-slate-900">
+                        <h2 class="mt-3 text-2xl font-semibold tracking-tight text-white">
                             Informes globales
                         </h2>
-                        <p class="mt-1 text-sm text-slate-500">
+                        <p class="mt-1 text-sm text-slate-300">
                             Consulta los datos consolidados de la empresa: liquidación de IVA y análisis bruto de obras.
                         </p>
                     </div>

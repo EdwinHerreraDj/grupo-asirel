@@ -71,17 +71,17 @@ export default function TareasLayout({
             <div className="space-y-4">
                 {/* CABECERA */}
                 <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_10px_35px_rgba(15,23,42,0.06)]">
-                    <div className="border-b border-slate-200 bg-gradient-to-r from-slate-50 via-white to-cyan-50/40 px-5 py-5 sm:px-6">
+                    <div className="border-b border-slate-800 cabecera-panel px-5 py-5 sm:px-6">
                         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                             <div className="min-w-0">
-                                <div className="inline-flex items-center gap-2 rounded-full border border-cyan-100 bg-cyan-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-cyan-700">
-                                    <span className="h-2 w-2 rounded-full bg-cyan-500"></span>
+                                <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-cyan-200">
+                                    <span className="h-2 w-2 rounded-full bg-cyan-300"></span>
                                     Personal
                                 </div>
-                                <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-900">
+                                <h2 className="mt-3 text-2xl font-semibold tracking-tight text-white">
                                     Tareas
                                 </h2>
-                                <p className="mt-1 text-sm text-slate-500">
+                                <p className="mt-1 text-sm text-slate-300">
                                     Organiza tu trabajo en estilo kanban: tareas
                                     pendientes, en curso y completadas.
                                 </p>
