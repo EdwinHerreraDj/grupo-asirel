@@ -5,7 +5,6 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
-use Throwable;
 
 /**
  * Imágenes del panel (menú, menú plegado y favicon). Una sola fila.
@@ -40,7 +39,7 @@ return new class extends Migration
                 Storage::disk('public')->copy($logoEmpresa, $copia);
                 $logo = $copia;
             }
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             report($e); // Si no se puede copiar, se usa el logo que trae la app.
         }
 
