@@ -5,4 +5,4 @@
 <meta content="Alminares.es" name="author">
 
 <!-- App favicon -->
-<link rel="shortcut icon" href="/images/favicon.ico">
+<link rel="shortcut icon" href="{{ $panel?->favicon_url ?? '/images/favicon.ico' }}">

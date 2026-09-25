@@ -27,5 +27,14 @@ class AppServiceProvider extends ServiceProvider
             $empresa = Empresa::first();
             View::share('empresa', $empresa);
         }
+
+        // Imágenes del panel (logo, menú plegado y favicon): se leen al pintar
+        // la vista para que un cambio se vea al momento.
+        if (Schema::hasTable('panel_apariencia')) {
+            View::composer(
+                ['layouts.shared.sidebar', 'layouts.shared.topbar', 'layouts.shared.title-meta', 'auth.login'],
+                fn ($view) => $view->with('panel', \App\Models\PanelApariencia::vigente()),
+            );
+        }
     }
 }

@@ -35,15 +35,15 @@
         </button>
 
         <!-- Topbar Brand Logo -->
-        @php $logoEmpresa = !empty($empresa?->logo) ? \Illuminate\Support\Facades\Storage::url($empresa->logo) : null; @endphp
+        @php $logoPanel = $panel?->logo_url; $iconoPanel = $panel?->icono_url; @endphp
         <a href="{{ route('home') }}" class="logo-box shrink-0">
             <div class="logo-light">
-                <img src="{{ $logoEmpresa ?? '/images/logo-light.png' }}" class="logo-lg" style="height:38px;width:auto;object-fit:contain;" alt="Logo">
-                <img src="{{ $logoEmpresa ?? '/images/logo-sm.png' }}" class="logo-sm" style="height:34px;width:auto;object-fit:contain;" alt="Logo">
+                <img src="{{ $logoPanel ?? '/images/logo-light.png' }}" class="logo-lg" style="height:38px;width:auto;object-fit:contain;" alt="Logo">
+                <img src="{{ $iconoPanel ?? '/images/logo-sm.png' }}" class="logo-sm" style="height:34px;width:auto;object-fit:contain;" alt="Logo">
             </div>
             <div class="logo-dark">
-                <img src="{{ $logoEmpresa ?? '/images/logo-dark.png' }}" class="logo-lg" style="height:38px;width:auto;object-fit:contain;" alt="Logo">
-                <img src="{{ $logoEmpresa ?? '/images/logo-sm.png' }}" class="logo-sm" style="height:34px;width:auto;object-fit:contain;" alt="Logo">
+                <img src="{{ $logoPanel ?? '/images/logo-dark.png' }}" class="logo-lg" style="height:38px;width:auto;object-fit:contain;" alt="Logo">
+                <img src="{{ $iconoPanel ?? '/images/logo-sm.png' }}" class="logo-sm" style="height:34px;width:auto;object-fit:contain;" alt="Logo">
             </div>
         </a>
     </div>

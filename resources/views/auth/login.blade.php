@@ -10,9 +10,9 @@
 <body class="bg-white dark:bg-slate-900">
 
     @php
-        $logo = !empty($empresa?->logo)
-            ? Storage::url($empresa->logo)
-            : asset('images/logo-alminares-500x500.png');
+        // El logo del panel (Configuración → Apariencia); el de la empresa es
+        // solo para los PDFs.
+        $logo = $panel?->logo_url ?? asset('images/logo-alminares-500x500.png');
     @endphp
 
     <div class="flex min-h-screen w-full">

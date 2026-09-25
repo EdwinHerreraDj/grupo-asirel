@@ -131,6 +131,14 @@ Contratado (presupuesto de venta) frente a ejecutado (`certificacion_detalles.ca
 
 ---
 
+## 5.5 Dos logos distintos (no confundirlos)
+
+- **Logo de la empresa** (`empresa.logo`): solo para **PDFs e informes**. Se cambia en Configuración → Empresa.
+- **Imágenes del panel** (`panel_apariencia`, modelo `App\Models\PanelApariencia`): logo del menú, icono del menú plegado y favicon. Se cambian en Configuración → Apariencia del panel (`/configuracion/apariencia`, solo admin y super_admin) y las usan el menú, la barra superior, el favicon y el login.
+- Las vistas reciben `$panel` por un *view composer* (`AppServiceProvider`) que lee `PanelApariencia::vigente()` al pintar; el controlador llama a `olvidar()` al guardar. Si un campo está vacío se usa la imagen del tema (`/images/logo-*.png`, `/images/favicon.ico`).
+
+---
+
 ## 6. Seguridad y permisos
 
 - **Roles** en `users.role`: `super_admin` | `admin` | `user`. No hay registro público: las altas se hacen en `/users`.

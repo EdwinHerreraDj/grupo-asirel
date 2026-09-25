@@ -168,6 +168,13 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
     // Mi Unidad
     Route::get('/empresa', [EmpresaController::class, 'index'])->name('empresa.index');
     Route::get('/empresa/configuracion', [EmpresaController::class, 'configuracion'])->middleware('role:admin,super_admin')->name('empresa.configuracion');
+
+    /* Imágenes del panel (logo, menú plegado y favicon): solo admin y super_admin */
+    Route::middleware('role:admin,super_admin')->group(function () {
+        Route::get('/configuracion/apariencia', [\App\Http\Controllers\Configuracion\AparienciaController::class, 'index'])->name('configuracion.apariencia');
+        Route::post('/configuracion/apariencia', [\App\Http\Controllers\Configuracion\AparienciaController::class, 'update'])->name('configuracion.apariencia.update');
+        Route::delete('/configuracion/apariencia/{campo}', [\App\Http\Controllers\Configuracion\AparienciaController::class, 'eliminar'])->name('configuracion.apariencia.eliminar');
+    });
     Route::get('/empresa/drive-app', [FoldersController::class, 'index'])->middleware('role:admin,super_admin')->name('empresa.driveApp');
     Route::get('/rrhh', [\App\Http\Controllers\RrhhController::class, 'index'])->middleware('role:admin,super_admin')->name('rrhh.index');
 

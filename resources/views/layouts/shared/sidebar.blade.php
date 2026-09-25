@@ -1,18 +1,20 @@
 <div class="app-menu">
 
     {{-- LOGO --}}
-    @php $logoEmpresa = !empty($empresa?->logo) ? \Illuminate\Support\Facades\Storage::url($empresa->logo) : null; @endphp
+    {{-- Imágenes del panel (Configuración → Apariencia). El logo de la empresa
+         es otro: ese solo se usa en los PDFs e informes. --}}
+    @php $logoPanel = $panel?->logo_url; $iconoPanel = $panel?->icono_url; @endphp
     <a href="{{ route('home') }}" class="logo-box">
         {{-- El tema muestra .logo-dark en menú claro (por defecto) y .logo-light
              en menú oscuro; apuntamos ambos al logo de empresa para que se vea
              en cualquier caso. Tamaño explícito porque el logo suele ser cuadrado. --}}
         <div class="logo-light">
-            <img src="{{ $logoEmpresa ?? '/images/logo-light.png' }}" class="logo-lg" style="height:54px;width:auto;object-fit:contain;" alt="Logo">
-            <img src="{{ $logoEmpresa ?? '/images/logo-sm.png' }}" class="logo-sm" style="height:40px;width:auto;object-fit:contain;" alt="Logo">
+            <img src="{{ $logoPanel ?? '/images/logo-light.png' }}" class="logo-lg" style="height:54px;width:auto;object-fit:contain;" alt="Logo">
+            <img src="{{ $iconoPanel ?? '/images/logo-sm.png' }}" class="logo-sm" style="height:40px;width:auto;object-fit:contain;" alt="Logo">
         </div>
         <div class="logo-dark">
-            <img src="{{ $logoEmpresa ?? '/images/logo-dark.png' }}" class="logo-lg" style="height:54px;width:auto;object-fit:contain;" alt="Logo">
-            <img src="{{ $logoEmpresa ?? '/images/logo-sm.png' }}" class="logo-sm" style="height:40px;width:auto;object-fit:contain;" alt="Logo">
+            <img src="{{ $logoPanel ?? '/images/logo-dark.png' }}" class="logo-lg" style="height:54px;width:auto;object-fit:contain;" alt="Logo">
+            <img src="{{ $iconoPanel ?? '/images/logo-sm.png' }}" class="logo-sm" style="height:40px;width:auto;object-fit:contain;" alt="Logo">
         </div>
     </a>
 
@@ -244,6 +246,13 @@
                             class="{{ $linkBase }} {{ request()->routeIs('empresa.configuracion') ? $linkActive : $linkIdle }}">
                             <i class="mgc_building_2_line text-lg shrink-0"></i>
                             <span class="sidebar-text">Empresa</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('configuracion.apariencia') }}"
+                            class="{{ $linkBase }} {{ request()->routeIs('configuracion.apariencia') ? $linkActive : $linkIdle }}">
+                            <i class="mgc_palette_line text-lg shrink-0"></i>
+                            <span class="sidebar-text">Apariencia del panel</span>
                         </a>
                     </li>
                 </ul>
