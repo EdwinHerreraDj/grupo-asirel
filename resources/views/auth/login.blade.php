@@ -23,13 +23,13 @@
             {{-- Resplandor de fondo --}}
             <div class="pointer-events-none absolute inset-0"
                 style="background:
-                    radial-gradient(60% 55% at 78% 18%, rgba(79,70,229,.45) 0%, rgba(79,70,229,0) 60%),
-                    radial-gradient(55% 45% at 15% 92%, rgba(8,145,178,.35) 0%, rgba(8,145,178,0) 60%);">
+                    radial-gradient(60% 55% at 78% 18%, rgba(48,115,241,.45) 0%, rgba(48,115,241,0) 60%),
+                    radial-gradient(55% 45% at 15% 92%, rgba(14,165,233,.30) 0%, rgba(14,165,233,0) 60%);">
             </div>
 
             <div class="relative flex h-full flex-col justify-between px-10 py-10 xl:px-14">
 
-                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-indigo-300">
+                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-[#8fb4fa]">
                     Gestión de obras
                 </p>
 
@@ -55,19 +55,19 @@
                                     stroke="#475569" />
                                 @foreach ([142, 186, 230, 274] as $i => $x)
                                     <rect x="{{ $x }}" y="{{ $y + 8 }}" width="28" height="18" rx="2"
-                                        fill="{{ $loop->index % 2 ? '#22d3ee' : '#38bdf8' }}" fill-opacity=".85" />
+                                        fill="{{ $loop->index % 2 ? '#3073F1' : '#5b8def' }}" fill-opacity=".85" />
                                 @endforeach
                             @endforeach
                         </g>
 
                         {{-- Planta en ejecución --}}
-                        <rect x="130" y="156" width="180" height="34" rx="3" fill="#0f172a" stroke="#fbbf24"
+                        <rect x="130" y="156" width="180" height="34" rx="3" fill="#0f172a" stroke="#E2A907"
                             stroke-opacity=".9" />
-                        <rect x="142" y="164" width="28" height="18" rx="2" fill="#fbbf24" fill-opacity=".85" />
-                        <rect x="186" y="164" width="28" height="18" rx="2" fill="#fbbf24" fill-opacity=".45" />
-                        <rect x="230" y="164" width="28" height="18" rx="2" fill="none" stroke="#fbbf24"
+                        <rect x="142" y="164" width="28" height="18" rx="2" fill="#E2A907" fill-opacity=".85" />
+                        <rect x="186" y="164" width="28" height="18" rx="2" fill="#E2A907" fill-opacity=".45" />
+                        <rect x="230" y="164" width="28" height="18" rx="2" fill="none" stroke="#E2A907"
                             stroke-opacity=".5" />
-                        <rect x="274" y="164" width="28" height="18" rx="2" fill="none" stroke="#fbbf24"
+                        <rect x="274" y="164" width="28" height="18" rx="2" fill="none" stroke="#E2A907"
                             stroke-opacity=".5" />
 
                         {{-- Planta por levantar: solo estructura --}}
@@ -97,7 +97,7 @@
                         </g>
                         <rect x="24" y="76" width="26" height="24" rx="4" fill="#475569" />
                         <rect x="72" y="100" width="34" height="22" rx="4" fill="#475569" />
-                        <rect x="238" y="164" width="48" height="14" rx="3" fill="#f59e0b" />
+                        <rect x="238" y="164" width="48" height="14" rx="3" fill="#E2A907" />
 
                         {{-- Suelo y acopio de material --}}
                         <path d="M28 292h364" stroke="#475569" stroke-width="3" stroke-linecap="round" />
@@ -105,7 +105,7 @@
                             <rect x="330" y="274" width="52" height="8" rx="2" />
                             <rect x="336" y="264" width="40" height="8" rx="2" />
                         </g>
-                        <g fill="#10b981" fill-opacity=".85">
+                        <g fill="#1CB454" fill-opacity=".85">
                             <rect x="340" y="254" width="32" height="6" rx="2" />
                         </g>
                     </svg>
@@ -114,7 +114,7 @@
                 <div>
                     <h1 class="text-3xl font-semibold leading-tight tracking-tight text-white xl:text-4xl">
                         Cada obra,
-                        <span class="block text-cyan-400">bajo control.</span>
+                        <span class="block text-[#6ea8ff]">bajo control.</span>
                     </h1>
                     <p class="mt-4 max-w-md text-sm leading-relaxed text-slate-300">
                         Presupuestos, certificaciones, gastos y facturación de todas tus obras en un solo lugar.
@@ -124,7 +124,7 @@
                         @foreach ([['mgc_building_2_line', 'Obras y presupuestos', 'Capítulos, partidas y coste teórico al día.'], ['mgc_task_2_line', 'Certificaciones y facturas', 'Certifica, factura y controla los cobros.'], ['mgc_group_line', 'Gastos y personal', 'Materiales, subcontratas, alquileres y recursos humanos.']] as [$icono, $titulo, $texto])
                             <li class="flex items-start gap-4">
                                 <span
-                                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-cyan-300 ring-1 ring-white/10">
+                                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-[#8fb4fa] ring-1 ring-white/10">
                                     <i class="{{ $icono }} text-lg"></i>
                                 </span>
                                 <span class="min-w-0">
@@ -189,7 +189,7 @@
                                 class="mgc_mail_line pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
                             <input type="email" id="email" name="email" value="{{ old('email') }}" required
                                 autofocus autocomplete="username" placeholder="nombre@empresa.com"
-                                class="w-full rounded-xl border-slate-300 py-3 pl-10 pr-3 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white
+                                class="w-full rounded-xl border-slate-300 py-3 pl-10 pr-3 text-sm shadow-sm focus:border-primary focus:ring-primary dark:border-slate-600 dark:bg-slate-800 dark:text-white
                                     @error('email') border-red-400 @enderror">
                         </div>
                         @error('email')
@@ -208,7 +208,7 @@
                                 class="mgc_lock_line pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
                             <input type="password" id="password" name="password" required
                                 autocomplete="current-password" placeholder="••••••••"
-                                class="w-full rounded-xl border-slate-300 py-3 pl-10 pr-11 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white
+                                class="w-full rounded-xl border-slate-300 py-3 pl-10 pr-11 text-sm shadow-sm focus:border-primary focus:ring-primary dark:border-slate-600 dark:bg-slate-800 dark:text-white
                                     @error('password') border-red-400 @enderror">
                             <button type="button" id="verContrasena" aria-label="Mostrar la contraseña"
                                 class="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700">
@@ -223,12 +223,12 @@
                     {{-- Recordar sesión --}}
                     <label class="flex cursor-pointer items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
                         <input type="checkbox" name="remember" value="1" {{ old('remember') ? 'checked' : '' }}
-                            class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600">
+                            class="rounded border-slate-300 text-primary focus:ring-primary dark:border-slate-600">
                         Recordar sesión
                     </label>
 
                     <button type="submit"
-                        class="w-full rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900">
+                        class="w-full rounded-xl bg-primary py-3 text-sm font-semibold text-white shadow-lg shadow-primary/25 transition hover:bg-[#245ec9] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-slate-900">
                         Iniciar sesión
                     </button>
                 </form>
@@ -237,7 +237,7 @@
                     Acceso restringido al personal autorizado
                 </p>
                 <p class="mt-1 text-center text-xs text-slate-400">
-                    Soporte técnico <span class="font-semibold text-indigo-600 dark:text-indigo-400">Alminares S.L.</span>
+                    Soporte técnico <span class="font-semibold text-primary">Alminares S.L.</span>
                 </p>
             </div>
         </div>
