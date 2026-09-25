@@ -333,5 +333,47 @@
         html[data-sidenav-view="sm"] .app-menu .sidebar-link > i {
             margin: 0;
         }
+
+        /* =======================================================
+           El menú nunca se sale de la pantalla: si al desplegar
+           varios submenús no cabe, hace scroll él mismo. El tema
+           deja el contenedor de SimpleBar en overflow visible, por
+           eso hay que forzarlo aquí.
+           ======================================================= */
+        .app-menu .scrollbar {
+            height: calc(100vh - var(--tw-topbar-height, 70px));
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(100, 116, 139, .35) transparent;
+        }
+
+        .app-menu .simplebar-content-wrapper {
+            max-height: calc(100vh - var(--tw-topbar-height, 70px));
+            overflow-y: auto !important;
+            overscroll-behavior: contain;
+        }
+
+        /* Barra de scroll fina y discreta */
+        .app-menu .scrollbar::-webkit-scrollbar,
+        .app-menu .simplebar-content-wrapper::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .app-menu .scrollbar::-webkit-scrollbar-thumb,
+        .app-menu .simplebar-content-wrapper::-webkit-scrollbar-thumb {
+            background: rgba(100, 116, 139, .35);
+            border-radius: 9999px;
+        }
+
+        .app-menu .scrollbar::-webkit-scrollbar-thumb:hover,
+        .app-menu .simplebar-content-wrapper::-webkit-scrollbar-thumb:hover {
+            background: rgba(100, 116, 139, .55);
+        }
+
+        /* Un poco de aire al final para que el último enlace no quede pegado */
+        .app-menu .sidebar-nav {
+            padding-bottom: 1.5rem;
+        }
     </style>
 </div>

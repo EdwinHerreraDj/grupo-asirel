@@ -62,11 +62,18 @@
             @foreach ($obras as $obra)
                 @php
                     $estadoClases = match ($obra->estado) {
-                        'planificacion' => 'bg-amber-100 text-amber-700 ring-amber-200',
-                        'ejecucion' => 'bg-blue-100 text-blue-700 ring-blue-200',
-                        'en_pausa' => 'bg-orange-100 text-orange-700 ring-orange-200',
-                        'finalizada' => 'bg-emerald-100 text-emerald-700 ring-emerald-200',
-                        default => 'bg-gray-100 text-gray-700 ring-gray-200',
+                        'planificacion' => 'bg-amber-400/15 text-amber-200 ring-amber-300/30',
+                        'ejecucion' => 'bg-sky-400/15 text-sky-200 ring-sky-300/30',
+                        'en_pausa' => 'bg-orange-400/15 text-orange-200 ring-orange-300/30',
+                        'finalizada' => 'bg-emerald-400/15 text-emerald-200 ring-emerald-300/30',
+                        default => 'bg-white/10 text-slate-200 ring-white/20',
+                    };
+                    $estadoPunto = match ($obra->estado) {
+                        'planificacion' => 'bg-amber-300',
+                        'ejecucion' => 'bg-sky-300',
+                        'en_pausa' => 'bg-orange-300',
+                        'finalizada' => 'bg-emerald-300',
+                        default => 'bg-slate-300',
                     };
                     $estadoLabel = match ($obra->estado) {
                         'planificacion' => 'Planificación',
@@ -77,42 +84,51 @@
                     };
                     $tipoLabel = $obra->tipo === 'contratista' ? 'Contratista' : 'Subcontratista';
                     $tipoClases = $obra->tipo === 'contratista'
-                        ? 'bg-violet-100 text-violet-700 ring-violet-200'
-                        : 'bg-cyan-100 text-cyan-700 ring-cyan-200';
+                        ? 'bg-violet-400/15 text-violet-200 ring-violet-300/30'
+                        : 'bg-cyan-400/15 text-cyan-200 ring-cyan-300/30';
                     $resultado = $obra->total_ventas - $obra->total_gastos;
                     $resultadoColor = $resultado >= 0 ? 'text-emerald-600' : 'text-red-600';
                     $colorBarra = fn($pct) => $pct >= 80 ? 'bg-emerald-500' : ($pct >= 50 ? 'bg-amber-500' : 'bg-red-500');
                 @endphp
 
-                <div class="card flex flex-col overflow-visible">
-                    {{-- HEADER --}}
-                    <div class="card-header flex items-start justify-between gap-3">
-                        <div class="min-w-0 flex-1">
-                            {{-- Nombre completo (salta de línea en vez de cortarse) --}}
-                            <h5 class="card-title break-words">{{ $obra->nombre }}</h5>
-                            <p class="text-xs text-gray-400 mt-0.5">ID #{{ $obra->id }}</p>
-
-                            {{-- Tipo y estado debajo del nombre --}}
-                            <div class="mt-2 flex flex-wrap items-center gap-2">
-                                <span
-                                    class="text-xs font-medium px-2.5 py-1 rounded-full ring-1 {{ $tipoClases }}">
-                                    {{ $tipoLabel }}
-                                </span>
-                                <span
-                                    class="text-xs font-medium px-2.5 py-1 rounded-full ring-1 {{ $estadoClases }}">
-                                    {{ $estadoLabel }}
-                                </span>
-                            </div>
+                <div
+                    class="card flex flex-col overflow-visible rounded-2xl ring-1 ring-slate-200 transition duration-200 hover:-translate-y-0.5 hover:shadow-xl">
+                    {{-- CABECERA OSCURA (mismo fondo que el login) --}}
+                    <div class="relative overflow-hidden rounded-t-2xl bg-slate-950 px-6 py-5">
+                        <div class="pointer-events-none absolute inset-0"
+                            style="background:
+                                radial-gradient(70% 90% at 88% 8%, rgba(48,115,241,.45) 0%, rgba(48,115,241,0) 62%),
+                                radial-gradient(60% 80% at 8% 100%, rgba(14,165,233,.28) 0%, rgba(14,165,233,0) 60%);">
                         </div>
 
-                        <div class="shrink-0">
+                        <div class="relative flex items-start justify-between gap-3">
+                            <div class="min-w-0 flex-1">
+                                {{-- Nombre completo (salta de línea en vez de cortarse) --}}
+                                <h5 class="card-title !text-white break-words">{{ $obra->nombre }}</h5>
+                                <p class="text-xs text-slate-400 mt-0.5">ID #{{ $obra->id }}</p>
+
+                                {{-- Tipo y estado debajo del nombre --}}
+                                <div class="mt-2.5 flex flex-wrap items-center gap-2">
+                                    <span
+                                        class="text-xs font-medium px-2.5 py-1 rounded-full ring-1 {{ $tipoClases }}">
+                                        {{ $tipoLabel }}
+                                    </span>
+                                    <span
+                                        class="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ring-1 {{ $estadoClases }}">
+                                        <span class="h-1.5 w-1.5 rounded-full {{ $estadoPunto }}"></span>
+                                        {{ $estadoLabel }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="shrink-0">
 
                             {{-- DROPDOWN ACCIONES --}}
                             <div class="relative" x-data="{ open: false }"
                                 x-on:keydown.escape.window="open = false">
                                 <button type="button" x-on:click="open = !open"
-                                    class="p-1.5 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition"
-                                    :class="open && 'bg-gray-100 text-gray-900'"
+                                    class="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition"
+                                    :class="open && 'bg-white/10 text-white'"
                                     aria-label="Acciones">
                                     <i class="mgc_more_2_line text-lg"></i>
                                 </button>
@@ -173,6 +189,7 @@
                                         <span>Eliminar obra</span>
                                     </button>
                                 </div>
+                            </div>
                             </div>
                         </div>
                     </div>
