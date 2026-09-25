@@ -104,6 +104,9 @@
 @endsection
 
 @section('script')
+    {{-- Esta tabla todavía usa DataTables (ya no se carga en todas las páginas) --}}
+    <script src="https://cdn.datatables.net/v/dt/dt-2.1.8/datatables.min.js"></script>
+    @vite(['resources/js/pages/tables-datatable.js'])
     @vite(['resources/js/pages/highlight.js'])
     @vite(['resources/js/visor-pdf.js'])
     <script>

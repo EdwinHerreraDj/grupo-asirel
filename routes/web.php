@@ -161,6 +161,10 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
     Route::resource('users', UserController::class)
         ->only(['index', 'store', 'update', 'destroy'])
         ->middleware('role:admin,super_admin');
+    Route::post('/login-logs/purgar', [LoginLogController::class, 'purgar'])
+        ->middleware('role:super_admin')
+        ->name('login.logs.purgar');
+
     Route::get('/login-logs', [LoginLogController::class, 'index'])
         ->middleware('role:super_admin')
         ->name('login.logs');

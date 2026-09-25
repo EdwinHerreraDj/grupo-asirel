@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Obra;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
@@ -44,13 +45,48 @@ class PaginasPrincipalesTest extends TestCase
     /** @dataProvider paginas */
     public function test_la_pagina_se_pinta_sin_errores(string $url): void
     {
-        $admin = User::factory()->create([
+        $this->actingAs($this->admin())->get($url)->assertOk();
+    }
+
+    /** Páginas de una obra que todavía usan DataTables. */
+    public function test_las_paginas_de_una_obra_se_pintan_sin_errores(): void
+    {
+        $obra = Obra::forceCreate([
+            'nombre' => 'Obra humo '.uniqid(),
+            'importe_presupuestado' => 0,
+            'estado' => 'ejecucion',
+        ]);
+        $admin = $this->admin();
+
+        $paginas = [
+            "/obras/{$obra->id}/ventas",
+            "/obras/{$obra->id}/gastos-varios",
+            "/obras/{$obra->id}/gastos/materiales",
+            "/obras/{$obra->id}/gastos/alquileres",
+            "/obras/{$obra->id}/gastos/subcontratas",
+            "/obras/{$obra->id}/documentos",
+            "/obras/{$obra->id}/certificaciones",
+            "/obras/{$obra->id}/facturas-recibidas",
+        ];
+
+        foreach ($paginas as $url) {
+            $html = $this->actingAs($admin)->get($url)->assertOk()->getContent();
+
+            // Donde hay tabla de DataTables deben venir su CSS y su JS.
+            if (str_contains($html, 'id="table-docs"')) {
+                $this->assertStringContainsString('datatables.min.css', $html, "Falta el CSS en {$url}");
+                $this->assertStringContainsString('datatables.min.js', $html, "Falta el JS en {$url}");
+            }
+        }
+    }
+
+    private function admin(): User
+    {
+        return User::factory()->create([
             'role' => User::ROLE_SUPER_ADMIN,
             'name' => 'Admin humo',
             'email' => 'humo-'.uniqid().'@t.es',
             'password' => 'password123',
         ]);
-
-        $this->actingAs($admin)->get($url)->assertOk();
     }
 }

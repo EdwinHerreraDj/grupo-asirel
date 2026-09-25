@@ -13,7 +13,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf/notyf.min.css">
     <script src="https://cdn.jsdelivr.net/npm/notyf/notyf.min.js"></script>
 
-    <link href="https://cdn.datatables.net/v/dt/dt-2.1.8/datatables.min.css" rel="stylesheet">
 
     @vite(['node_modules/sweetalert2/dist/sweetalert2.min.css'])
 
@@ -52,9 +51,8 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdn.datatables.net/v/dt/dt-2.1.8/datatables.min.js"></script>
 
-    @vite(['resources/js/app.js', 'resources/js/react/app.jsx', 'resources/js/pages/tables-datatable.js'])
+    @vite(['resources/js/app.js', 'resources/js/react/app.jsx'])
 
     @livewireScripts
 

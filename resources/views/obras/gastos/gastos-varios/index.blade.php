@@ -2,6 +2,8 @@
 
 
 @section('css')
+    {{-- Esta tabla todavía usa DataTables (ya no se carga en todas las páginas) --}}
+    <link href="https://cdn.datatables.net/v/dt/dt-2.1.8/datatables.min.css" rel="stylesheet">
     @vite(['node_modules/sweetalert2/dist/sweetalert2.min.css'])
     @vite(['resources/css/app.css'])
 @endsection

@@ -2,6 +2,8 @@
 
 
 @section('css')
+    {{-- Esta tabla todavía usa DataTables (ya no se carga en todas las páginas) --}}
+    <link href="https://cdn.datatables.net/v/dt/dt-2.1.8/datatables.min.css" rel="stylesheet">
     @vite(['resources/css/app.css'])
 @endsection
 
@@ -104,6 +106,8 @@
 @endsection
 
 @section('script')
+    <script src="https://cdn.datatables.net/v/dt/dt-2.1.8/datatables.min.js"></script>
+    @vite(['resources/js/pages/tables-datatable.js'])
     @vite(['resources/js/visor-pdf.js', 'resources/js/pages/highlight.js'])
     <script>
         document.addEventListener("DOMContentLoaded", function() {

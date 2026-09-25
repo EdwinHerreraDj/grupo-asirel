@@ -131,6 +131,15 @@ Contratado (presupuesto de venta) frente a ejecutado (`certificacion_detalles.ca
 
 ---
 
+## 5.4 Usuarios y accesos
+
+- **Usuarios** (`/users`, admin y super_admin): listado propio con búsqueda, filtro por rol, paginación y último acceso de cada uno; alta, edición y borrado desde modales. `UserController@destroy` responde JSON si la petición lo espera y, si no, redirige con aviso.
+- **Accesos** (`/login-logs`, solo super_admin): filtros (usuario, estado, fechas, texto), paginación y limpieza de registros antiguos (`POST /login-logs/purgar`).
+- Un acceso sin `logged_out_at` está **abierto** solo mientras no pasen `session.lifetime` minutos; después es **caducado**, porque al caducar la sesión sola no queda registro de salida (`LoginLog::getEstadoAttribute`).
+- **DataTables ya no se carga en todas las páginas**: solo lo incluyen las cinco tablas que aún lo usan (ventas, gastos varios, materiales, alquileres y subcontratas de una obra). Si se migran, se puede quitar del todo.
+
+---
+
 ## 5.5 Dos logos distintos (no confundirlos)
 
 - **Logo de la empresa** (`empresa.logo`): solo para **PDFs e informes**. Se cambia en Configuración → Empresa.

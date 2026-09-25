@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\LoginLog;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -17,14 +18,49 @@ use Illuminate\Validation\Rule;
  */
 class UserController extends Controller
 {
-    /* Aqui creamos la ruta que nos perimite llevar todo los usuarios a page users/index */
+    private const POR_PAGINA = 15;
+
+    /** Listado con búsqueda, filtro por rol y último acceso de cada uno. */
     public function index(Request $request)
     {
-        $users = User::all();
-        $actor = $request->user();
-        $totalSuperAdmins = $users->where('role', User::ROLE_SUPER_ADMIN)->count();
+        $filtros = $request->validate([
+            'buscar' => ['nullable', 'string', 'max:100'],
+            'rol' => ['nullable', Rule::in([User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN, User::ROLE_USER])],
+        ]);
 
-        return view('users.index', compact('users', 'actor', 'totalSuperAdmins'));
+        $query = User::query();
+
+        if (! empty($filtros['buscar'])) {
+            $like = '%'.addcslashes($filtros['buscar'], '%_\\').'%';
+            $query->where(fn ($q) => $q->where('name', 'like', $like)->orWhere('email', 'like', $like));
+        }
+        if (! empty($filtros['rol'])) {
+            $query->where('role', $filtros['rol']);
+        }
+
+        $users = $query->orderBy('name')->paginate(self::POR_PAGINA)->withQueryString();
+
+        // Último acceso de los usuarios de esta página, en una sola consulta.
+        $ultimosAccesos = LoginLog::selectRaw('user_id, MAX(logged_in_at) as ultimo')
+            ->whereIn('user_id', $users->pluck('id'))
+            ->groupBy('user_id')
+            ->pluck('ultimo', 'user_id');
+
+        $porRol = User::selectRaw('role, COUNT(*) as total')->groupBy('role')->pluck('total', 'role');
+
+        return view('users.index', [
+            'users' => $users,
+            'actor' => $request->user(),
+            'totalSuperAdmins' => (int) ($porRol[User::ROLE_SUPER_ADMIN] ?? 0),
+            'ultimosAccesos' => $ultimosAccesos,
+            'filtros' => $filtros,
+            'stats' => [
+                'total' => (int) $porRol->sum(),
+                'super_admins' => (int) ($porRol[User::ROLE_SUPER_ADMIN] ?? 0),
+                'admins' => (int) ($porRol[User::ROLE_ADMIN] ?? 0),
+                'usuarios' => (int) ($porRol[User::ROLE_USER] ?? 0),
+            ],
+        ]);
     }
 
     /**
@@ -35,7 +71,7 @@ class UserController extends Controller
         // Validar los datos de entrada
         $validatedData = $request->validate([
             'name' => 'required|string|max:30',
-            'email' => 'required|email|max:30|unique:users',
+            'email' => 'required|email|max:150|unique:users',
             'password' => 'required|string|min:8|confirmed',
             'role' => ['required', Rule::in($this->rolesAsignables($request->user()))],
         ], [
@@ -70,7 +106,7 @@ class UserController extends Controller
         // Validar los datos
         $validatedData = $request->validate([
             'name' => 'required|string|max:30',
-            'email' => "required|string|email|max:30|unique:users,email,$id",
+            'email' => "required|string|email|max:150|unique:users,email,$id",
             'password' => 'nullable|string|min:8|confirmed',
             'role' => ['required', Rule::in($this->rolesAsignables($actor))],
         ], [
@@ -89,6 +125,11 @@ class UserController extends Controller
             'role' => $validatedData['role'],
             'password' => $request->filled('password') ? Hash::make($validatedData['password']) : $user->password,
         ]);
+
+        // El menú de arriba lee el nombre de la sesión.
+        if ($user->id === $actor->id) {
+            session(['user_name' => $user->name, 'user_email' => $user->email]);
+        }
 
         return redirect()->route('users.index')->with('success', 'Usuario actualizado exitosamente.');
     }
@@ -110,25 +151,23 @@ class UserController extends Controller
             };
 
             if ($motivo) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $motivo,
-                ], 403);
+                return $request->expectsJson()
+                    ? response()->json(['success' => false, 'message' => $motivo], 403)
+                    : redirect()->route('users.index')->with('error', $motivo);
             }
 
+            $nombre = $user->name;
             $user->delete();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Usuario eliminado exitosamente.',
-            ], 200);
+            return $request->expectsJson()
+                ? response()->json(['success' => true, 'message' => 'Usuario eliminado exitosamente.'])
+                : redirect()->route('users.index')->with('success', "Usuario «{$nombre}» eliminado.");
         } catch (\Exception $e) {
             Log::error('Error al eliminar el usuario: '.$e->getMessage());
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Ocurrió un error al eliminar el usuario.',
-            ], 500);
+            return $request->expectsJson()
+                ? response()->json(['success' => false, 'message' => 'Ocurrió un error al eliminar el usuario.'], 500)
+                : redirect()->route('users.index')->with('error', 'Ocurrió un error al eliminar el usuario.');
         }
     }
 
