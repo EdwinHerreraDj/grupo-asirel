@@ -142,7 +142,9 @@
                                     x-transition:leave="transition ease-in duration-75"
                                     x-transition:leave-start="opacity-100 scale-100"
                                     x-transition:leave-end="opacity-0 scale-95"
-                                    class="absolute right-0 mt-2 w-56 z-50 bg-white rounded-xl shadow-lg ring-1 ring-black/5 py-1"
+                                    {{-- overflow-hidden: si no, el fondo del hover del primer y del
+                                         último elemento asoma por las esquinas redondeadas. --}}
+                                    class="absolute right-0 mt-2 w-56 z-50 bg-white rounded-xl shadow-lg ring-1 ring-black/5 py-1 overflow-hidden"
                                     style="display: none;">
 
                                     <a href="{{ route('obras.facturas-recibidas', $obra->id) }}"
