@@ -167,6 +167,12 @@ Route::group(['prefix' => '/', 'middleware' => 'auth'], function () {
 
     // Mi Unidad
     Route::get('/empresa', [EmpresaController::class, 'index'])->name('empresa.index');
+    /* Mi perfil: cualquier usuario con sesión */
+    Route::get('/mi-perfil', [\App\Http\Controllers\PerfilController::class, 'index'])->name('perfil.index');
+    Route::post('/mi-perfil', [\App\Http\Controllers\PerfilController::class, 'actualizar'])->name('perfil.actualizar');
+    Route::post('/mi-perfil/contrasena', [\App\Http\Controllers\PerfilController::class, 'cambiarContrasena'])->name('perfil.contrasena');
+    Route::delete('/mi-perfil/avatar', [\App\Http\Controllers\PerfilController::class, 'eliminarAvatar'])->name('perfil.avatar.eliminar');
+
     Route::get('/empresa/configuracion', [EmpresaController::class, 'configuracion'])->middleware('role:admin,super_admin')->name('empresa.configuracion');
 
     /* Imágenes del panel (logo, menú plegado y favicon): solo admin y super_admin */

@@ -20,6 +20,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'avatar',
         'password',
         'role',
     ];
@@ -47,6 +48,25 @@ class User extends Authenticatable
     public const ROLE_SUPER_ADMIN = 'super_admin';
     public const ROLE_ADMIN = 'admin';
     public const ROLE_USER = 'user';
+
+    /** Foto del usuario, si la ha subido. */
+    public function getAvatarUrlAttribute(): ?string
+    {
+        return $this->avatar ? \Illuminate\Support\Facades\Storage::disk('public')->url($this->avatar) : null;
+    }
+
+    /** Iniciales para cuando no hay foto: "Ana Pérez" → "AP". */
+    public function getInicialesAttribute(): string
+    {
+        $partes = preg_split('/\s+/', trim((string) $this->name)) ?: [];
+        $iniciales = mb_strtoupper(mb_substr($partes[0] ?? 'U', 0, 1));
+
+        if (! empty($partes[1])) {
+            $iniciales .= mb_strtoupper(mb_substr($partes[1], 0, 1));
+        }
+
+        return $iniciales ?: 'U';
+    }
 
     public function isSuperAdmin(): bool
     {

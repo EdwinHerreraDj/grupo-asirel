@@ -69,20 +69,40 @@
         <div class="relative">
             <button data-fc-type="dropdown" data-fc-placement="bottom-end" type="button" class="nav-link"
                 aria-label="Menú de usuario">
-                <span class="inline-flex h-10 w-10 items-center justify-center rounded-full {{ $userAvatarBg }} text-white text-sm font-semibold shadow-sm ring-2 ring-white dark:ring-gray-800 select-none"
-                    title="{{ $userName }}">
-                    {{ $userInitials ?: 'U' }}
-                </span>
+                @if (auth()->user()?->avatar_url)
+                    <img src="{{ auth()->user()->avatar_url }}" alt="{{ $userName }}" title="{{ $userName }}"
+                        class="h-10 w-10 rounded-full object-cover shadow-sm ring-2 ring-white dark:ring-gray-800">
+                @else
+                    <span class="inline-flex h-10 w-10 items-center justify-center rounded-full {{ $userAvatarBg }} text-white text-sm font-semibold shadow-sm ring-2 ring-white dark:ring-gray-800 select-none"
+                        title="{{ $userName }}">
+                        {{ $userInitials ?: 'U' }}
+                    </span>
+                @endif
             </button>
 
             <div
-                class="fc-dropdown fc-dropdown-open:opacity-100 hidden opacity-0 w-44 z-50 transition-[margin,opacity] duration-300 mt-2 bg-white shadow-lg border rounded-lg p-2 border-gray-200 dark:border-gray-700 dark:bg-gray-800 right-0">
+                class="fc-dropdown fc-dropdown-open:opacity-100 hidden opacity-0 w-56 z-50 transition-[margin,opacity] duration-300 mt-2 bg-white shadow-lg border rounded-lg p-2 border-gray-200 dark:border-gray-700 dark:bg-gray-800 right-0">
+
+                {{-- Quién eres --}}
+                <div class="border-b border-gray-100 px-3 pb-2 pt-1 dark:border-gray-700">
+                    <p class="truncate text-sm font-semibold text-gray-800 dark:text-gray-200">{{ $userName }}</p>
+                    <p class="truncate text-xs text-gray-500 dark:text-gray-400">
+                        {{ auth()->user()?->email }}
+                    </p>
+                </div>
+
+                <a href="{{ route('perfil.index') }}"
+                    class="mt-1 flex w-full items-center py-2 px-3 rounded-md text-sm text-gray-800 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-300">
+                    <i class="mgc_user_3_line me-2"></i>
+                    <span>Mi perfil</span>
+                </a>
+
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <button type="submit"
                         class="flex w-full items-center py-2 px-3 rounded-md text-sm text-gray-800 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-300">
                         <i class="mgc_exit_line me-2"></i>
-                        <span>Log Out</span>
+                        <span>Cerrar sesión</span>
                     </button>
                 </form>
             </div>
