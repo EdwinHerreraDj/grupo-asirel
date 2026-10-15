@@ -9,7 +9,7 @@
 
 @section('content')
     <div class="grid grid-cols-12">
-        <div class="col-span-12 card p-10">
+        <div class="col-span-12">
             @livewire('empresa.facturas.series.index')
         </div>
     </div>

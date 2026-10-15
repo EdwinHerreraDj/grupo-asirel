@@ -9,7 +9,7 @@
 
 @section('content')
     <div class="grid grid-cols-12">
-        <div class="col-span-12 card p-10">
+        <div class="col-span-12">
             {{-- Renderizamos el componente Livewire --}}
             @livewire('empresa.facturas-ventas.detalle', ['factura' => $factura])
         </div>
