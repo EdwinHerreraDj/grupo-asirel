@@ -39,6 +39,10 @@ class Detalle extends Component
     // Modal emitir
     public bool $showEmitirModal = false;
 
+    // Eliminar la factura (excepcional: equivocaciones haciendo pruebas)
+    public bool $showEliminarModal = false;
+    public string $motivoEliminar = '';
+    public string $passwordEliminar = '';
     // Modal pago (crear o editar)
     public bool $showPagoModal = false;
     public ?int $pagoId = null;
@@ -380,6 +384,86 @@ class Detalle extends Component
         $this->factura->refresh()->load(['detalles', 'pagos']);
         $this->showAnularModal = false;
         $this->dispatch('notify', type: 'success', message: 'Factura anulada.');
+    }
+
+    // -------------------------
+    // ELIMINAR LA FACTURA (solo admin, con contraseña)
+    // -------------------------
+
+    /** Solo admin y super_admin pueden eliminar facturas. */
+    public function getPuedeEliminarFacturaProperty(): bool
+    {
+        return (bool) auth()->user()?->isAdmin();
+    }
+
+    /** Si no se puede eliminar, el motivo; si se puede, null. */
+    public function getMotivoNoEliminableProperty(): ?string
+    {
+        return app(FacturaVentaService::class)->motivoNoEliminable($this->factura);
+    }
+
+    public function confirmarEliminarFactura(): void
+    {
+        if (! $this->puedeEliminarFactura) {
+            $this->dispatch('notify', type: 'error', message: 'No tienes permiso para eliminar facturas.');
+
+            return;
+        }
+
+        if ($motivo = $this->motivoNoEliminable) {
+            $this->dispatch('notify', type: 'error', message: $motivo);
+
+            return;
+        }
+
+        $this->motivoEliminar = '';
+        $this->passwordEliminar = '';
+        $this->resetValidation(['motivoEliminar', 'passwordEliminar']);
+        $this->showEliminarModal = true;
+    }
+
+    public function cerrarEliminarModal(): void
+    {
+        $this->showEliminarModal = false;
+        $this->motivoEliminar = '';
+        $this->passwordEliminar = '';
+        $this->resetValidation(['motivoEliminar', 'passwordEliminar']);
+    }
+
+    public function eliminarFactura(FacturaVentaService $service)
+    {
+        if (! $this->puedeEliminarFactura) {
+            abort(403);
+        }
+
+        $this->validate([
+            'motivoEliminar' => ['required', 'string', 'min:5', 'max:500'],
+            'passwordEliminar' => ['required', 'current_password'],
+        ], [
+            'motivoEliminar.required' => 'Escribe por qué eliminas la factura.',
+            'motivoEliminar.min' => 'Explica el motivo con algo más de detalle.',
+            'passwordEliminar.required' => 'Escribe tu contraseña para confirmar.',
+            'passwordEliminar.current_password' => 'La contraseña no es correcta.',
+        ]);
+
+        $numero = $this->factura->numeroFormateado();
+
+        try {
+            $registro = $service->eliminar($this->factura, $this->motivoEliminar);
+        } catch (RuntimeException $e) {
+            $this->passwordEliminar = '';
+            $this->dispatch('notify', type: 'error', message: $e->getMessage());
+
+            return;
+        }
+
+        $aviso = $registro->numero_liberado
+            ? "Factura {$numero} eliminada. El número vuelve a estar libre para la siguiente."
+            : "Factura {$numero} eliminada.";
+
+        session()->flash('success', $aviso);
+
+        return redirect()->route('empresa.facturas-ventas');
     }
 
     // -------------------------

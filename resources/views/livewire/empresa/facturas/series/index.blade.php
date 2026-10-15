@@ -269,4 +269,63 @@
             </div>
         </div>
     @endif
+
+    {{-- FACTURAS ELIMINADAS: rastro de los números que se devolvieron --}}
+    @if ($eliminadas->isNotEmpty())
+        <div class="mt-4 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_10px_35px_rgba(15,23,42,0.06)]">
+            <div class="border-b border-slate-200 px-5 py-4 sm:px-6">
+                <h3 class="flex items-center gap-2 font-semibold text-slate-900">
+                    <i class="mgc_delete_line text-lg text-rose-600"></i> Facturas eliminadas
+                </h3>
+                <p class="mt-0.5 text-sm text-slate-500">
+                    Últimas facturas borradas y su número, que volvió a quedar libre en la serie.
+                </p>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-sm">
+                    <thead class="bg-slate-50 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                        <tr>
+                            <th class="px-6 py-3">Factura</th>
+                            <th class="px-3 py-3">Cliente</th>
+                            <th class="px-3 py-3">Total</th>
+                            <th class="px-3 py-3">Quién y cuándo</th>
+                            <th class="px-6 py-3">Motivo</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @foreach ($eliminadas as $eliminada)
+                            <tr>
+                                <td class="whitespace-nowrap px-6 py-3">
+                                    <p class="font-semibold text-slate-800">{{ $eliminada->numero_formateado }}</p>
+                                    <p class="text-xs text-slate-500">
+                                        {{ $eliminada->fecha_emision?->format('d/m/Y') ?? '—' }}
+                                        @if ($eliminada->numero_liberado)
+                                            · <span class="text-emerald-700">número liberado</span>
+                                        @endif
+                                    </p>
+                                </td>
+                                <td class="px-3 py-3 text-slate-600">
+                                    {{ $eliminada->cliente_nombre ?? '—' }}
+                                    @if ($eliminada->obra_nombre)
+                                        <span class="block text-xs text-slate-400">{{ $eliminada->obra_nombre }}</span>
+                                    @endif
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-3 font-semibold text-slate-800">
+                                    {{ number_format((float) $eliminada->total, 2, ',', '.') }} €
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-3 text-slate-600">
+                                    {{ $eliminada->usuario?->name ?? $eliminada->usuario_nombre ?? '—' }}
+                                    <span class="block text-xs text-slate-400">
+                                        {{ $eliminada->created_at?->format('d/m/Y H:i') }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-3 text-slate-600">{{ $eliminada->motivo }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    @endif
 </div>

@@ -148,6 +148,15 @@ Contratado (presupuesto de venta) frente a ejecutado (`certificacion_detalles.ca
 
 ---
 
+## 5.6 Eliminar una factura de venta (excepcional)
+
+- `FacturaVentaService::eliminar()`: borra la factura y devuelve su número a la serie. Solo admin y super_admin, y la pantalla pide **contraseña** y **motivo**.
+- **Solo la última factura de la serie** (`esUltimaDeLaSerie`), para que la numeración no quede con huecos; para el resto, anular. Se vuelve a comprobar dentro de la transacción con la serie bloqueada.
+- Borra líneas, pagos, documentos (y sus archivos), PDF y adjunto; las certificaciones vuelven a quedar pendientes, igual que al anular.
+- Queda rastro en `facturas_venta_eliminadas` (quién, cuándo, desde qué IP, motivo y copia de los datos), visible en Configuración → Series de facturas.
+
+---
+
 ## 6. Seguridad y permisos
 
 - **Roles** en `users.role`: `super_admin` | `admin` | `user`. No hay registro público: las altas se hacen en `/users`.

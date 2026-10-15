@@ -92,6 +92,21 @@
                             <i class="mgc_close_circle_line"></i> Anular
                         </button>
                     @endif
+
+                    {{-- Eliminar: excepcional (equivocaciones al hacer pruebas) y solo admin --}}
+                    @if ($this->puedeEliminarFactura)
+                        @if ($this->motivoNoEliminable)
+                            <span title="{{ $this->motivoNoEliminable }}"
+                                class="inline-flex cursor-not-allowed items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-medium text-slate-400">
+                                <i class="mgc_delete_line"></i> Eliminar
+                            </span>
+                        @else
+                            <button wire:click="confirmarEliminarFactura"
+                                class="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(225,29,72,0.22)] transition hover:from-rose-500 hover:to-red-500">
+                                <i class="mgc_delete_line"></i> Eliminar
+                            </button>
+                        @endif
+                    @endif
                 </div>
             </div>
         </div>
@@ -595,6 +610,95 @@
                     <button wire:click="anularFactura"
                         class="px-4 py-2 rounded-xl text-sm font-semibold bg-red-600 text-white hover:bg-red-700">
                         Anular factura
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- MODAL: ELIMINAR LA FACTURA --}}
+    @if ($showEliminarModal)
+        <div class="fixed inset-0 z-[10000] bg-black/60 backdrop-blur-sm flex items-center justify-center px-4 py-6">
+            <div class="flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl">
+                <div class="overflow-y-auto overscroll-contain px-6 pt-6">
+                    <div class="text-center">
+                        <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+                            <i class="mgc_delete_line text-3xl"></i>
+                        </div>
+                        <h3 class="text-lg font-semibold text-slate-900">
+                            Eliminar la factura {{ $factura->numeroFormateado() }}
+                        </h3>
+                        <p class="mt-2 text-sm text-slate-600">
+                            Esto no es lo mismo que anularla: la factura <strong>desaparece</strong> y no se puede recuperar.
+                        </p>
+                    </div>
+
+                    <div class="mt-4 space-y-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-left text-sm text-rose-800">
+                        <p class="font-semibold">Se borrará todo lo suyo:</p>
+                        <ul class="list-inside list-disc space-y-0.5">
+                            <li>{{ $factura->detalles->count() }} {{ $factura->detalles->count() === 1 ? 'línea' : 'líneas' }} de la factura</li>
+                            @if ($factura->pagos->count())
+                                <li><strong>{{ $factura->pagos->count() }} {{ $factura->pagos->count() === 1 ? 'pago registrado' : 'pagos registrados' }}</strong></li>
+                            @endif
+                            @if ($factura->documentos->count())
+                                <li>{{ $factura->documentos->count() }} {{ $factura->documentos->count() === 1 ? 'documento adjunto' : 'documentos adjuntos' }}</li>
+                            @endif
+                            <li>El PDF emitido y sus copias</li>
+                        </ul>
+                    </div>
+
+                    @if ($factura->numero_factura)
+                        <div class="mt-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-left">
+                            <i class="mgc_information_line mt-0.5 text-amber-600"></i>
+                            <p class="text-xs text-amber-800">
+                                El número <strong>{{ $factura->numeroFormateado() }}</strong> quedará libre y lo usará
+                                la siguiente factura de la serie.
+                            </p>
+                        </div>
+                    @endif
+
+                    @if ($factura->origen === 'certificacion')
+                        <div class="mt-3 flex items-start gap-2 rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-2 text-left">
+                            <i class="mgc_information_line mt-0.5 text-cyan-600"></i>
+                            <p class="text-xs text-cyan-800">
+                                Sus certificaciones volverán a quedar <strong>disponibles</strong>, listas para editar
+                                o volver a facturar.
+                            </p>
+                        </div>
+                    @endif
+
+                    <div class="mt-4 space-y-3 pb-2">
+                        <div>
+                            <label class="mb-1.5 block text-sm font-medium text-slate-700">
+                                ¿Por qué la eliminas? <span class="text-red-500">*</span>
+                            </label>
+                            <textarea wire:model="motivoEliminar" rows="2"
+                                placeholder="Ej: factura de prueba creada por error"
+                                class="w-full form-textarea rounded-xl border-slate-300"></textarea>
+                            @error('motivoEliminar') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label class="mb-1.5 block text-sm font-medium text-slate-700">
+                                Tu contraseña <span class="text-red-500">*</span>
+                            </label>
+                            <input type="password" wire:model="passwordEliminar" autocomplete="current-password"
+                                placeholder="••••••••" class="w-full form-input rounded-xl border-slate-300">
+                            @error('passwordEliminar') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 border-t border-slate-200 bg-slate-50 px-6 py-4">
+                    <button type="button" wire:click="cerrarEliminarModal"
+                        class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100">
+                        Cancelar
+                    </button>
+                    <button type="button" wire:click="eliminarFactura" wire:loading.attr="disabled"
+                        class="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:opacity-60">
+                        <i class="mgc_delete_line" wire:loading.remove wire:target="eliminarFactura"></i>
+                        <i class="mgc_loading_line animate-spin" wire:loading wire:target="eliminarFactura"></i>
+                        Eliminar definitivamente
                     </button>
                 </div>
             </div>

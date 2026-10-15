@@ -8,6 +8,7 @@ use App\Models\FacturaSerie;
 use App\Support\EstadoCobro;
 use App\Models\FacturaVenta;
 use App\Models\FacturaVentaDetalle;
+use App\Models\FacturaVentaEliminada;
 use App\Models\FacturaVentaPago;
 use App\Services\facturas\FacturaPdfService;
 use Illuminate\Http\UploadedFile;
@@ -287,6 +288,124 @@ class FacturaVentaService
         });
 
         return $factura->fresh();
+    }
+
+    // -------------------------------------------------------------
+    // ELIMINAR UNA FACTURA YA EMITIDA (excepcional)
+    // -------------------------------------------------------------
+
+    /**
+     * ¿Es la última factura emitida de su serie? Solo esa se puede eliminar:
+     * así el número vuelve al contador y la serie no queda con huecos.
+     */
+    public function esUltimaDeLaSerie(FacturaVenta $factura): bool
+    {
+        if (! $factura->serie || ! $factura->numero_factura) {
+            return false;
+        }
+
+        return ! FacturaVenta::where('serie', $factura->serie)
+            ->where('numero_factura', '>', $factura->numero_factura)
+            ->exists();
+    }
+
+    /** Por qué no se puede eliminar, o null si sí se puede. */
+    public function motivoNoEliminable(FacturaVenta $factura): ?string
+    {
+        if (! $factura->numero_factura) {
+            return null; // Un borrador no ha consumido número.
+        }
+
+        if (! $this->esUltimaDeLaSerie($factura)) {
+            return 'Solo se puede eliminar la última factura emitida de la serie, '
+                .'para que la numeración no quede con huecos. Para esta factura, anúlala.';
+        }
+
+        return null;
+    }
+
+    /**
+     * Elimina una factura y, si tenía número, lo devuelve a la serie.
+     *
+     * Se borra todo lo suyo (líneas, pagos, documentos, reimpresiones y los
+     * PDF), las certificaciones vuelven a quedar pendientes y queda un
+     * registro de quién la borró y por qué.
+     */
+    public function eliminar(FacturaVenta $factura, string $motivo): FacturaVentaEliminada
+    {
+        if ($impedimento = $this->motivoNoEliminable($factura)) {
+            throw new RuntimeException($impedimento);
+        }
+
+        $factura->loadMissing(['cliente', 'obra', 'detalles', 'pagos', 'documentos']);
+
+        return DB::transaction(function () use ($factura, $motivo) {
+            // Con la serie bloqueada se vuelve a comprobar que sigue siendo la
+            // última: otra persona puede haber emitido una mientras tanto.
+            $serie = $factura->numero_factura
+                ? FacturaSerie::where('serie', $factura->serie)->lockForUpdate()->first()
+                : null;
+
+            if ($factura->numero_factura && ! $this->esUltimaDeLaSerie($factura)) {
+                throw new RuntimeException(
+                    'Mientras tanto se ha emitido otra factura en la serie, así que esta ya no es la última.'
+                );
+            }
+
+            $usuario = Auth::user();
+
+            $registro = FacturaVentaEliminada::create([
+                'factura_id' => $factura->id,
+                'serie' => $factura->serie,
+                'numero_factura' => $factura->numero_factura,
+                'numero_formateado' => $factura->numeroFormateado(),
+                'estado' => $factura->estado,
+                'origen' => $factura->origen,
+                'fecha_emision' => $factura->fecha_emision,
+                'cliente_id' => $factura->cliente_id,
+                'cliente_nombre' => $factura->cliente?->nombre,
+                'obra_id' => $factura->obra_id,
+                'obra_nombre' => $factura->obra?->nombre,
+                'codigo_certificacion' => $factura->codigo_certificacion,
+                'base_imponible' => $factura->base_imponible,
+                'iva_importe' => $factura->iva_importe,
+                'retencion_importe' => $factura->retencion_importe,
+                'total' => $factura->total,
+                'usuario_id' => $usuario?->id,
+                'usuario_nombre' => $usuario?->name,
+                'ip' => request()->ip(),
+                'motivo' => $motivo,
+                'numero_liberado' => $serie !== null && $factura->numero_factura !== null,
+                'datos' => [
+                    'factura' => $factura->toArray(),
+                    'detalles' => $factura->detalles->toArray(),
+                    'pagos' => $factura->pagos->toArray(),
+                    'documentos' => $factura->documentos->toArray(),
+                ],
+            ]);
+
+            // Las certificaciones vuelven a estar disponibles.
+            if ($factura->origen === 'certificacion') {
+                $this->liberarCertificaciones($factura, 'Factura eliminada: '.$motivo);
+            }
+
+            // Los adjuntos y sus archivos (las filas caen por clave foránea,
+            // pero el archivo del disco hay que borrarlo a mano).
+            foreach ($factura->documentos as $documento) {
+                if ($documento->ruta && Storage::disk(self::DISCO)->exists($documento->ruta)) {
+                    Storage::disk(self::DISCO)->delete($documento->ruta);
+                }
+            }
+
+            $factura->delete(); // El modelo borra el PDF y el adjunto.
+
+            // El número vuelve a quedar libre para la siguiente factura.
+            if ($serie && (int) $serie->ultimo_numero === (int) $registro->numero_factura) {
+                $serie->update(['ultimo_numero' => max(0, $registro->numero_factura - 1)]);
+            }
+
+            return $registro;
+        });
     }
 
     /**

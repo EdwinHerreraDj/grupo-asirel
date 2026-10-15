@@ -4,6 +4,7 @@ namespace App\Livewire\Empresa\Facturas\Series;
 
 use Livewire\Component;
 use App\Models\FacturaSerie;
+use App\Models\FacturaVentaEliminada;
 
 class Index extends Component
 {
@@ -129,6 +130,11 @@ class Index extends Component
 
         return view('livewire.empresa.facturas.series.index', [
             'series' => $query->orderBy('serie')->get(),
+            // Rastro de las facturas eliminadas (su número volvió a la serie).
+            'eliminadas' => FacturaVentaEliminada::with('usuario:id,name')
+                ->orderByDesc('created_at')
+                ->limit(20)
+                ->get(),
         ]);
     }
 }
