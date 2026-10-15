@@ -226,6 +226,35 @@ class EliminarFacturaVentaTest extends TestCase
         $this->assertNotNull($primera->fresh());
     }
 
+    public function test_el_boton_aparece_en_la_pantalla_de_la_factura(): void
+    {
+        $ultima = $this->factura();
+
+        // Última de la serie: botón activo, que abre la ventana.
+        $this->componente($ultima)
+            ->assertSee('Eliminar')
+            ->assertSeeHtml('wire:click="confirmarEliminarFactura"')
+            ->call('confirmarEliminarFactura')
+            ->assertSet('showEliminarModal', true)
+            ->assertSee('Tu contraseña');
+
+        // Si se emite otra después, la anterior ya no se puede eliminar.
+        $this->factura();
+        $this->componente($ultima->fresh())
+            ->assertSee('Eliminar')
+            ->assertDontSeeHtml('wire:click="confirmarEliminarFactura"')
+            ->assertSee('Solo se puede eliminar la última factura emitida');
+
+        // Quien no es administrador no ve el botón.
+        $user = User::factory()->create([
+            'role' => User::ROLE_USER,
+            'name' => 'Sin permiso',
+            'email' => 'sinpermiso-'.uniqid().'@t.es',
+            'password' => 'password123',
+        ]);
+        $this->componente($ultima->fresh(), $user)->assertDontSeeHtml('confirmarEliminarFactura');
+    }
+
     public function test_lo_eliminado_queda_a_la_vista_en_las_series(): void
     {
         $factura = $this->factura();
