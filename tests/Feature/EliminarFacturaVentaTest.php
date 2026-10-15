@@ -226,6 +226,37 @@ class EliminarFacturaVentaTest extends TestCase
         $this->assertNotNull($primera->fresh());
     }
 
+    /** Tanto admin como super_admin pueden eliminar facturas. */
+    public function test_pueden_eliminar_los_dos_roles_de_administracion(): void
+    {
+        foreach ([User::ROLE_ADMIN, User::ROLE_SUPER_ADMIN] as $rol) {
+            $usuario = User::factory()->create([
+                'role' => $rol,
+                'name' => 'Gestor '.$rol,
+                'email' => $rol.'-'.uniqid().'@t.es',
+                'password' => 'password123',
+            ]);
+
+            $factura = $this->factura();
+            $numero = $factura->numero_factura;
+
+            $this->componente($factura, $usuario)
+                ->assertSet('puedeEliminarFactura', true)
+                ->assertSeeHtml('wire:click="confirmarEliminarFactura"')
+                ->set('motivoEliminar', 'factura de prueba creada por error')
+                ->set('passwordEliminar', 'password123')
+                ->call('eliminarFactura')
+                ->assertHasNoErrors();
+
+            $this->assertNull(FacturaVenta::find($factura->id), "El rol {$rol} debería poder eliminar");
+            $this->assertEquals($numero - 1, $this->serie->fresh()->ultimo_numero);
+            $this->assertSame(
+                $usuario->id,
+                FacturaVentaEliminada::where('factura_id', $factura->id)->value('usuario_id'),
+            );
+        }
+    }
+
     public function test_el_boton_aparece_en_la_pantalla_de_la_factura(): void
     {
         $ultima = $this->factura();
